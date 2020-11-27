@@ -157,6 +157,10 @@ namespace GreyHackTools
         {
             {"<<", @"bitwise(""<<"",$a,$b)"},
             {">>", @"bitwise("">>"",$a,$b)"},
+            {">>>", @"bitwise("">>>"",$a,$b)"},
+            {"^", @"bitwise(""^"",$a,$b)"},
+            {"&", @"bitwise(""&"",$a,$b)"},
+            {"|", @"bitwise(""|"",$a,$b)"},
             {"++", @"$a=$a+1"},
             {"--", @"$a=$a-1"},
             {"+=", @"$a=$a+$b"},
@@ -372,23 +376,6 @@ namespace GreyHackTools
 
             public virtual Token Compile(Context context)
             {
-                if ((Next != null && Next.Value == "."))
-                {
-                    context.stringBuilders.Push(new StringBuilder());
-                    context.StringBuilder.Append(Value);
-                    while (Next != null && Next.Value == ".")
-                    {
-                        Next.Compile(context);
-                        Next = Next.Next;
-                        Next?.Compile(context);
-                        Next = Next?.Next;
-                    }
-
-                    Next.Prev = this;
-                    Value = context.StringBuilder.ToString();
-                    context.stringBuilders.Pop();
-                }
-                
                 if (context.StringBuilder.Length != 0 && Prev != null && !char.IsWhiteSpace(context.StringBuilder[^1]))
                 {
                     if (_tokenSpaces[Prev.GetType()][GetType()]) context.StringBuilder.Append(' ');
@@ -505,6 +492,30 @@ namespace GreyHackTools
             {
                 public override Token Compile(Context context)
                 {
+                    if ((Next != null && (Next.Value == "." || Next.Value == "(")))
+                    {
+                        context.stringBuilders.Push(new StringBuilder());
+                        context.StringBuilder.Append(Value);
+                        while (Next != null && (Next.Value == "." || Next.Value == "("))
+                        {
+                            Next.Compile(context);
+                            if (Next.Value != ".")
+                            {
+                                Next = Next.Next;
+                            }
+                            else
+                            {
+                                Next = Next.Next;
+                                Next?.Compile(context);
+                                Next = Next?.Next;
+                            }
+                        }
+
+                        Next.Prev = this;
+                        Value = context.StringBuilder.ToString();
+                        context.stringBuilders.Pop();
+                    }
+
                     if (Next != null && Next is Operator o && o.NeedsLeft)
                     {
                         return o.NeedsValue ? base.Compile(context) : this;
@@ -712,6 +723,7 @@ namespace GreyHackTools
             }
             public override string ToString()
             {
+                return StringBuilder.ToString();
                 StringBuilder sb = new StringBuilder();
                 Token node = RootToken;
                 while (node!=null)

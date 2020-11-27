@@ -1,0 +1,13 @@
+﻿//very simple xor encryption
+XOR = {}
+XOR.Encrypt = function(text, key)
+	o = []
+	i = 0
+	for c in text
+		o.push(char(code(c) ^ code(key[i%key.len])))
+		i++
+	end for
+	return o.join("")
+end function
+
+

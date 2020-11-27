@@ -700,29 +700,23 @@ namespace GreyHackTools
                 optimizeEnabled = optimize;
                 StringBuilder.Clear();
 
+                Token node;
                 if (optimize)
                 {
-                    Token node = RootToken;
+                    node = RootToken;
                     while (node!=null)
                     {
                         node.Optimize(this);
                         node = node.Next;
                     }
-
-                    node = RootToken;
-                    while (node!=null)
-                    {
-                        node = node.Compile(this).Next;
-                    }
                 }
-                else
+                
+                node = RootToken;
+                while (node != null)
                 {
-                    Token node = RootToken;
-                    while (node != null)
-                    {
-                        node = node.Compile(this).Next;
-                    }
+                    node = node.Compile(this).Next;
                 }
+                
 
                 optimizeEnabled = false;
                 return StringBuilder.ToString();

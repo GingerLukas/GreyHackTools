@@ -1,13 +1,46 @@
-﻿//very simple xor encryption
-XOR = {}
-XOR.Encrypt = function(text, key)
-	o = []
-	i = 0
-	for c in text
-		o.push(char(code(c) ^ code(key[i%key.len])))
-		i++
+﻿GZip = {"__ini":0,"charToBin":{},"binToChar":{}}
+GZip.CreateMaps = function()
+	byte = [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+	self.binToChar["0000000"] = ""
+	for c in range(1,16384)
+		ch = char(c)
+		for i in range(13,0)
+			byte[i] = byte[i] + 1
+			if byte[i] == 1 then break
+			byte[i] = 0
+		end for
+		b = byte.join("")
+		if c < 128 then 
+			self.charToBin[ch] = b[7:]
+			self.binToChar[b[7:]] = ch
+		else
+			self.charToBin[ch] = b
+		end if
+		
+		self.binToChar[b] = ch
 	end for
-	return o.join("")
+	self.__ini = 1
 end function
 
+GZip.GetCompressedString = function(string)
+	if not self.__ini then self.CreateMaps
+	out = []
+	i = 0
+	while i+1<string.len
+		out.push(self.binToChar[self.charToBin[string[i]]+self.charToBin[string[i+1]]])
+		i = i + 2
+	end while
+	if string.len%2!=0 then out.push(self.binToChar[self.charToBin[string[i]]])
+	return out.join("")
+end function
 
+GZip.GetDecompressedString = function(string)
+	if not self.__ini then self.CreateMaps
+	out = []
+	for c in string
+		tmp = self.charToBin[c]
+		out.push(self.binToChar[tmp[:7]])
+		if tmp.len > 7 then out.push(self.binToChar[tmp[7:]])
+	end for
+	return out.join("")
+end function

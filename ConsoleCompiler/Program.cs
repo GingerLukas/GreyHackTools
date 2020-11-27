@@ -8,7 +8,7 @@ namespace ConsoleCompiler
     {
         static void Main(string[] args)
         {
-            Console.WriteLine(GreyHackCompiler.Compile(File.ReadAllText("test.src")));
+            Console.WriteLine(GreyHackCompiler.Compile(File.ReadAllText("test.src"),true));
             Console.ReadKey();
         }
     }

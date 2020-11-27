@@ -341,7 +341,6 @@ namespace GreyHackTools
             if (_keywords.Contains(tmp_value))
             {
                 t = new Token.Keyword();
-                t.Optimizable = false;
             }
             else if (t.Optimizable && _ignoreOptimize.Contains(t.Value))
             {
@@ -371,7 +370,7 @@ namespace GreyHackTools
 
             public virtual void Optimize(Context context)
             {
-
+                if (Optimizable&&Value.Length>0&&!char.IsDigit(Value[0])) Value = context.nameProvider.GetReplace(Value);
             }
 
             public virtual Token Compile(Context context)
@@ -387,29 +386,11 @@ namespace GreyHackTools
             }
 
             public class Keyword : Token
-            {/*
-                public override Token Compile(Context context)
+            {
+                public Keyword()
                 {
-                    if (!(Prev == null || Prev.EndStatement || Prev is Keyword))
-                    {
-                        context.StringBuilder.Append(' ');
-                    }
-
-                    context.StringBuilder.Append(Value);
-                    if (Next != null)
-                    {
-                        if (EndStatement)
-                        {
-                            context.StringBuilder.Append('\n');
-                        }
-                        else
-                        {
-                            context.StringBuilder.Append(' ');
-                        }
-                    }
-
-                    return this;
-                }*/
+                    Optimizable = false;
+                }
             }
 
             public class Operator : Token
@@ -546,20 +527,30 @@ namespace GreyHackTools
                         int last = 0;
                         for (int i = 0; i < Value.Length; i++)
                         {
+                            if (i + 1 < Value.Length && Value[i] == '\\' &&
+                                (Value[i + 1] == '{' || Value[i + 1] == '}'))
+                            {
+                                i++;
+                                context.StringBuilder.Append(Value[i]);
+                                continue;
+                            }
                             if (Value[i] == '{')
                             {
                                 if (depth == 0) last = i+1;
                                 depth++;
                             }
 
-                            else if (Value[i] == '}')
+                            else if (Value[i] == '}' && (i == 0 || Value[i - 1] != '\\'))
                             {
                                 depth--;
-                                if (depth<0) throw new Exception($"string format ({Value}) is not valid");
+                                if (depth < 0) throw new Exception($"string format ({Value}) is not valid");
                                 if (depth == 0)
                                 {
                                     context.StringBuilder.Append("\"+(");
-                                    context.StringBuilder.Append(GreyHackCompiler.Compile(Value.Substring(last, i - last), context.optimizeEnabled));
+                                    Context innerCodeContext = Tokenize(Value.Substring(last, i - last));
+                                    innerCodeContext.nameProvider = context.nameProvider;
+                                    string compiled = innerCodeContext.Compile(context.optimizeEnabled);
+                                    context.StringBuilder.Append(compiled);
                                     context.StringBuilder.Append(")+\"");
                                 }
                             }
@@ -642,6 +633,10 @@ namespace GreyHackTools
 
             public class Separator : Token
             {
+                public Separator()
+                {
+                    Optimizable = false;
+                }
                 public override string ToString()
                 {
                     return $"Separator: {base.ToString()}";
@@ -650,6 +645,10 @@ namespace GreyHackTools
 
             public class Include : Token
             {
+                public Include()
+                {
+                    Optimizable = false;
+                }
                 public override string ToString()
                 {
                     return $"Include: {base.ToString()}";
@@ -668,6 +667,7 @@ namespace GreyHackTools
             internal Stack<bool> ShouldOptimizeString = new Stack<bool>();
             internal Stack<bool> MapActive = new Stack<bool>();
             internal Dictionary<string, List<Token>> TokensByValue = new Dictionary<string, List<Token>> ();
+            internal VariableNameProvider nameProvider = new VariableNameProvider();
             internal bool optimizeEnabled = false;
 
             public void AddToken(Token token)
@@ -706,6 +706,12 @@ namespace GreyHackTools
                     while (node!=null)
                     {
                         node.Optimize(this);
+                        node = node.Next;
+                    }
+
+                    node = RootToken;
+                    while (node!=null)
+                    {
                         node = node.Compile(this).Next;
                     }
                 }

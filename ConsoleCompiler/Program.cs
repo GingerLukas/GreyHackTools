@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using GreyHackTools;
 
@@ -8,7 +9,12 @@ namespace ConsoleCompiler
     {
         static void Main(string[] args)
         {
-            Console.WriteLine(GreyHackCompiler.Compile(File.ReadAllText("test.src"),true));
+            string s = File.ReadAllText("test.src");
+            Stopwatch sw = Stopwatch.StartNew();
+            s = GreyHackCompiler.Compile(s, false);
+            sw.Stop();
+            Console.WriteLine(s);
+            Console.WriteLine(sw.Elapsed);
             Console.ReadKey();
         }
     }

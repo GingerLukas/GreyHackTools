@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace GreyHackTools
 {
@@ -291,23 +292,10 @@ namespace GreyHackTools
                     token.Custom = true;
                     context.PlainInput.Dequeue();
                 }
-                context.PlainInput.Dequeue();
-                if (EndOfString(context))
-                {
-                    return x =>
-                    {
-                        context.StringBuilder.Clear();
-                        return false;
-                    };
-                }
+
                 return x =>
                 {
-                    if (!EndOfString(context))
-                    {
-                        return true;
-                    }
-
-                    x.PlainInput.Dequeue();
+                    GetString(x);
                     return false;
                 };
             }
@@ -320,11 +308,22 @@ namespace GreyHackTools
                         !_tokenEndStatements.Contains(x.PlainInput.Peek().ToString() + x.PlainInput.Skip(1).FirstOrDefault().ToString());
         }
 
-        private static bool EndOfString(Context context)
+        private static void GetString(Context context)
         {
-            return !(context.PlainInput.Peek() != '"' || context.PlainInput.Skip(1).FirstOrDefault() == '"');
-        }
+            
+            while (context.PlainInput.Count>0&&context.PlainInput.Peek()!='"')
+            {
+                context.StringBuilder.Append(context.PlainInput.Dequeue());
+            }
 
+            if (context.PlainInput.Count != 0)
+                context.StringBuilder.Append(context.PlainInput.Dequeue());
+            if (context.PlainInput.Count > 0 && context.PlainInput.Peek() == '"')
+            {
+                context.StringBuilder.Append(context.PlainInput.Dequeue());
+                GetString(context);
+            }
+        }
         private static Token GetNextToken(Context context)
         {
             context.StringBuilder.Clear();
@@ -492,7 +491,14 @@ namespace GreyHackTools
                             }
                         }
 
-                        Next.Prev = this;
+                        if (Next != null)
+                        {
+                            Next.Prev = this;
+                        }
+                        else
+                        {
+                            context.LastToken = this;
+                        }
                         Value = context.StringBuilder.ToString();
                         context.stringBuilders.Pop();
                     }
@@ -522,7 +528,7 @@ namespace GreyHackTools
                 {
                     if (Custom)
                     {
-                        context.StringBuilder.Append("(\"");
+                        context.StringBuilder.Append("(");
                         int depth = 0;
                         int last = 0;
                         for (int i = 0; i < Value.Length; i++)
@@ -559,13 +565,11 @@ namespace GreyHackTools
                                 context.StringBuilder.Append(Value[i]);
                             }
                         }
-                        context.StringBuilder.Append("\")");
+                        context.StringBuilder.Append(")");
                     }
                     else
                     {
-                        context.StringBuilder.Append("\"");
                         context.StringBuilder.Append(Value);
-                        context.StringBuilder.Append("\"");
                     }
 
                     if (EndStatement) context.StringBuilder.Append('\n');
@@ -574,7 +578,7 @@ namespace GreyHackTools
 
                 public override string ToString()
                 {
-                    return $"String: {(Custom?"$":"")}\"{base.ToString()}\"";
+                    return $"String: {(Custom?"$":"")}{base.ToString()}";
                 }
             }
 
@@ -723,12 +727,15 @@ namespace GreyHackTools
             }
             public override string ToString()
             {
-                return StringBuilder.ToString();
                 StringBuilder sb = new StringBuilder();
                 Token node = RootToken;
                 while (node!=null)
                 {
-                    sb.Append(node.Value);
+                    /*
+                    if (node is Token.String)
+                        sb.Append('"'+node.Value+ '"');
+                    else
+                        sb.Append(node.Value);
                     if (node.EndStatement)
                     {
                         sb.Append('\n');
@@ -736,7 +743,9 @@ namespace GreyHackTools
                     else
                     {
                         sb.Append(' ');
-                    }
+                    }*/
+
+                    sb.AppendLine(node.ToString());
                     node = node.Next;
                 }
 

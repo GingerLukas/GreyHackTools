@@ -44,3 +44,2471 @@ GZip.GetDecompressedString = function(string)
 	end for
 	return out.join("")
 end function
+
+
+SystemImager = {"__ini":0,"permToChar":{},"charToPerm":{},"OnTextFile":{},"OnFolder":{},"OnBinaryFile":{}}
+SystemImager.CreateMaps = function()
+	array = [0,0,0,0,0,0,0,0,0,-1]
+	for p in range(0,1023)
+		for i in range(9)
+			array[i] = array[i] + 1
+			if array[i] < 2 then break
+			array[i] = 0
+		end for
+		c = char(32768+p)
+		perm = SystemImager.BinaryToPerm(array)
+		SystemImager.charToPerm[c] = perm
+		SystemImager.permToChar[perm] = c
+	end for
+	
+	SystemImager.__ini = 1
+end function
+SystemImager.BinaryToPerm = function(bin)
+	out = ["-","-","-","-","-","-","-","-","-","-"]
+	if bin.len != 10 then return null
+	if bin[0] then out[0] = "d"
+	if bin[1] then out[1] = "r"
+	if bin[2] then out[2] = "w"
+	if bin[3] then out[3] = "x"
+	if bin[4] then out[4] = "r"
+	if bin[5] then out[5] = "w"
+	if bin[6] then out[6] = "x"
+	if bin[7] then out[7] = "r"
+	if bin[8] then out[8] = "w"
+	if bin[9] then out[9] = "x"
+	return out.join("")
+end function
+
+SystemImager.GetFileString = function(file)
+	tmp = GZip.GetCompressedString(file.name)+SystemImager.permToChar[file.permissions]
+	return tmp
+end function
+
+SystemImager.ScanFolder = function(folder, out = null)
+	if not SystemImager.__ini then SystemImager.CreateMaps
+	if out == null then out = []
+	out.push(SystemImager.GetFileString(folder)+char(33793))
+	for file in folder.get_files
+		if file.is_binary then 
+			for delegate in self.OnBinaryFile.values
+				delegate.Invoke(file)
+			end for
+		else
+			for delegate in self.OnTextFile.values
+				delegate.Invoke(file)
+			end for
+		end if
+		out.push(SystemImager.GetFileString(file))
+	end for
+	for f in folder.get_folders
+		for delegate in self.OnFolder.values
+			delegate.Invoke(f)
+		end for
+		self.ScanFolder(f,out)
+	end for
+	out.push(char(33792))
+end function
+
+
+SystemImager.ParseSystemImage = function(stream)
+	if not SystemImager.__ini then SystemImager.CreateMaps
+	depth = 0
+	out = []
+	while stream.len > 0
+		tmp_name = []
+		while stream[0].code < 32768
+			tmp_name.push(stream.pull)
+		end while
+		tmp_char = stream.pull
+		if tmp_char.code == 33792 then //depth up
+			depth = depth - 1
+			continue
+		end if
+		out.push((" "*depth)+GZip.GetDecompressedString(tmp_name.join(""))+" "+SystemImager.charToPerm[tmp_char])
+		if stream[0].code == 33793 then //depth-down
+			depth = depth + 1
+			stream.pull
+		end if
+	end while
+	return out.join(char(10))
+end function
+
+
+Delegate = {"target":{},"targetIndex":"","argCount":0}
+Delegate.Invoke = function(a,b,c,d,e,f,g)
+	if self.argCount > 3 then
+		if self.argCount > 5 then
+			if self.argCount == 7 then
+				self.target[self.targetIndex](a,b,c,d,e,f,g)
+			else
+				self.target[self.targetIndex](a,b,c,d,e,f)
+			end if
+		else
+			if self.argCount == 5 then
+				self.target[self.targetIndex](a,b,c,d,e)
+			else
+				self.target[self.targetIndex](a,b,c,d)
+			end if
+		end if
+	else
+		if self.argCount > 1 then
+			if self.argCount == 3 then
+				self.target[self.targetIndex](a,b,c)
+			else
+				self.target[self.targetIndex](a,b)
+			end if
+		else
+			if self.argCount == 1 then
+				self.target[self.targetIndex](a)
+			else
+				self.target[self.targetIndex]()
+			end if
+		end if
+	end if
+end function
+DELEGATE = function(object,index)
+	d = new Delegate
+	d.target = object
+	d.targetIndex = index
+	s = str(object[index])
+	if s.indexOf("()") != null then 
+		d.argCount = 0
+	else
+		d.argCount = s.split(",").len
+	end if
+	return d
+end function
+
+
+
+TextGenerator = {"OnFinalAdded":{},"CustomTokens":[]}
+TextGenerator.GetToken = function(input,prefix)
+	if input.len == 0 or input.indexOf("+") == null or input.indexOf("-") == null then
+		return ""
+	end if
+	while input.len > 0
+		if input[0] == "+" then
+			s = []
+			input.pull
+			while input[0] != "-"
+				s.push(input.pull)
+			end while
+			input.pull
+			return s.join("")
+		else
+			prefix.push(input.pull)
+		end if
+	end while
+end function
+
+TextGenerator.Convert = function(input, finalOut)
+	bak_input = input
+	input = input.values
+	if finalOut == null then finalOut = []
+	prefix = []
+	
+	token = self.GetToken(input,prefix)
+	if token == "" and bak_input.indexOf("+") == null then
+		for delegate in self.OnFinalAdded.values
+			delegate.Invoke(bak_input)
+		end for
+		finalOut.push(bak_input)
+		return
+	end if
+	if token.indexOf("_") != null then
+		token = token.split("_")
+		for i in range(token[0].val,token[1].val)
+			self.Convert(prefix.join("")+i+input.join(""),finalOut)
+		end for
+	else if token == "byte" then
+		for i in range(0,255)
+			self.Convert(prefix.join("")+i+input.join(""),finalOut)
+		end for
+	end if
+end function
+
+TextGenerator.Generate = function(input)
+	fo = []
+	self.Convert(input,fo)
+	return fo
+end function
+
+
+
+__utils_addToList__ = "__utils_addToList__"
+__system_hash_sizes__ = "__system_hash_sizes__"
+
+Utils = {"SystemImager": new SystemImager,"s":get_shell,"BANK_FILE":0,"MAIL_FILE":0,"BANK_INDEX":0,"MAIL_INDEX":0,"INDEX_FILE":0,"MAIN_PATH":0,"Inited":0}
+
+Utils.com = function()
+	return self.s.host_computer
+end function
+Utils.Ini = function()
+	if not self.MAIN_PATH then self.MAIN_PATH = "" + home_dir + "/DB"
+	if not self.INDEX_FILE then
+		if not self.com.File(self.MAIN_PATH+"/indexes.txt") then self.com.touch(self.MAIN_PATH,"indexes.txt")
+		self.INDEX_FILE = self.com.File(self.MAIN_PATH+"/indexes.txt")
+		if self.INDEX_FILE then
+			if self.INDEX_FILE.content.split("\"+"n").len > 1 then
+				self.BANK_INDEX = self.INDEX_FILE.content.split("\"+"n")[0]
+				self.MAIL_INDEX = self.INDEX_FILE.content.split("\"+"n")[1]
+			else
+				self.INDEX_FILE.set_content("0\" + "n0")
+			end if
+		end if
+	end if
+	if not self.BANK_FILE then 
+		tmp_bank = self.com.File(self.MAIN_PATH + "/bank.txt")
+		if not tmp_bank then self.com.touch(self.MAIN_PATH, "bank.txt")
+		self.BANK_FILE = self.com.File(self.MAIN_PATH + "/bank.txt")
+	end if
+	if not self.MAIL_FILE then 
+		tmp_mail = self.com.File(self.MAIN_PATH + "/mail.txt")
+		if not tmp_mail then self.com.touch(self.MAIN_PATH, "mail.txt")
+		self.MAIL_FILE = self.com.File(self.MAIN_PATH + "/mail.txt")
+		self.Inited = true
+	end if
+end function
+
+Utils.GetBankAndMail = function(computer, bank = true, mail = false)
+	if not bank and not mail then return
+	if not self.Inited then self.Ini
+	if bank and not self.BANK_FILE then return "ERROR_BANK_FILE_IS_NOT_DEFINED"
+	if mail and not self.MAIL_FILE then return "ERROR_MAIL_FILE_IS_NOT_DEFINED"
+	if typeof(computer) == "shell" then
+		computer = computer.host_computer
+	end if
+	if typeof(computer) != "computer" then return "ERROR_WRONG_PARAMS_PARSED_OBJECT_IS_NOT_COMPUTER_OR_SHELL"
+	home_folder = computer.File("/home")
+	if not home_folder then return "ERROR_/HOME_NOT_FOUND"
+	for folder in home_folder.get_folders
+		for ffolder in folder.get_folders
+			if ffolder.name == "Config" then
+				for file in ffolder.get_files
+					if bank and file.name == "Bank.txt" and file.has_permission("r") then self.AppendLoot(file.content, "")
+					if mail and file.name == "Mail.txt" and file.has_permission("r") then self.AppendLoot("", file.content)
+				end for
+			end if
+		end for
+	end for
+end function
+
+Utils.AppendLoot = function(bank_input = "", mail_input = "")
+	if not self.Inited then self.Ini
+	if bank_input != "" then
+		if self.BANK_FILE.content.len > 78000 then
+			new_name = "bank" + self.BANK_INDEX + ".txt"
+			self.BANK_FILE.rename(new_name)
+			self.com.touch(self.MAIN_PATH,"bank.txt")
+			self.BANK_FILE = self.com.File(self.MAIN_PATH + "/bank.txt")
+			self.BANK_INDEX = self.BANK_INDEX + 1
+			self.INDEX_FILE.set_content(self.BANK_INDEX+"\"+"n"+self.MAIL_INDEX)
+		end if
+		self.BANK_FILE.set_content(self.BANK_FILE.content + "\" + "n" + bank_input)
+	end if
+	if mail_input != "" then
+		if self.MAIL_FILE.content.len > 78000 then
+			new_name = "mail" + self.MAIL_INDEX + ".txt"
+			self.MAIL_FILE.rename(new_name)
+			self.com.touch(self.MAIN_PATH,"mail.txt")
+			self.MAIL_FILE = self.com.File(self.MAIN_PATH + "/mail.txt")
+			self.MAIL_INDEX = self.MAIL_INDEX + 1
+			self.INDEX_FILE.set_content(self.BANK_INDEX+"\"+"n"+self.MAIL_INDEX)
+		end if
+		self.MAIL_FILE.set_content(self.MAIL_FILE.content + "\" + "n" + mail_input)
+	end if
+end function
+
+Utils.SearchFolder = function(folder, name = "", special = false, output)
+	if not folder then return "ERROR_FOLDER_IN_NULL"
+	if special then
+		if folder.name.indexOf(name) != null then output.push(folder.path)
+		for file in folder.get_files
+			if file.name.indexOf(name) != null then output.push(file.path)
+		end for
+	else
+		if folder.name == name then output.push(folder.path)
+		for file in folder.get_files
+			if file.name == name then output.push(file.path)
+		end for
+	end if
+	for folder in folder.get_folders
+		self.SearchFolder(folder, name, special, output)
+	end for
+end function
+
+Utils.FindFile = function(pc,name = "")
+	if typeof(pc) == "shell" then pc = pc.host_computer
+	if typeof(pc) != "computer" and typeof(pc) != "file" then return "ERROR_COMPUTER_NOT_PROVIDED"
+	if typeof(pc) == "file" then 
+		root_folder = self.GetRootFolder(pc)
+	else
+		root_folder = pc.File("/")
+	end if
+	if not root_folder then return "ERROR_ROOT_FOLDER_NOT_OBTAINED"
+	output = []
+	special = false
+	if name.indexOf("*") != null then 
+		special = true
+		name = name.remove("*")
+	end if
+	self.SearchFolder(root_folder, name, special, output)
+	return output
+end function
+
+Utils.CreateBounce = function(path = "")
+	remote_shell = get_shell
+	credentials = self.com.File(path)
+	if not credentials then return "ERROR_FILE_NOT_FOUND"
+	credentials = credentials.content.split("\" + "n")
+	for cred in credentials
+		tmp = remote_shell.connect_service(cred[0],cred[1],cred[2],cred[3])
+		if tmp then remote_shell = tmp
+	end for
+	return remote_shell
+end function
+
+Utils.ScanFolder = function(folder, depth, output, name_mode = 0)
+	for f in folder.get_files + folder.get_folders
+		if name_mode == 0 then
+			output.push(" "*depth + f.name + " "+f.permissions)
+		else if name_mode == 1 then
+			output.push(f.path)
+		end if
+		self.ScanFolder(f, depth + 2, output, name_mode)
+	end for
+end function
+
+Utils.ScanComputer = function(computer, name_mode = 0)
+	if typeof(computer) == "shell" then computer = computer.host_computer
+	if typeof(computer) != "computer" then return 
+	output = []
+	root_folder = computer.File("/")
+	if not root_folder then return
+	if name_mode == 0 then
+		output.push(root_folder.name + " " + root_folder.permissions)
+	else if name_mode == 1 then
+		output.push(root_folder.path)
+	end if
+	self.ScanFolder(root_folder,2,output, name_mode)
+	return output
+end function
+
+Utils.GetRootFolder = function(file)
+	root_folder = file
+	while root_folder.name != "/"
+		root_folder = root_folder.parent
+	end while
+	return root_folder
+end function
+
+Utils.EvaluateAccessLevel = function(object)
+	if typeof(object) == "shell" then object = object.host_computer.File("/etc/passwd")
+	if typeof(object) == "computer" then object = object.File("/etc/passwd")
+	if typeof(object) == "file" then 
+		tmp_folder = self.GetRootFolder(object)
+		for folder in tmp_folder.get_folders
+			if folder.name == "etc" then 
+				for file in folder.get_files
+					if file.name == "passwd" then
+						object = file
+						break
+					end if
+				end for
+			end if
+		end for
+	else
+		return 3
+	end if
+
+	tmp_level = 2
+	if object.has_permission("r") then tmp_level = 1
+	if object.has_permission("w") then tmp_level = 0
+	return tmp_level
+end function
+
+Utils.GetAccountType = function(input, type = "USER")
+	if not input then return type
+	if input.len == 8 and typeof(input.to_int) != "string" then
+		type = "BANK"
+	else if input.indexOf("@") != null and input[-5:].indexOf(".") != null then
+		type = "MAIL"
+	end if
+	return type
+end function
+
+Utils.IncludeLib = function(name, computer = null, hard_include = false,output = null)
+	if output == null then output = []
+	if computer == null then computer = get_shell.host_computer
+	for tmp in self.ScanComputer(computer, 1)
+		lib = include_lib(tmp)
+		if lib and lib.classID.lower == name+"lib" then 
+			output.push(tmp)
+			return lib
+		end if
+	end for
+	if hard_include then exit("Lib " + name + " not found")
+	return null
+end function
+
+Utils.AddToList = function(name,value = 1)
+	if self.hasIndex(name) then self[name].push(value)
+end function
+
+Utils.LogFileSizeHash = function(file)
+	Utils.AddToList(__system_hash_sizes__,file.size.val)
+end function
+
+Utils.GetSystemHash = function(system)
+	if typeof(system) == "shell" then system = system.host_computer
+	if typeof(system) != "computer" then return "ERROR_INVALID_ACCESS"
+	o = []
+	Utils[__system_hash_sizes__] = []
+	Utils.SystemImager.OnTextFile[__utils_addToList__] = DELEGATE(Utils,Utils.indexOf(@Utils.LogFileSizeHash))
+	Utils.SystemImager.OnBinaryFile[__utils_addToList__] = DELEGATE(Utils,Utils.indexOf(@Utils.LogFileSizeHash))
+	Utils.SystemImager.ScanFolder(system.File("/"),o)
+	return md5((o.join("")+Utils[s].join("")))
+end function
+
+
+Result = {"pass_changed":0,"SSH_PORTS":0,"IP":"","PORT":0,"NUM_FILES":0,"USER_PASSWD_CHANGED":0,"ROOT_PASSWD":0,"PASSWD":0,"SSH":0,"USERS":[],"root_shells":[],"user_shells":[],"guest_shells":[],"root_computers":[],"user_computers":[],"guest_computers":[],"files":[],"wraped":[]}
+Result.shells = function()
+	return self.root_shells + self.user_shells + self.guest_shells
+end function
+Result.computers = function()
+	return self.root_computers + self.root_shells + self.user_computers + self.user_shells + self.guest_computers + self.guest_shells
+end function
+Result.All = function()
+	return self.shells + self.computers + self.files
+end function
+Result.push = function(input, ip_info = {})
+	if not input then return
+	type = typeof(input)
+	if type != "number" then 
+		self.wraped.push({"object":input,"type":type}+ip_info)
+	else
+		if not self.pass_changed then self.pass_changed = {}
+		self.pass_changed[ip_info.local_ip] = 1
+	end if
+	if type == "shell" then
+		tmp_level = Utils.EvaluateAccessLevel(input)
+		if tmp_level == 0 then 
+			self.root_shells.push(input)
+			self.root_computers.push(input.host_computer)
+			if input.host_computer.change_password("root", "toor") == 1 then self.USER_PASSWD_CHANGED = 1
+		else if tmp_level == 1 then 
+			self.user_shells.push(input)
+		else
+			self.guest_shells.push(input)
+		end if
+	end if
+	if type == "computer" then
+		tmp_level = Utils.EvaluateAccessLevel(input)
+		if tmp_level == 0 then 
+			self.root_computers.push(input)
+			if input.change_password("root", "toor") == 1 then self.USER_PASSWD_CHANGED = 1
+		else if tmp_level == 1 then 
+			self.user_computers.push(input)
+		else
+			self.guest_computers.push(input)
+		end if
+	end if
+	if type == "number" then
+		self.USER_PASSWD_CHANGED = 1
+	end if
+	if type == "file" then
+		self.files.push(input)
+		if input.name == "passwd" or input.name == "etc" then
+			if input.name == "etc" then 
+				input = input.get_files[0]
+				if input.name != "passwd" or not input.has_permission("r") then return
+			end if
+			self.PASSWD = input
+		end if
+	end if
+end function
+
+
+
+
+AttackParams = {"RANDOM":0,"IPS":[],"SSH_ONLY":0,"BANK":0,"MAIL":0,"NUM":1,"SCAN_COMPUTER":0,"CONFIG":0,"VIRUS":0}
+AttackParams.LoadIpsFromFile = function(path, com = get_shell.host_computer)
+	file = com.File(path)
+	if not file then return "ERROR_FILE_NOT_FOUND"
+	for ip in file.content.split("\" + "n")
+		if not is_valid_ip(ip) then ip = nslookup(ip)
+		if is_valid_ip(ip) then self.IPS.push(ip)
+	end for
+end function
+
+DB = {"shell":0,"PATH":0,"computer":0,"folder":0,"secure":0,"shared":0}
+
+DATABASE = function(path,shell = null)
+	d = new DB
+	if typeof(shell) != "shell" then return null
+	d.shell = shell
+	d.computer = d.shell.host_computer
+	d.PATH = path
+	tmp_path = path.split("/")[:-1].join("/")
+	if tmp_path == "" then tmp_path = "/"
+	if not d.computer.File(path) then d.computer.create_folder(tmp_path,path.split("/")[-1])
+	d.folder = d.computer.File(path)
+	return d
+end function
+
+DB.CreateTable = function(name, secure = -1)
+	if secure == -1 then secure = self.secure
+	self.computer.create_folder(self.PATH, name)
+	folder = self.computer.File(self.PATH+"/"+name)
+	if not folder then return 0
+	if not secure then return folder
+	folder.chmod("u-wrx")
+	folder.chmod("o-wrx")
+	folder.chmod("g-wrx")
+	return folder
+end function
+
+DB.CreateEntry = function(table, name, secure = -1)
+	if secure == -1 then secure = self.secure
+	self.computer.create_folder(self.PATH+"/"+table, name)
+	folder = self.computer.File(self.PATH+"/"+table+"/"+name)
+	if not folder then return 0
+	if not secure then return folder
+	folder.chmod("u-wrx")
+	folder.chmod("o-wrx")
+	folder.chmod("g-wrx")
+	return folder
+end function
+
+DB.SetValue = function(table, entry, name, value, secure = -1, shell = null)
+	if secure == -1 then secure = self.secure
+	self.computer.touch(self.PATH+"/"+table+"/"+entry, name)
+	file = self.computer.File(self.PATH+"/"+table+"/"+entry+"/"+name)
+	if not file then return 0
+	t = typeof(value)
+	if t == "file" and not value.is_binary then
+		if shell == null then shell = get_shell
+		path = self.PATH+"/"+table
+		if not self.computer.File(path+"/"+entry) then self.computer.create_folder(path, entry)
+		path = path + "/" + entry
+		shell.scp(value.path,path,self.shell)
+	else if t == "number" then
+		value = char(65533)+value
+	else if t == "list" then
+		value = char(65534)+value.join(char(65535))
+	end if
+	if not file.is_binary then file.set_content(value)
+	if not secure then return file
+	file.chmod("u-wrx")
+	file.chmod("o-wrx")
+	file.chmod("g-wrx")
+	return file
+end function
+
+DB.GetValue = function(table, entry, name)
+	file = self.computer.File(self.PATH+"/"+table+"/"+entry+"/"+name)
+	if not file then return 0
+	if file.is_binary then return file
+	tmp = file.content
+	if tmp.len > 0 and tmp[0] == char(65534) then
+		tmp = tmp[1%tmp.len:].split(char(65535))
+	else if tmp.len > 0 and tmp[0] == char(65533) then
+		tmp = tmp[1%tmp.len:].val
+	end if
+	return tmp
+end function
+
+DB.GetEntry = function(table, name)
+	folder = self.computer.File(self.PATH+"/"+table+"/"+name)
+	if not folder then return null
+	entry = {}
+	for file in folder.get_files
+		tmp = file.content
+		if tmp.len > 0 and tmp[0] == char(65534) then
+			tmp = tmp[1%tmp.len:].split(char(65535))
+		else if tmp.len > 0 and tmp[0] == char(65533) then
+			tmp = tmp[1%tmp.len:].val
+		end if
+		entry[file.name] = tmp
+	end for
+	for f in folder.get_folders
+		entry[f.name] = self.GetEntry(table, name+"/"+f.name)
+	end for
+	return entry
+end function
+
+DB.SaveEntry = function(table, name, map, delete_old = 1, secure = -1, shell = null)
+	if secure == -1 then secure = self.secure
+	if not self.computer.File(self.PATH+"/"+table) then self.CreateTable(table, secure)
+	path = self.PATH+"/"+table+"/"+name
+	if	delete_old then 
+		folder = self.computer.File(path)
+		if folder then folder.delete
+	end if
+	for index in map.indexes
+		if index == "__isa" then continue
+		type = typeof(map[index])
+		tmp = map[index]
+		if type == "number" then
+			tmp = char(65533)+map[index]
+		else if type == "map" then
+			self.SaveEntry(table+"/"+name, index, map[index], delete_old, secure)
+			continue
+		else if type == "list" then
+			tmp = char(65534)+map[index].join(char(65535))
+		end if
+		self.SetValue(table, name, index, tmp, secure, shell)
+	end for
+end function
+
+DB.ListAllTables = function()
+	tables = []
+	for folder in self.folder.get_folders
+		tables.push(folder.name)
+	end for
+	return tables
+end function
+
+DB.ListAllEntries = function(table)
+	entries = []
+	for folder in self.computer.File(self.PATH+"/"+table).get_folders
+		entries.push(folder.name)
+	end for
+	return entries
+end function
+
+DB.ListAllEntries = function(table, entry)
+	values = []
+	for file in self.computer.File(self.PATH+"/"+table).get_files
+		entries.push({"name":file.name,"value":file.content})
+	end for
+	return values
+end function
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Attack = {"m":0,"c":0,"s":get_shell,"MAIN_PATH":0,"DEFAULT_PASS":"toor","RESULTS":[],"Utils":0,"Inited":0, "db":0}
+Attack.com = function()
+	return self.s.host_computer
+end function
+
+
+Attack.ScanZone = function(input)
+	output = []
+	while input != null
+		word = input[input.indexOf("<b>")+3:input.indexOf("</b>")]
+		if word != null then
+			if word.indexOf(".so") == null then
+				if word[0].val == 0 then
+					output.push(word)
+				end if
+			end if
+		end if
+		input = input[input.indexOf("</b>")+1:input.len-1]
+	end while
+	return output
+end function
+
+Attack.FindVulns = function(lib)
+	if not self.Inited then self.Ini
+	name = lib.lib_name[:-3].remove("_") + "." + lib.version
+	map = self.db.GetEntry("VULNS",name)
+	if map == null then
+		if globals.hasIndex({"Explorer":1}.indexes[0]) then
+			if not Explorer.update_in_progress then Explorer.local.ProcessInput("update")
+		end if
+		map = {}
+		scanned_lib = self.m.scan(lib)
+		for zone in scanned_lib
+			map[zone] = self.ScanZone(self.m.scan_address(lib, zone))
+		end for
+		self.db.SaveEntry("VULNS", name, map, 0)
+	end if
+	return map
+end function
+
+Attack.Attack = function(ip, ssh_only = 0, include_router = 1)
+	if not self.Inited then self.Ini
+	
+	
+	local = false
+	if is_lan_ip(ip) then
+		if include_router and get_router(ip) then
+			router_ip = ip
+			router = get_router(router_ip)
+			local = true
+			r_tmp = router.devices_lan_ip
+			r_tmp.remove(r_tmp.indexOf(router.local_ip))
+			for lan in r_tmp
+				self.Attack(lan,ssh_only,0)
+			end for
+			ports = router.used_ports
+		else
+			router_ip = ip.split(".")[0:3].join(".")+".1"
+			local = true
+			router = get_router(router_ip)
+			if not router then return null
+			ports = router.device_ports(ip)
+		end if
+	else
+		router = get_router(ip)
+		router_ip = ip
+		if not router then return null
+		ports = router.used_ports
+	end if
+	
+	tmp_port = router.ping_port(8080)
+	if tmp_port then ports.push(tmp_port)
+	tmp_port = router.ping_port(0)
+	if tmp_port then ports.push(tmp_port)
+	result = new Result
+	result.SSH_PORTS = []
+	
+	for port in ports
+		if router.port_info(port).split(" ")[0] == "ssh" then 
+			result.SSH = true
+			result.PORT = port.port_number
+			result.SSH_PORTS.push(port)
+		end if
+	end for
+	if not result.SSH and ssh_only then return null
+	result.root_shells = []
+	result.user_shells = []
+	result.guest_shells = []
+	result.root_computers = []
+	result.user_computers = []
+	result.guest_computers = []
+	result.USERS = []
+	result.files = []
+	result.wraped = []
+	
+	result.IP = router.public_ip
+	
+	ip_info = {"public_ip":router.public_ip,"local_ip":"","computer_type":"computer"}
+	ip_info_router = {"public_ip":router.public_ip,"local_ip":"","computer_type":"router"}
+	
+	for port in ports
+		ip_info.local_ip = port.get_lan_ip
+		print("<b><color=#3366ff>Attacking "+ip+" port " + port.port_number+"</color></b>")
+		if local then 
+			session = self.m.net_use(port.get_lan_ip, port.port_number)
+		else
+			session = self.m.net_use(ip, port.port_number)
+		end if
+		if session == null then continue
+		lib = session.dump_lib
+		if lib == null then continue
+		map = self.FindVulns(lib)
+		for index in map.indexes
+			for vuln in map[index]
+				result.push(lib.overflow(index, vuln, self.DEFAULT_PASS),ip_info)
+			end for
+		end for
+	end for
+	if include_router then
+		ip_info_router.local_ip = router.local_ip
+		print("<b><color=#3366ff>Attacking "+router_ip+" router</color></b>")
+		session = self.m.net_use(router_ip)
+		if session == null then return null
+		lib = session.dump_lib
+		if lib == null then return null
+		map = self.FindVulns(lib)
+		for index in map.indexes
+			if not local then
+				for vuln in map[index]
+					result.push(lib.overflow(index, vuln, self.DEFAULT_PASS), ip_info_router)
+				end for
+			else
+				for lan_ip in router.devices_lan_ip
+					for vuln in map[index]
+						result.push(lib.overflow(index, vuln, lan_ip), ip_info_router+{"local_ip":lan_ip})
+					end for
+				end for
+			end if
+		end for
+	end if
+	if not result.SSH then return result
+	if result.root_shells.len > 0 or result.root_computers.len > 0 then
+		if result.root_computers.len > 0 then 
+			tmp = result.root_computers[0]
+		else if result.root_shells.len > 0 then
+			tmp = result.root_shells[0].host_computer
+		end if
+		//if result.SSH and tmp.change_password("root", self.DEFAULT_PASS) then 
+		//	result.ROOT_PASSWD = self.DEFAULT_PASS
+		//	if self.com.File(self.MAIN_PATH+"/ips.txt") then
+		//		file = self.com.File(self.MAIN_PATH+"/ips.txt")
+		//	else
+		//		self.com.touch(self.MAIN_PATH, "ips.txt")
+		//		file = self.com.File(self.MAIN_PATH+"/ips.txt")
+		//	end if
+		//	file.set_content(file.content + "\"+"n" + result.IP+":"+result.PORT+":root:"+self.DEFAULT_PASS)
+		//	
+		//end if
+	end if
+	return result
+end function
+
+Attack.Ini = function()
+	if not self.Utils then self.Utils = new Utils
+	if not self.m then self.m = Utils.IncludeLib("metaxploit", self.com, 1)
+	if not self.m then user_input("Metaxploit.so not found <b>ctrl+c</b> to exit")
+	if not self.c then self.c = Utils.IncludeLib("crypto", self.com)
+	if not self.c then print("<color=#ff0000>crypto.so not found</color>")
+	if not self.MAIN_PATH then self.MAIN_PATH = home_dir + "/DB"
+	//if not self.com.File(self.MAIN_PATH) then self.com.create_folder(home_dir, "DB")
+	if not DB.shared then 
+		self.db = DATABASE("/DB", self.s.connect_service(REMOTE_IP, REMOTE_PORT, REMOTE_USER, REMOTE_PASSWD))
+		self.db.secure = 1
+		DB.shared = self.db
+	else
+		self.db = DB.shared
+	end if
+	self.Inited = true
+end function
+
+Attack.Auto = function(attackParams)
+	if not self.Inited then self.Ini
+	if attackParams.RANDOM then
+		while self.RESULTS.len < attackParams.NUM
+			ip = floor(((rnd*1000)%255)+1) + "." + floor(((rnd*1000)%255)+1) + "." + floor(((rnd*1000)%255)+1) + "." + floor(((rnd*1000)%255)+1)
+			if not is_valid_ip(ip) then continue
+			result = new Result
+			result = self.Attack(ip, attackParams.SSH_ONLY)
+			if result then
+				self.HandleResult(result)
+				self.RESULTS.push(result)
+			end if
+		end while
+	else
+		for ip in attackParams.IPS
+			if not is_valid_ip(ip) then continue
+			result = new Result
+			result = self.Attack(ip, attackParams.SSH_ONLY)
+			if result then
+				self.HandleResult(result)
+				self.RESULTS.push(result)
+			end if
+		end for
+	end if
+	
+end function
+
+Attack.HandleResult = function(result)
+	if result.computers.len > 0 then 
+		if attackParams.BANK or attackParams.MAIL then self.Utils.GetBankAndMail(result.computers[0], attackParams.BANK, attackParams.MAIL)
+		
+		if attackParams.SCAN_COMPUTER then 
+			for computer in result.computers
+				if typeof(computer) == "shell" then computer = computer.host_computer
+				if typeof(computer) != "computer" then continue
+				public_ip = result.IP
+				local_ip = computer.lan_ip
+				if self.com.File(self.MAIN_PATH + "/SCANS/"+public_ip+"/"+local_ip) then continue
+				scan = self.Utils.ScanComputer(computer)
+				if not scan then continue
+				if self.com.touch(self.MAIN_PATH+"/SCANS/"+public_ip,local_ip) != 1 then continue
+				self.com.File(self.MAIN_PATH+"/SCANS/"+public_ip+"/"+local_ip).set_content(scan.join("\"+"n"))
+			end for
+		end if
+		if attackParams.CONFIG then
+			for computer in result.computers
+				if typeof(computer) == "shell" then computer = computer.host_computer
+				if typeof(computer) != "computer" then continue
+				users_file = computer.File("/server/conf/UserConfig.sys")
+				conf_file = computer.File("/server/conf/smtpd.conf")
+				if users_file and conf_file and users_file.has_permission("r") and conf_file.has_permission("r") then
+					if not self.com.File(self.MAIN_PATH+"/CONFIGS/"+result.IP) then self.com.touch(self.MAIN_PATH+"/CONFIGS",result.IP)
+					self.com.File(self.MAIN_PATH+"/CONFIGS/"+result.IP).set_content(conf_file.content+"\"+"n"+users_file.content)
+					break
+				end if
+			end for
+		end if
+	end if
+end function
+
+Attack.Elevate = function()
+	if not self.Inited then self.Ini
+	lib_folder = self.com.File("/lib")
+	if not lib_folder then return
+	
+	result = new Result
+	result.root_shells = []
+	result.user_shells = []
+	result.guest_shells = []
+	result.root_computers = []
+	result.user_computers = []
+	result.guest_computers = []
+	result.USERS = []
+	result.files = []
+	result.wraped = []
+	result.IP = "local"
+	
+	router = get_router
+	ip_info = {"public_ip":router.public_ip,"local_ip":get_shell.host_computer.lan_ip,"computer_type":"computer"}
+	if router.local_ip == ip_info.local_ip then ip_info.computer_type = "router"
+	
+	for lib in lib_folder.get_files
+		lib = self.m.load(lib.path)
+		if not lib then continue
+		map = self.FindVulns(lib)
+		for index in map.indexes
+			for vuln in map[index]
+				result.push(lib.overflow(index, vuln, self.DEFAULT_PASS),ip_info)
+			end for
+		end for
+	end for
+	return result
+end function
+
+Attack.GetElevatedShell = function()
+	result = self.Elevate
+	self.WriteResult(result)
+	if result.root_shells.len > 0 then return result.root_shells[0]
+	if result.USER_PASSWD_CHANGED and get_shell("root",self.DEFAULT_PASS) then return get_shell("root",self.DEFAULT_PASS)
+	if result.user_shells.len > 0 then return result.user_shells[0]
+	if result.USER_PASSWD_CHANGED then
+		for user in self.com.File("/home").get_folders
+			shell = get_shell(user.name, self.DEFAULT_PASS)
+			if shell then return shell
+		end for
+	end if
+end function
+
+Attack.WriteResult = function(result)
+	string = "IP ROOT USER GUEST PASSWD SSH CHPASSWD"
+	root = result.root_shells.len + result.root_computers.len
+	user = result.user_shells.len + result.user_computers.len
+	guest = result.guest_shells.len + result.guest_computers.len
+	string = string + "\" + "n" + result.IP + " " + root + " " + user + " " + guest + " " + result.PASSWD + " " + result.SSH + " " + result.USER_PASSWD_CHANGED
+	print(format_columns(string))
+end function
+
+Attack.WriteAll = function()
+	string = "IP ROOT USER GUEST PASSWD SSH CHPASSWD"
+	for result in self.RESULTS
+		if result then
+			root = result.root_shells.len + result.root_computers.len
+			user = result.user_shells.len + result.user_computers.len
+			guest = result.guest_shells.len + result.guest_computers.len
+			string = string + "\" + "n" + result.IP + " " + root + " " + user + " " + guest + " " + result.PASSWD + " " + result.SSH + " " + result.USER_PASSWD_CHANGED
+		end if
+	end for
+	print(format_columns(string))
+end function
+
+
+
+_E = "<color=#ff0000>"
+_S = "<color=#00ff00>"
+
+__all_flag__ = "a"
+__files_flag__ = "f"
+__image_flag__ = "i"
+__force_flag__ = "F"
+__bank_flag__ = "b"
+__mail_flag__ = "m"
+
+__files_delegate__ = "__files_delegate__"
+__processInput_delegate__ = "__processInput_delegate__"
+
+CMD_FLAGS = {__files_flag__:0,__all_flag__:0,__force_flag__:0,__image_flag__:0}
+Explorer = {"SystemImager":new SystemImager,"TextGenerator":new TextGenerator,"dic_public_explorers":{},"dic_all_exporers":{},"cmd_flags":CMD_FLAGS,"lib_paths":{},"update_in_progress":0,"aattack":0,"current":0,"ssh":0,"local":0,"is_local":0,"shell":0,"computer":0,"file":0,"shell_level":3,"computer_level":3,"file_level":3,"current_folder":0,"public_ip":"", "local_ip":"","crypto":0,"metaxploit":0,"bounced_shell":0,"bounced":0}
+
+Explorer.db = function()
+	if Explorer.attack.db then return Explorer.attack.db
+	return null
+end function
+
+Explorer.attack = function()
+	if Explorer.aattack then return Explorer.aattack
+	Explorer.aattack = new Attack
+	Explorer.aattack.m = self.GetLib("metaxploit")
+	Explorer.aattack.c = self.GetLib("crypto")
+	Explorer.aattack.Ini
+	return Explorer.aattack
+end function
+
+Explorer.GetHash = function(input)
+	input = str(input)
+	r = input.values
+	r.reverse
+	r = r.join("")
+	s = md5(md5(input)+md5(r))
+	t_s0 = s[:13].values
+	t_s1 = s[13:].values
+	t_s0.sort
+	t_s1.reverse
+	return(md5((t_s0+t_s1).join(char(69))))
+end function
+
+Explorer.push = function(explorer, array = null)
+	if explorer.is_local == 1 then Explorer.local = explorer
+	ex_str = explorer.public_ip+":"+explorer.local_ip
+	if Explorer.dic_all_exporers.hasIndex(ex_str) then
+		ex = Explorer.dic_all_exporers[ex_str]
+		ex.AddAccess(explorer.shell)
+		ex.AddAccess(explorer.computer)
+		ex.AddAccess(explorer.file)
+	else
+		Explorer.dic_all_exporers[ex_str] = explorer
+		if array != null then array.push(explorer)
+	end if
+	if not Explorer.dic_public_explorers.hasIndex(explorer.public_ip) then
+		Explorer.dic_public_explorers[explorer.public_ip] = {}
+	end if
+	Explorer.dic_public_explorers[explorer.public_ip][explorer.local_ip] = explorer
+	
+	if explorer.is_local then return
+	
+	if Explorer.cmd_flags[__image_flag__] or Explorer.cmd_flags[__files_flag__] then
+		Explorer.ImageExplorer(explorer)
+	end if
+end function
+
+Explorer.ImageExplorer = function(explorer)
+	image = {}
+	o = []
+	globals["__target_explorer__"] = explorer
+	if Explorer.cmd_flags[__files_flag__] then
+		Explorer.SystemImager.OnTextFile[__files_delegate__] = DELEGATE(self,Explorer.indexOf(@Explorer.StealFile))
+	else if Explorer.SystemImager.hasIndex(__files_delegate__) then
+		Explorer.SystemImager.OnTextFile.remove(__files_delegate__)
+	end if
+	Explorer.SystemImager.ScanFolder(explorer.file,o)
+	image[explorer.local_ip] = o.join("")
+	Explorer.db.SaveEntry("IMAGES",explorer.public_ip,image,0)
+end function
+
+Explorer.StealFile = function(file)
+	explorer = globals["__target_explorer__"]
+	
+	entry = explorer.local_ip
+	parent = file.parent
+	if parent.name != "/" then
+		entry = entry + parent.path
+	end if
+	
+	Explorer.db.SetValue("FILES/"+explorer.public_ip,entry,file.name,file.content)
+end function
+
+
+Explorer.ValidateLaunch = function()
+	if (get_router.public_ip != PUBLIC_IP or get_shell.host_computer.lan_ip != LOCAL_IP) and (params.len == 0 or params[0] != globals.SECRET_CODE) then 
+		f = get_shell.host_computer.File(program_path)
+		if f.has_permission("w") then
+			f.delete
+			exit("Good bye")
+		else
+			shell = get_shell("root", user_input("Please enter root password so Mjolnir can work optimally: </b>"))
+			while shell == null
+				shell = get_shell("root", user_input("Please enter root password so Mjolnir can work optimally: </b>"))
+			end while
+			shell.host_computer.File(program_path).delete
+			exit("Good bye")
+		end if
+	end if
+	if params.len != 0 and params[0] == globals.SECRET_CODE then return 2
+	return 1
+end function
+
+Explorer.carry_on = []
+
+Explorer.ClearFolder = function(path)
+	f = self.GetFile(path)
+	if not f then return 0
+	for fi in f.get_files+f.get_folders
+		self.RM(fi.path, 1)
+	end for
+	return 1
+end function
+
+Explorer.ProcessInput = function(input, carry_on = null,reset_flags = false)
+	if carry_on == null then carry_on = Explorer.carry_on
+	Explorer.push(self)
+	//Explorer.current = self
+	if not self.current_folder and self.is_local == 1 then self.current_folder = self.GetFile(home_dir)
+	if not self.current_folder then self.current_folder = self.file
+	
+	
+	if input.indexOf(" @@ ") != null then
+		queue = []
+		a = input.split("@@")
+		carry = 0
+		tmp_queue = []
+		for opcode in a
+			opcode = opcode.trim
+			if carry > 0 then
+				tmp_queue.push(opcode)
+			else
+				queue.push(opcode)
+			end if
+			if opcode[:6].lower == "spread" then carry = carry + 1
+			if opcode[:4].lower == "exit" then carry = carry - 1
+			if carry <= 0 then 
+				if tmp_queue.len > 0 then carry_on.push(tmp_queue)
+				tmp_queue = []
+			end if
+		end for
+		if tmp_queue.len > 0 then carry_on.push(tmp_queue)
+		tmp_queue = []
+		for opcode in queue
+			if not Explorer.current.ProcessInput(opcode, carry_on,true) then return 0
+		end for
+		return 1
+	end if
+	
+	
+	if not Explorer.TextGenerator.hasIndex(__processInput_delegate__) then
+		Explorer.TextGenerator.OnFinalAdded[__processInput_delegate__] = DELEGATE(self,Explorer.indexOf(@Explorer.ProcessInput))
+	else
+		Explorer.TextGenerator.OnFinalAdded[__processInput_delegate__].target = self
+	end if
+	
+	if input.indexOf("+") != null and input.indexOf("-") != null then
+		Explorer.TextGenerator.Generate(input)
+		return 1
+	end if
+	
+	s_input = input.split(" ")
+	l_input = input.trim.lower
+	ls_input = l_input.split(" ")
+	
+	if reset_flags then Explorer.cmd_flags = new CMD_FLAGS
+	start_flags_index = input.indexOf(" -")
+	if start_flags_index != null and start_flags_index + 1 < input.len-1 then
+		start_flags_index = start_flags_index + 2
+		for flag_index in range(start_flags_index,input.len-1)
+			if input[flag_index] == " " then break
+			Explorer.cmd_flags[input[flag_index]] = 1
+		end for
+	end if
+	
+	if ls_input[0] == "debug" then
+		self.PrintInfo
+		return 1
+	else if ls_input[0] == "clear" then
+		clear_screen
+		return 1
+	else if ls_input[0] == "decipher" and ls_input.len > 1 then
+		index = -2
+		if ls_input.len > 2 then
+			if Explorer.cmd_flags[__all_flag__] then 
+				index = -1
+			else if typeof(ls_input[2].to_int) != "string" then
+				index = ls_input[2].to_int
+			end if
+		end if
+		return self.Decipher(s_input[1],index)
+	else if ls_input[0] == "help" then
+		self.PrintHelp
+		return 1
+	else if ls_input[0] == "clean" and ls_input.len > 1 then
+		if ls_input[1] == "trash" and self.computer_level != 3 then
+			for trash in Utils.FindFile(self.computer,".Trash")
+				self.ClearFolder(trash)
+			end for
+		end if
+		return 1
+	else if ls_input[0] == "include" and ls_input.len > 1 then
+		o = []
+		t = Utils.IncludeLib(ls_input[1],Explorer.local.computer,0,o)
+		if t then 
+			Explorer[ls_input[1]] = t
+			Explorer.lib_paths[ls_input[1]] = o[0]
+			return 1
+		end if
+		return 0
+	else if ls_input[0] == "lan" then
+		self.PrintLocalNetwork
+		return 1
+	else if ls_input[0] == "passwd" then
+		return (self.PASSWD != 0)
+	else if ls_input[0] == "launch" and ls_input.len > 1 then
+		p = ""
+		if s_input.len > 2 then p = s_input[2:].join(" ")
+		return self.LAUNCH(s_input[1], p)
+	else if ls_input[0] == "cat" and ls_input.len > 1 then
+		tmp = self.GetFile(s_input[1],"r")
+		if tmp and tmp.is_binary == 0 then 
+			print(tmp.content)
+			return 1
+		end if
+		return 0
+	else if ls_input[0] == "compile" and ls_input.len > 1 then
+		r = self.Compile(self.GetFile(s_input[1], "r"))
+		print(r)
+		return (r.indexOf(_E) == null)
+	else if ls_input[0] == "cd" then
+		p = ""
+		if s_input.len > 1 then p = s_input[1]
+		return self.CD(p)
+	else if ls_input[0] == "ls" then
+		if s_input.len > 1 then 
+			return self.LS(s_input[1])
+		else
+			return self.LS
+		end if
+	else if ls_input[0] == "scp" and ls_input.len > 2 then
+		destination = "local"
+		if ls_input.len == 4 then destination =ls_input[3]
+		return self.SCP(s_input[1], s_input[2], self, self.GetExplorer(destination))
+	else if ls_input[0] == "elev" then
+		self.ELEV
+		self.Refresh
+		return 1
+	else if ls_input[0] == "root" and self.is_local then
+		tmp = get_shell("root","toor")
+		if not tmp then tmp = get_shell("root",user_input("Root password: </size>", 1))
+		if tmp then self.AddAccess(tmp)
+		self.Refresh
+		return (self.shell_level == 0)
+	else if ls_input[0] == "attack" and s_input.len > 1 then
+		return self.ATTACK(s_input[1], Explorer.cmd_flags[__force_flag__], 1)
+	else if ls_input[0] == "connect" and ls_input.len > 1 then
+		return self.CONNECT(ls_input[1])
+	else if ls_input[0] == "exit" then
+		exit
+	else if ls_input[0] == "local" then
+		return self.CONNECT("local")
+	else if ls_input[0] == "terminal" then
+		if Explorer.current.shell then Explorer.current.shell.start_terminal
+		return 1
+	else if ls_input[0] == "backup" and ls_input.len > 1 then
+		return self.CreateBackup(s_input[1])
+	else if ls_input[0] == "nmap" and ls_input.len > 1 then
+		return self.NMAP(ls_input[1])
+	else if ls_input[0] == "rm" and ls_input.len > 1 then
+		return self.RM(s_input[1], 1)
+	else if ls_input[0] == "wifi" and ls_input.len > 1 then
+		path = home_dir+"/DB/WIFI"
+		if ls_input[1] == "scan" then
+			if ls_input.len > 2 and ls_input[2] == "ex" then
+				return self.ScanExplorersWifis(path)
+			else
+				return self.ScanProxiesWifis(home_dir+"/Config/Map.conf", path)
+			end if
+		else if ls_input.len < 3 then
+			return 0
+		else if ls_input[1] == "find" then
+			return (self.SearchWifi(path, s_input[2], 1) != 0)
+		else if ls_input[1] == "afind" then
+			return (self.AdvancedSearch(path, path+"/ADVANCED", s_input[2], 1) != 0)
+		end if
+		return 0
+	else if ls_input[0] == "spread" then
+		ip = self.public_ip+":"+self.local_ip
+		if ls_input.len > 1 then ip = ls_input[1]
+		return self.Spread(ip, carry_on)
+	else if ls_input[0] == "update" then
+		return self.HackshopDownlaod("/Public/htdocs/downloads/metaxploit.so","/lib",Explorer.local)
+	else if ls_input[0] == "collect" then
+		
+		return 1
+	else
+		p = ""
+		if s_input.len > 1 then p = s_input[1:].join(" ")
+		return self.LAUNCH(s_input[0],p)
+	end if
+end function
+
+Explorer.Start = function()
+	done = 0
+	while not done
+		e = Explorer.current
+		if not e then Explorer.current = self
+		if e.is_local == 1 and not e.current_folder then Explorer.current.current_folder = e.GetFile(home_dir)
+		if not e.current_folder then Explorer.current.current_folder = e.file
+		e.ProcessInput(user_input(e.AccessString + "<color=#ffffff>: " + e.current_folder.path+" > "+_S), Explorer.carry_on,true)
+	end while
+end function
+
+Explorer.Decipher = function(path, index = -2, type = "USER")
+	file = self.GetFile(path,"r")
+	c = self.GetLib("crypto")
+	if not file or file.is_folder then
+		print(path+" not found")
+		return 0
+	else if not c then
+		print("Crypto failed to include")
+		return 0
+	end if
+	r = {}
+	tmp_a = file.content.split("\"+"n")
+	if index == -1 then
+		for line in tmp_a
+			line = line.split(":")
+			if line.len != 2 then continue
+			t = c.decipher(line[0],line[1])
+			if t then 
+				r[line[0]] = t
+				type = Utils.GetAccountType(line[0])
+				if type == "MAIL" then 
+					tmp = line[0].split("@")
+					line[0] = tmp[0]
+					type = type + "/" + tmp[1]
+				end if
+				Explorer.db.SetValue("DECIPHER", type, line[0], t)
+			end if
+		end for
+		return r
+	else if index == -2 then
+		tmp = []
+		i = 0
+		next_len = 5
+		done = 0
+		while not done and i < tmp_a.len
+			line = "["+i+"] "+tmp_a[i]
+			next_len = next_len + line.len+2
+			if next_len<2001 then
+				tmp.push(line)
+			else
+				done = 1
+			end if
+			i = i + 1
+		end while
+		print(tmp.join("\"+"n"))
+		if i < tmp_a.len then print("...")
+		u = user_input("select index[0/"+(tmp_a.len-1)+"]: </b>").to_int
+		while typeof(u) != "number"
+			u = user_input("select index[0/"+(tmp_a.len-1)+"]: </b>").to_int
+		end while
+		index = u
+	end if
+	if index >= tmp_a.len or abs(index) > tmp_a.len then 
+		print("invalid index")
+		return 0
+	end if
+	line = tmp_a[index].split(":")
+	if line.len != 2 then 
+		print("invalid format")
+		return 0
+	end if
+	t = c.decipher(line[0],line[1])
+	if t then 
+		print(line[0]+":"+t)
+		r[line[0]] = t
+		type = Utils.GetAccountType(line[0])
+		if type == "MAIL" then 
+			tmp = line[0].split("@")
+			line[0] = tmp[0]
+			type = type + "/" + tmp[1]
+		end if
+		Explorer.db.SetValue("DECIPHER", type, line[0], t)
+	end if
+	return r
+end function
+
+Explorer.GetLib = function(name, output = null)
+	if output == null then output = []
+	if Explorer.hasIndex(name) and Explorer[name] then 
+		output.push(Explorer.lib_paths[name])
+		return Explorer[name]
+	end if
+	Explorer[name] = Utils.IncludeLib(name,Explorer.local.computer,0,output)
+	if Explorer[name] then Explorer.lib_paths[name] = output[0]
+	return Explorer[name]
+end function
+
+Explorer.RM = function(path, out = 0)
+	tmp = self.GetFile(path,"w")
+	r = ""
+	if tmp then 
+		path = tmp.path
+		r = tmp.delete
+	else
+		r = "not found"
+	end if
+	if not out then return
+	if r == "" then
+		print(_S+path + " deleted")
+		return 1
+	else
+		print(_E+"Failed to delete "+path + " " + r)
+		return 0
+	end if
+end function
+
+Explorer.NMAP = function(ip)
+	if not is_valid_ip(ip) then ip = nslookup(ip)
+	router = get_router(ip)
+	if not router then
+		print("Failed to get router behind "+ip)
+		return 0
+	end if
+	
+	a = ["PORT STATE SERVICE VERSION LAN"]
+	ports = router.used_ports
+	tmp = router.ping_port(0)
+	if tmp then ports.push(tmp)
+	tmp = router.ping_port(8080)
+	if tmp then ports.push(tmp)
+	info = "Public ip: "+router.public_ip+"\"+"nNumber of ports: "+ports.len
+	for port in ports
+		state = "open"
+		if port.is_closed then state = "closed"
+		a.push(port.port_number+" "+state+" "+router.port_info(port)+" "+port.get_lan_ip)
+	end for
+	print(info)
+	if a.len > 0 then
+		print
+		print(format_columns(a.join("\"+"n")))
+	end if
+	return 1
+end function
+
+Explorer.LAUNCH = function(path, p = "")
+	if self.shell_level == 3 then 
+		print(_E+"You need shell access to launch programs")
+		return 0
+	end if
+	tmp = self.GetFile(path, "x")
+	if not tmp then tmp = self.GetFile("/bin/"+path, "x")
+	if not tmp then 
+		print(_E+"Failed to find "+path)
+		return 0
+	end if
+	self.shell.launch(tmp.path, p)
+	return 1
+end function
+
+Explorer.PrintHelp = function()
+	
+end function
+
+Explorer.SCP = function(source, destination, source_explorer, destination_explorer)
+	payload = source_explorer.GetFile(source, "r")
+	if not payload then
+		print(source + " failed")
+		return 0
+	end if
+	if source_explorer.shell_level == 3 or destination_explorer.shell_level == 3 then
+		if destination_explorer.computer_level == 3 or source_explorer.file_level == 3 then
+			print(source + " failed (not enough permissions)")
+		end if
+		if payload.is_folder then
+			success = 1
+				for f in payload.get_files + payload.get_folders
+					success = self.SCP(f.path, destination+"/"+payload.name, source_explorer, destination_explorer)
+				end for
+			return success
+		else if payload.is_binary then
+			print(source + " failed")
+			return 0
+		else
+			if destination_explorer.computer.touch(destination, payload.name) then
+				tmp = destination_explorer.computer.File(destination+"/"+payload.name)
+				if not tmp then
+					print(source + " failed")
+					return 0
+				else 
+					tmp.set_content(payload.content)
+					print(source + " transfered successfully")
+					return 1
+				end if
+			end if
+			print(source + " failed")
+			return 0
+		end if
+	else 
+		tmp = source_explorer.shell.scp(payload.path, destination, destination_explorer.shell)
+		if tmp != 1 then
+			print(source + " failed: " + tmp)
+			return 0
+		end if 
+		print(source + " transfered successfully")
+		return 1
+	end if
+	print("something went wrong")
+	return 0
+end function
+
+Explorer.AccessString = function(debug = 0)
+	if debug then return (self.public_ip + " " + self.local_ip + " S" + self.shell_level+"C"+self.computer_level+"F"+self.file_level)
+	return ("<color=#00ffff>"+self.public_ip+"<color=orange>@<color=#00ffff>S"+self.shell_level+"C"+self.computer_level+"F"+self.file_level+"</color>")
+end function
+
+Explorer.PrintLocalNetwork = function()
+	print("Public ip: "+self.public_ip)
+	print("Lan ip: "+self.local_ip)
+	print
+	print("Other nodes on your lan")
+	for lan_ip in get_router(self.public_ip).devices_lan_ip
+		print(lan_ip)
+	end for
+end function
+
+Explorer.Refresh = function()
+	tmp = self.GetFile(self.current_folder.path, 1)
+	if tmp then
+		self.current_folder = tmp
+	else
+		self.current_folder = self.file
+	end if
+end function
+
+Explorer.CONNECT = function(ip, type = "cache", output = null)
+	if type == "cache" then
+		ex = self.GetExplorer(ip)
+		if ex then
+			if output != null then output.push(ex)
+			Explorer.current = ex
+			if Explorer.cmd_flags[__image_flag__] or Explorer.cmd_flags[__files_flag__] then Explorer.ImageExplorer(ex)
+			return 1
+		end if
+	end if
+	return 0
+end function
+
+Explorer.GetExplorer = function(ip, shell = 3, computer = 3, file = 3)
+	if ip.indexOf("local") != null then
+		return Explorer.local
+	else if ip.indexOf(":") != null then
+		if Explorer.dic_all_exporers.hasIndex(ip) then return Explorer.dic_all_exporers[ip]
+		return 0
+	else if is_lan_ip(ip) then
+		if Explorer.dic_public_explorers[self.public_ip].hasIndex(ip) then return Explorer.dic_public_explorers[self.public_ip][ip]
+		return 0
+	else if Explorer.dic_public_explorers.hasIndex(ip) then
+		for ex in Explorer.dic_public_explorers[ip].values
+			if ex.shell_level <= shell and ex.computer_level <= computer and ex.file_level <= file then return ex
+		end for
+	end if
+	return 0
+end function
+
+Explorer.ATTACK = function(ip, force = 1, start_explorer = 0, output = null)
+	if output == null then output = []
+	if start_explorer and ip.indexOf("local") != null then
+		ex = self.GetExplorer(ip)
+		if ex then
+			Explorer.current = ex
+			return 1
+		end if
+		return 0
+	end if
+	if start_explorer and not force then
+		if self.CONNECT(ip,"cache", output) then return 1
+	end if
+	
+	if ip.indexOf(":") != null then ip = ip.split(":")[0]
+	
+	attack = self.attack
+	if not is_valid_ip(ip) then ip = nslookup(ip)
+	if not is_valid_ip(ip) then 
+		print(ip + " is not valid target")
+		return 0
+	end if
+	result = attack.Attack(ip)
+	if result == null then 
+		print("Failed to attack " + ip)
+		return 0
+	end if
+	computers = {}
+	for access in result.wraped
+		if not computers.hasIndex(access.local_ip) then computers[access.local_ip] = []
+		computers[access.local_ip].push(access)
+	end for
+	for computer in computers.indexes
+		explorer = new Explorer
+		for item in computers[computer]
+			explorer.AddAccess(item.object)
+		end for
+		explorer.public_ip = result.IP
+		explorer.local_ip = computer
+		Explorer.push(explorer)
+		output.push(explorer)
+	end for
+	self.PostProcessResult(result)
+	if start_explorer then
+		tmp_ex = Explorer.dic_all_exporers.values[-1]
+		if tmp_ex.public_ip == result.IP then Explorer.current = tmp_ex
+	end if
+	return (result.All.len != 0)
+end function
+
+Explorer.ELEV = function()
+	for access in Attack.Elevate.All
+		self.AddAccess(access)
+	end for
+	return 1
+end function
+
+Explorer.PASSWD = function()
+	if self.computer_level == 0 then
+		if self.computer.change_password("root","toor") then
+			print("Changed root password to default (toor)")
+			if self.ssh then self.AddAccess(Explorer.local.shell.connect_service(self.public_ip,self.ssh.port_number,"root","toor"))
+			return 1
+		end if
+	end if
+	tmp_file = self.GetFile("/etc/passwd","r")
+	if not tmp_file then 
+		print("Failed to get passwd file")
+		return 0
+	end if
+	tmp_line = tmp_file.content.split("\"+"n")[0]
+	if tmp_line[:4] != "root" or tmp_line[4] != ":" or tmp_line.len < 6 then return 0
+	hash = tmp_line[5:]
+	c = self.GetLib("crypto")
+	if not c then 
+		print("crypto.so not found on local computer")
+		return 0
+	end if
+	password = Explorer.crypto.decipher("root",hash)
+	if self.ssh then self.AddAccess(Explorer.local.shell.connect_service(self.public_ip,self.ssh.port_number,"root","toor"))
+	print("root:"+password)
+	return password
+end function
+
+Explorer.CD = function(param = "")
+	t = 0
+	if param == "" then
+		if self.is_local == 1 then
+			t = self.GetFile(home_dir,"",1) 
+		else
+			t = self.file
+		end if
+	else if param == ".." then
+		if self.current_folder.parent != null then t = self.GetFile(self.current_folder.parent.path,"",1)
+	else
+		t = self.GetFile(param, "", 1)
+	end if
+	if t then self.current_folder = t
+	return not (not t)
+end function
+
+Explorer.LS = function(param = "")
+	out = ["perms owner group size name"]
+	tmp = self.GetFile(param, "", 1)
+	if not tmp then return _E+param+" not found</color>"
+	for file in tmp.get_files + tmp.get_folders
+		out.push(file.permissions + " " + file.owner + " " + file.group + " " + file.size + " " + file.name)
+	end for
+	print(format_columns(out.join("\"+"n")))
+	return 1
+end function
+
+Explorer.PrintInfo = function()
+
+
+
+	cs = "none"
+	ms = "none"
+	
+	out = []
+	me = self.GetLib("metaxploit",out)
+	if out.len > 0 then
+		tmp = me.load(out.pop)
+		if tmp then ms = tmp.version
+		
+		cr = self.GetLib("crypto",out)
+		if out.len > 0 then
+			tmp = me.load(out.pop)
+		if tmp then cs = tmp.version
+		end if
+	end if
+	
+	
+	
+	
+
+	print("Shell level: "+self.shell_level)
+	print("Computer level: "+self.computer_level)
+	print("File level: "+self.file_level)
+	print
+	print("crypto.so: "+cs)
+	print("metaxploit.so: "+ms)
+	print
+	print("Active explorers: "+Explorer.dic_all_exporers.values.len)
+	tmp_table = ["PUBLIC LOCAL ACCESS"]
+	for ex in Explorer.dic_all_exporers.values
+		tmp_table.push(ex.AccessString(1))
+	end for
+	print(format_columns(tmp_table.join("\"+"n")))
+end function
+
+Explorer.AddAccess = function(object)
+	if not object then return
+	tmp_level = Utils.EvaluateAccessLevel(object)
+	if typeof(object) == "file" then
+		if tmp_level < self.file_level then 
+			self.file = Utils.GetRootFolder(object)
+			self.file_level = tmp_level
+		end if
+	else if typeof(object) == "computer" then
+		if tmp_level < self.computer_level then 
+			self.computer = object
+			self.computer_level = tmp_level
+			if self.file_level > tmp_level then
+				self.file_level = tmp_level
+				self.file = object.File("/")
+			end if
+		end if
+	else if typeof(object) == "shell" then
+		if tmp_level < self.shell_level then 
+			self.shell = object
+			self.shell_level = tmp_level
+			if self.computer_level > tmp_level then
+				self.computer_level = tmp_level
+				self.computer = object.host_computer
+			end if
+			if self.file_level > tmp_level then
+				self.file_level = tmp_level
+				self.file = self.computer.File("/")
+			end if
+		end if
+	end if
+end function
+
+Explorer.GetFile = function(path,permissions = "", force_folder = 0)
+	if typeof(permissions) == "string" then permissions.values
+	path = path.trim
+	if path.len == 0 or  path[0] != "/" then path = (self.current_folder.path+"/"+path)
+	while path.indexOf("//") != null
+		path = path.replace("//","/")
+	end while
+	if path[-1] == "/" and path != "/" then path = path[:-1]
+	success = 1
+	file = null
+	if self.shell_level < 3 then
+		file = self.computer.File(path)
+		if not file then return null
+		for perm in permissions
+			success = file.has_permission(perm)
+		end for
+		if success and (file.is_folder or not force_folder) then return file
+	end if
+	if self.computer_level < self.shell_level and self.computer_level < 3 then
+		file = self.computer.File(path)
+		if not file then return null
+		for perm in permissions
+			success = file.has_permission(perm)
+		end for
+		if success and (file.is_folder or not force_folder) then return file
+	end if
+	if self.file_level < self.computer_level and self.file_level < 3 then
+		file = null
+		path_d = path.split("/")
+		folder = self.file
+		for part in path_d
+			if part == "" then continue
+			for f in folder.get_files + folder.get_folders
+				if f.name == part then
+					folder = f
+					break
+				end if
+			end for
+		end for
+		if path == "/" or path_d[-1] == folder.name then file = folder
+		if not file then return null
+		for perm in permissions
+			success = file.has_permission(perm)
+		end for
+		if success and (file.is_folder or not force_folder) then return file
+	end if
+	return null
+end function
+
+Optimizer = {"ini":0}
+Optimizer.keywords = "clear_screen classID for end in abs print range if function not while then else and or true false null return continue break function new self typeof md5 get_router get_shell nslookup whois is_valid_ip is_lan_ip command_info current_date parent_path home_dir program_path active_user user_mail_address user_bank_number format_columns user_input include_lib exit public_ip local_ip computer_ports devices_lan_ip ping_port port_info used_ports bssid_name essid_name change_password create_user create_group create_folder close_program connect_wifi delete_user delete_group groups network_devices get_ports is_network_active lan_ip show_procs current_path touch wifi_networks File copy move rename chmod set_content set_group group path content is_binary is_folder has_permission owner permissions parent name size delete get_folders get_files get_lan_ip is_closed port_number connect_service scp launch build start_terminal put host_computer aircrack airmon decipher smtp_user_list overflow lib_name version load net_use scan scan_address dump_lib device_ports devices_lan_ip lastIndexOf split replace trim code lower upper val to_int abs acos asin atan tan cos sin char floor round rnd sign sqrt str ceil pi slice join pull reverse sort hasIndex indexOf push remove indexes len pop shuffle sum values time params globals locals"
+Optimizer.valid_chars = {}
+Optimizer.Ini = function()
+	tmp = self.keywords
+	self.keywords = {}
+	for index in tmp.split(" ")
+		if index == "hasIndex" then continue
+		self.keywords[index] = true
+	end for
+	for a in self.abc + ["_"]
+		self.valid_chars[a] = true
+	end for
+	tmp = self.spaceless.split(" ")
+	self.spaceless = {}
+	for s in tmp
+		self.spaceless[s] = true
+	end for
+	tmp = self.special_chars.split(" ")
+	self.special_chars = {}
+	for sc in tmp
+		self.special_chars[sc] = true
+	end for
+	tmp = self.not_map.split(" ")
+	self.not_map = {}
+	for n in tmp
+		self.not_map[n] = true
+	end for
+	self.ini = true
+end function
+
+Optimizer = {"ini":0}
+Optimizer.keywords = "clear_screen classID for end in abs print range if function not while then else and or true false null return continue break function new self typeof md get_router get_shell nslookup whois is_valid_ip is_lan_ip command_info current_date parent_path home_dir program_path active_user user_mail_address user_bank_number format_columns user_input include_lib exit public_ip local_ip computer_ports devices_lan_ip ping_port port_info used_ports bssid_name essid_name change_password create_user create_group create_folder close_program connect_wifi delete_user delete_group groups network_devices get_ports is_network_active lan_ip show_procs current_path touch wifi_networks File copy move rename chmod set_content set_group group path content is_binary is_folder has_permission owner permissions parent name size delete get_folders get_files get_lan_ip is_closed port_number connect_service scp launch build start_terminal put host_computer aircrack airmon decipher smtp_user_list overflow lib_name version load net_use scan scan_address dump_lib device_ports devices_lan_ip lastIndexOf split replace trim code lower upper val to_int abs acos asin atan tan cos sin char floor round rnd sign sqrt str ceil pi slice join pull reverse sort hasIndex indexOf push remove indexes len pop shuffle sum values time params globals locals"
+Optimizer.valid_chars = {}
+Optimizer.Ini = function()
+	tmp = self.keywords
+	self.keywords = {}
+	for index in tmp.split(" ")
+		if index == "hasIndex" then continue
+		self.keywords[index] = true
+	end for
+	for a in self.abc + ["_"]
+		self.valid_chars[a] = true
+	end for
+	tmp = self.spaceless.split(" ")
+	self.spaceless = {}
+	for s in tmp
+		self.spaceless[s] = true
+	end for
+	tmp = self.special_chars.split(" ")
+	self.special_chars = {}
+	for sc in tmp
+		self.special_chars[sc] = true
+	end for
+	tmp = self.not_map.split(" ")
+	self.not_map = {}
+	for n in tmp
+		self.not_map[n] = true
+	end for
+	self.ini = true
+end function
+
+Optimizer.abc = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m","n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
+Optimizer.special_chars = "{ } : , [ ] " + char(34)
+Optimizer.not_map = "! = + * - / :"
+Optimizer.spaceless = "< > { } ( ) [ ] , " + Optimizer.not_map
+Optimizer.index = [0]
+Optimizer.Next = function()
+	out = ""
+	for i in self.index
+		out = out + self.abc[i]
+	end for
+	self.index[0] = self.index[0] + 1
+	for i in self.index.indexes
+		if self.index[i] == self.abc.len then
+			if i+1 == self.index.len then
+				self.index[i] = 0
+				self.index.push(0)
+				return out
+			else
+				self.index[i] = 0
+				self.index[i+1] = self.index[i+1] + 1
+			end if
+		end if
+	end for
+	if self.keywords.hasIndex(out) then return self.Next
+	return out
+end function
+
+Optimizer.Optimize = function(s,name = "none")
+	backup = s
+	s = s.replace(char(34)*2, char(1)).replace(char(10), char(2))
+	if not self.ini then self.Ini
+	a = s.values
+	
+	map_active = [false]
+	value_active = [false]
+	
+	m = {}
+	
+	o = []
+	while a.len > 0
+		tmp = a[0]
+		if self.valid_chars.hasIndex(tmp) then
+			tmp_value = a.pull
+			while a.len > 0 and self.valid_chars.hasIndex(a[0])
+				tmp_value = tmp_value + a.pull
+			end while
+			if not self.keywords.hasIndex(tmp_value) and tmp_value != "hasIndex" then
+				if not m.hasIndex(tmp_value) then m[tmp_value] = self.Next
+				tmp_value = m[tmp_value]
+			end if
+			o.push(tmp_value)
+		else if self.special_chars.hasIndex(tmp) then
+			if tmp == char(34) then
+				tmp_value = a.pull
+				while a.len > 0 and a[0] != char(34)
+					tmp_value = tmp_value + a.pull
+				end while
+				if a.len > 0 then tmp_value = tmp_value + a.pull
+				if value_active[-1] then
+					tmp_value = tmp_value[1:tmp_value.len-1]
+					if not self.keywords.hasIndex(tmp_value) and tmp_value != "hasIndex" then
+						if not m.hasIndex(tmp_value) then m[tmp_value] = self.Next
+						tmp_value = m[tmp_value]
+					end if
+					tmp_value = char(34)+tmp_value+char(34)
+				end if
+				o.push(tmp_value)
+			else if tmp == "[" then
+				tmp = a.pull
+				while a.len > 0 and a[0] == " "
+					a.pull
+				end while
+				if a[0] != "]" then
+					if self.not_map.hasIndex(o[-1]) then
+						value_active.push(false)
+					else
+						value_active.push(true)
+					end if
+					map_active.push(false)
+				end if
+				o.push(tmp)
+			else if tmp == "]" then
+				if o[-1] != "[" then
+					value_active.pop
+					map_active.pop
+				end if
+				o.push(a.pull)
+			else if tmp == "{" then
+				tmp = a.pull
+				while a.len > 0 and a[0] == " "
+					a.pull
+				end while
+				if a[0] != "}" then
+					map_active.push(true)
+					value_active.push(true)
+				end if
+				o.push(tmp)
+			else if tmp == "}" then
+				if o[-1] != "{" then map_active.pop
+				o.push(a.pull)
+			else if map_active[-1] and tmp == "," then
+				value_active.push(true)
+				o.push(a.pull)
+			else if map_active[-1] and tmp == ":" then
+				value_active.pop
+				o.push(a.pull)
+			else
+				o.push(a.pull)
+			end if
+		else
+			o.push(a.pull)
+		end if
+		if self.spaceless.hasIndex(o[-1]) then
+			tmp = o.pop
+			while o.len > 0 and o[-1] == " "
+				o.pop
+			end while
+			o.push(tmp)
+			while a.len > 0 and a[0] == " "
+				a.pull
+			end while
+		end if
+	end while
+	o = o.join("")
+	o = o.replace(char(1), char(34)*2).replace(char(2), char(10))
+	out = []
+	for line in o.split(char(10))
+		tmp = line.trim
+		if tmp == "" then continue
+		out.push(tmp)
+	end for
+	o = out.join(char(10))
+	if backup.len > 0 then
+		save = {}
+		key = "PAIRS.DEBUG"
+		save[key] = m
+		tmp = "part"
+		for i in range(1,ceil(backup.len/70000))
+			save[tmp+i] = backup[(i-1)*70000:i*70000]
+		end for
+		Explorer.db.SaveEntry("DEBUG/"+get_router.public_ip,name,save)
+	end if
+	return o
+end function
+
+Explorer.Compile = function(input_file, delete = 0)
+	if not input_file then return (_E+"File not found</color>")
+	if self.shell_level == 3 then return (_E+"Failed to compile due to lack of access</color>")
+	ini_len = input_file.content.len
+	ini_content = input_file.content
+	
+	FindClasses = function(input, classes, used)
+		while input.indexOf(char(35)+char(33)) != null
+			class = input[input.indexOf(char(35)+char(33))+2:input.indexOf(char(33),input.indexOf(char(35)+char(33))+2)].trim
+			class_file = Explorer.local.computer.File(home_dir+"/COMPILER/"+class+".src")
+			if not class_file then return (_E+"Failed to find class <b>" + class + "</b></color>")
+			if used.indexOf(class) == null then
+				used.push(class)
+				tmp = FindClasses(class_file.content, classes, used).trim
+				if tmp[:_E.len] == _E then return tmp
+				classes.push(tmp)
+			end if
+			input = input[input.indexOf(char(33),input.indexOf(char(35)+char(33))+2)+1:]
+		end while
+		return input
+	end function
+
+	s = self.shell
+	c = self.computer
+
+	classes = []
+	used = []
+	tmp = FindClasses(ini_content, classes, used)
+	if tmp[:_E.len] == _E then return tmp
+	tmp = classes.join(char(10)) + char(10) + tmp
+	stock_len = tmp.len
+	
+	a = Optimizer.Optimize(tmp, md5(input_file.path+current_date+time))
+	optimized_len = a.len
+	
+	if input_file.has_permission("w") and false then
+		output_file = input_file
+	else
+		tmp_name = md5(str(time))
+		if not c.touch(home_dir+"/DEBUG/"+tmp_name,input_file.name) then return (_E+"Failed to create tmp file, try to run as root or change directory</color>")
+		output_file = c.File(home_dir+"/DEBUG/"+tmp_name+"/"+input_file.name)
+		if not output_file then return (_E+"Failed to get tmp file, try to run as root or change directory</color>")
+	end if
+	
+	output_file.set_content(a)
+	out_len = output_file.content.len
+	out_path = "/"
+	if output_file.parent != null then out_path = output_file.parent.path
+	out = s.build(output_file.path, out_path)
+	input_file.set_content(ini_content)
+	
+
+	
+	
+	if out == "" then
+		s = "<color=#00b7eb>Included <color=#0000ff>" + used.len + " <color=#00b7eb>classes</color>\"+"n<color=#00b7eb>Added total of <color=#0000ff>" + optimized_len + " <color=#00b7eb>additional chars</color>\"+"n<color=#00b7eb>Saved <color=#0000ff>"+(stock_len-optimized_len)+" <color=#00b7eb>chars <color=#0000ff>("+round((optimized_len/stock_len)*100,4)+"%)</color>"
+		if delete then output_file.delete
+		return s
+	else
+		if delete then output_file.delete
+		return (out)
+	end if
+end function
+
+Explorer.CreateBackup = function(path)
+	if self.file_level == 3 then
+		print("you lack access level")
+		return 0 
+	end if
+	a = ["c = get_shell.host_computer"]
+	c = self.computer
+	f = self.GetFile(path, "", 1)
+	if not f then
+		print(_E+path + " not found")
+		return 0
+	end if
+	for tmp_path in f.get_files
+		tmp_file = self.GetFile(tmp_path.path, "r")
+		if not tmp_file or tmp_file.is_binary != 0 then 
+			print("Failed to backup "+tmp_path)
+			continue
+		end if
+		a.push("c.touch("""+f.path+""","""+tmp_file.name+""")")
+		a.push("c.File("""+tmp_file.path+""").set_content(("""+tmp_file.content.replace("""","""""")+"""))")
+		print("Added "+tmp_file.path+" to backup")
+	end for
+	if Explorer.local.computer.touch(home_dir,f.name+".backup.src") then
+		Explorer.local.computer.File(home_dir+"/"+f.name+".backup.src").set_content(a.join("\"+"n"))
+		print(_S+"Backup of " + f.path + " created successfully")
+		return 1
+	else
+		print(_E+"Backup failed")
+		return 0
+	end if
+end function
+
+Proxy = {"user":"","public_ip":"","local_ip":"","password":"","port":22}
+
+Proxy.ip = function(fancy = 0)
+	if fancy then return self.public_ip+":"+self.local_ip
+	return self.public_ip+"."+self.local_ip
+end function
+
+Proxy.get_shell = function()
+	return get_shell.connect_service(self.public_ip, 22, self.user, self.password)
+end function
+
+Proxy.get_wifi_net = function()
+	c = self.get_shell
+	print(c)
+	if not c then return 0
+	if typeof(c) == "shell" then c = c.host_computer
+	if typeof(c) != "computer" then return 0
+	self.local_ip = c.lan_ip
+	out = []
+	for device in c.network_devices.split("\"+"n")
+		for wifi in c.wifi_networks(device.split(" ")[0])
+			tmp_split = wifi.split(" ")
+			out.push(tmp_split[0] + ";" + tmp_split[2])
+		end for
+	end for
+	return out.join(";")
+end function
+
+Proxy.SaveWifi = function(path)
+	n = self.get_wifi_net
+	if not n then return 0
+	print(n)
+	if not Explorer.local.computer.touch(path, self.ip) then return 0
+	f = Explorer.local.computer.File(path+"/"+self.ip)
+	if f then return (f.set_content(n) == 1)
+end function
+
+Proxy.Bounce = function(source, counter = [0])
+	if not (self.user and self.password and self.public_ip and self.port) then return source
+	tmp = source.connect_service(self.public_ip, self.port, self.user, self.password)
+	if tmp then 
+		counter[0] = counter[0] + 1
+		return tmp
+	end if
+	return source
+end function
+
+Explorer.CreateBounceShell = function(shell, path, out = 0)
+	counter = [0]
+	for proxy in self.LoadProxies(path)
+		shell = proxy.Bounce(shell, counter)
+	end for
+	if out then 
+		if counter[0] != 1 then
+			print("Bounced "+counter[0]+" times")
+		else
+			print("Bounced 1 time")
+		end if
+	end if
+	self.bounced_shell = shell
+	self.bounced = counter[0]
+	return shell
+end function
+
+Explorer.LoadProxies = function(path)
+	out = []
+	map_file = self.GetFile(path, "r")
+	if not map_file then
+		print("Map file not found")
+		return 0
+	end if
+	map_content = map_file.content
+	tmp_index0 = 0
+	while map_content.indexOf("user",tmp_index0) != null
+		tmp_acc = new Proxy
+		tmp_index0 = map_content.indexOf("user",tmp_index0)+7
+		tmp_index1 = map_content.indexOf("""",tmp_index0)
+		tmp_acc.user = map_content[tmp_index0:tmp_index1]
+		tmp_index0 = tmp_index1+8
+		tmp_index1 = map_content.indexOf("""",tmp_index0)
+		tmp_acc.public_ip = map_content[tmp_index0:tmp_index1]
+		tmp_index0 = tmp_index1 + 14
+		tmp_index1 = map_content.indexOf("""",tmp_index0)
+		tmp_acc.password = map_content[tmp_index0:tmp_index1]
+		out.push(tmp_acc)
+	end while
+	return out
+end function
+
+Explorer.ScanProxiesWifis = function(path, db_path)
+	tmp = self.LoadProxies(path)
+	print("Loaded "+tmp.len+" proxies")
+	for proxy in tmp
+		proxy.SaveWifi(db_path)
+	end for
+	return 1
+end function
+
+Explorer.SearchWifi = function(path, term, out = 0)
+	f = Explorer.local.computer.File(path)
+	if not f then 
+		print("Database not found")
+		return 0
+	end if
+	output = []
+	for file in f.get_files
+		if file.content.indexOf(term) != null then output.push(file.name)
+	end for
+	if out then 
+		print("Result IPs for search term: "+term)
+		if output.len == 0 then print("none")
+		for o in output
+			print(o.split(".")[:4].join(".")+":"+o.split(".")[4:].join("."))
+		end for
+	end if
+	return output
+end function
+
+Explorer.ConvertToMaps = function(list, name_source)
+	out = []
+	for item in list
+		object = {"map":{},"_id":[name_source[out.len]]}
+		for tmp in item.split(";")
+			object.map[tmp] = 1
+		end for
+		out.push(object)
+	end for
+	return out
+end function
+
+Explorer.TryToConnect = function(one, two, map_index, out)
+	if one[map_index].len < two[map_index].len then
+		for index in one[map_index].indexes
+			if two[map_index].hasIndex(index) then 
+				tmp = one[map_index]+two[map_index]
+				r = {"_id":one._id+two._id,map_index:tmp}
+				out.push(r)
+				return 1
+			end if
+		end for
+	else
+		for index in two[map_index].indexes
+			if one[map_index].hasIndex(index) then 
+				tmp = one[map_index]+two[map_index]
+				r = {"_id":one._id+two._id,map_index:tmp}
+				out.push(r)
+				return 1
+			end if
+		end for
+	end if
+	out.push(one)
+	out.push(two)
+	return 0
+end function
+
+Explorer.SaveConnected = function(list, name_index, map_index, path, pairs_path, computer)
+	tmp_type = typeof(computer)
+	if tmp_type == "shell" then computer = computer.host_computer
+	if typeof(computer) != "computer" then return 0
+	pairs = {}
+	for item in list
+		id = md5(item[map_index].indexes.join(";"))
+		pairs[id] = item[name_index].join(";")
+		if computer.touch(path, id) then
+			computer.File(path+"/"+id).set_content(item[map_index].indexes.join(";"))
+		else
+			return 0
+		end if
+	end for
+	for pair in pairs.indexes
+		if computer.touch(pairs_path, pair) then
+			computer.File(pairs_path+"/"+pair).set_content(pairs[pair])
+		else
+			return 0
+		end if
+	end for
+end function
+
+Explorer.FindConnections = function(list, map_index)
+	a = list
+	connection_made = 0
+	counter = 0
+	while counter < a.len and a.len > 1
+		if not self.TryToConnect(a.pull, a.pull, map_index, a) then 
+			counter = counter + 1
+		else
+			counter = 0
+		end if
+	end while
+	return a
+end function
+
+Explorer.AdvancedSearch = function(base_path, path, term, out = 0)
+	if Explorer.local.computer_level == 3 then 
+		print("You lack computer access level")
+		return 0
+	end if
+	
+	Explorer.local.RM(path)
+	
+	c = Explorer.local.computer
+	f = c.File(base_path)
+	files = f.get_files
+	tmp_contents = []
+	tmp_names = []
+	for file in files
+		tmp_contents.push(file.content)
+		tmp_names.push(file.name)
+	end for
+	
+	converted = self.ConvertToMaps(tmp_contents, tmp_names)
+	connected = self.FindConnections(converted, "map")
+	self.SaveConnected(connected, "_id", "map", path, path + "/PAIRS", c)
+	results = self.SearchWifi(path,term, 0)
+	if results == 0 then
+		print("Search failed")
+		return 0
+	end if
+	output = []
+	
+	if out then print("Result IPs for search term: "+term)
+	if out and results.len == 0 then print("none")
+	for result in results
+		tmp = c.File(path+"/PAIRS/"+result).content.split(";")
+		for o in tmp
+			output.push(o.split(".")[:4].join(".")+":"+o.split(".")[4:].join("."))
+		end for
+		print
+	end for
+	if out then print(output.join("\"+"n"))
+	return output
+end function
+
+Explorer.Steal = function(name)
+	//TODO
+end function
+
+Explorer.GetAnyFolders = function(permissions = "", folder = null, output = null)
+	if typeof(permissions) == "string" then permissions = permissions.values
+	if folder == null then folder = self.file
+	if output == null then output = []
+	success = 1
+	for perm in permissions
+		success = folder.has_permission(perm)
+	end for
+	if success then output.push(folder)
+	for f in folder.get_folders
+		self.GetAnyFolders(permissions, f, output)
+	end for
+	return output
+end function
+
+Explorer.Spread = function(ip, carry_on = [])
+	explorer = self.GetExplorer(ip, 2)
+	if not explorer then 
+		self.ATTACK(ip, 1)
+		explorer = self.GetExplorer(ip, 2)
+	end if
+	if not explorer then return 0
+	if explorer.shell_level == 3 then return 0
+	folder = explorer.GetFile("/home/guest","w")
+	if not folder then
+		folders = self.GetAnyFolders("w")
+		if folders.len == 0 then return 0
+		folder = folders[0]
+	end if
+	if not self.SCP(program_path, folder.path, Explorer.local, explorer) then return 0
+	payload = ""
+	if carry_on.len != 0 then payload = carry_on.pull.join(" @@ ")
+	return explorer.LAUNCH(folder.path+"/"+program_path.split("/")[-1], (globals.SECRET_CODE+" "+payload).trim)
+end function
+
+Explorer.ScanExplorersWifis = function(db_path)
+	for ex in Explorer.dic_all_exporers.values
+		if ex.is_local == 1 or ex.computer_level == 3 then continue
+		p = new Proxy
+		p.get_shell = ex.computer
+		p.public_ip = ex.public_ip
+		p.local_ip = ex.local_ip
+		p.SaveWifi(db_path)
+	end for
+	return 1
+end function
+
+Explorer.PostProcessResult = function(result)
+	if result.SSH_PORTS.len == 0 then return
+	for port in result.SSH_PORTS
+		ex = self.GetExplorer(result.IP+":"+port.get_lan_ip)
+		if ex then ex.ssh = port
+		if ex and ex.file_level != 3 then
+			tmp = Explorer.local.shell.connect_service(ex.public_ip, port.port_number, "root", "toor")
+			if typeof(tmp) == "shell" then
+				ex.AddAccess(tmp)
+				continue
+			end if
+			if ex.computer_level == 0 then
+				if ex.computer.change_password("root","toor") == 1 then
+					tmp = Explorer.local.shell.connect_service(ex.public_ip, port.port_number, "root", "toor")
+					if typeof(tmp) == "shell" then
+						ex.AddAccess(tmp)
+						continue
+					end if
+				end if
+			end if
+			f = ex.GetFile("/home")
+			if f then
+				for user in f.get_folders
+					tmp = Explorer.local.shell.connect_service(ex.public_ip, port.port_number, user.name, "toor")
+					if typeof(tmp) == "shell" then
+						ex.AddAccess(tmp)
+						continue
+					end if
+				end for
+			end if
+		end if
+	end for
+end function
+
+Explorer.HackshopDownlaod = function(path, dest_path = "/lib", dest_ex = null)
+	Explorer.update_in_progress = 1
+	if dest_ex == null then dest_ex = Explorer.local
+	for ip in globals.hackshops
+		tmp = []
+		self.ATTACK(ip,0,1,tmp)
+		for ex in tmp
+			if ex.SCP(path, dest_path, ex, dest_ex) then 
+				Explorer.update_in_progress = 0
+				Explorer.current = Explorer.local
+				Explorer.local.ProcessInput("include metaxploit")
+				return 1
+			end if
+		end for
+	end for
+	Explorer.current = Explorer.local
+	Explorer.update_in_progress = 0
+	return 0
+end function
+
+Explorer.PostProcess = function()
+	
+end function
+
+
+
+hackshops = ["183.125.192.36:192.168.0.2"]
+
+PUBLIC_IP = "221.41.17.174"
+LOCAL_IP = "192.168.0.4"
+REMOTE_IP = "145.109.61.80"
+REMOTE_PORT = 22
+REMOTE_USER = "root"
+REMOTE_PASSWD = "R2luZ2VySXNUaGV"
+SECRET_CODE = "58d0dea0fa1dd68504fd3319a932fe97"
+//ssh root@R2luZ2VySXNUaGV 145.109.61.80
+
+e = new Explorer
+e.AddAccess(get_shell)
+e.public_ip = get_router.public_ip
+e.local_ip = get_shell.host_computer.lan_ip
+e.is_local = true
+Explorer.current = e
+r = e.ValidateLaunch
+if r == 2 then program_path = "/home/guest/"+program_path.split("/")[-1]
+if r == 2 and params.len > 1 then
+	e.ProcessInput(params[1:].join(" "))
+end if
+if r == 1 and params.len > 0 then
+	e.ProcessInput(params.join(" "))
+end if
+
+Explorer.push(e)
+Explorer.current.Start
+
+
+
+
+
+
+
+
+
+
+
+

@@ -49,7 +49,7 @@ namespace GreyHackTools
                     typeof(Token.Operator), new Dictionary<Type, bool>()
                     {
                         {typeof(Token.Keyword), false},
-                        {typeof(Token.Operator), true},
+                        {typeof(Token.Operator), false},
                         {typeof(Token.Variable), false},
                         {typeof(Token.String), false},
                         {typeof(Token.Bracket), false},
@@ -148,10 +148,11 @@ namespace GreyHackTools
             "scan", "scan_address", "scp", "set_content", "set_group", "show_procs", "shuffle", "sign", "sin", "size",
             "slice", "smtp_user_list", "sort", "split", "sqrt", "start_terminal", "str", "sum", "tan", "to_int",
             "touch", "trim", "typeof", "upper", "used_ports", "user_bank_number", "user_input", "user_mail_address",
-            "val", "values", "version", "whois", "wifi_networks",
+            "val", "values", "version", "whois", "wifi_networks", "params",
 
 
-            "if", "then", "else", "end", "while", "for", "in", "and", "or", "not", "true", "false", "null", "return", "continue", "break", "function", "new", "self"
+            "if", "then", "else", "end", "while", "for", "in", "and", "or", "not", "true", "false", "null", "return",
+            "continue", "break", "function", "new", "self"
         };
 
         private static Dictionary<string, string> _operators = new Dictionary<string, string>()
@@ -260,7 +261,8 @@ namespace GreyHackTools
                         context.ShouldOptimizeString.Pop();
                         break;
                     case '[':
-                        context.ShouldOptimizeString.Push(true);
+                        context.ShouldOptimizeString.Push(!(context.LastToken == null ||
+                                                            context.LastToken is Token.Operator));
                         break;
                     case ']':
                         context.ShouldOptimizeString.Pop();
@@ -369,7 +371,7 @@ namespace GreyHackTools
 
             public virtual void Optimize(Context context)
             {
-                if (Optimizable&&Value.Length>0&&!char.IsDigit(Value[0])) Value = context.nameProvider.GetReplace(Value);
+                if (Optimizable&&Value.Length>0&&!char.IsDigit(Value[0])&&!_ignoreOptimize.Contains(Value)) Value = context.nameProvider.GetReplace(Value);
             }
 
             public virtual Token Compile(Context context)
@@ -438,6 +440,7 @@ namespace GreyHackTools
                             Next.Compile(context);
                             s = s.Replace("$b", context.StringBuilder.ToString());
                             context.stringBuilders.Pop();
+                            EndStatement = Next.EndStatement;
                             if (Next?.Next != null)
                             {
                                 Next = Next.Next;
@@ -454,7 +457,7 @@ namespace GreyHackTools
 
                         Value = s;
 
-                        return Compile(context);
+                        return base.Compile(context);
                     }
                     else
                     {
@@ -505,12 +508,34 @@ namespace GreyHackTools
 
                     if (Next != null && Next is Operator o && o.NeedsLeft)
                     {
-                        return o.NeedsValue ? base.Compile(context) : this;
+                        if (o.NeedsValue)
+                        {
+                            bool b = EndStatement;
+                            EndStatement = false;
+                            var r = base.Compile(context);
+                            EndStatement = b;
+                            return r;
+                        }
+                        else
+                        {
+                            return this;
+                        }
                     }
 
                     if (Prev != null && Prev is Operator oo && oo.NeedsRight)
                     {
-                        return oo.NeedsValue ? base.Compile(context) : this;
+                        if (oo.NeedsValue)
+                        {
+                            bool b = EndStatement;
+                            EndStatement = false;
+                            var r = base.Compile(context);
+                            EndStatement = b;
+                            return r;
+                        }
+                        else
+                        {
+                            return this;
+                        }
                     }
 
                     return base.Compile(context);

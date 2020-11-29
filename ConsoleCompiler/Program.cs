@@ -15,14 +15,14 @@ namespace ConsoleCompiler
             string onlyVariables =
                 GreyHackCompiler.Compile(initialCode, true, GreyHackCompiler.Settings.IgnoreMapVariables);
             string fullOptimize = GreyHackCompiler.Compile(initialCode, true);
-
+            
             Console.WriteLine($"Initial: {initialCode.Length} chars");
             Console.WriteLine($"No optimize: {noOptimize.Length} chars {GetPercentage(noOptimize.Length, initialCode.Length)}%");
             Console.WriteLine($"Optimize w/o maps: {onlyVariables.Length} chars {GetPercentage(onlyVariables.Length, initialCode.Length)}%");
             Console.WriteLine($"Full optimize: {fullOptimize.Length} chars {GetPercentage(fullOptimize.Length, initialCode.Length)}%");
 
             Console.WriteLine();
-
+            
             //Console.WriteLine(noOptimize);
             //Console.WriteLine(onlyVariables);
             Console.WriteLine(fullOptimize);

@@ -194,7 +194,7 @@ namespace GreyHackTools
             {"<<", @"bitwise(""<<"",$a,$b)"},
             {">>", @"bitwise("">>"",$a,$b)"},
             {">>>", @"bitwise("">>>"",$a,$b)"},
-            {"^", @"bitwise(""^"",$a,$b)"},
+            {"^^", @"bitwise(""^"",$a,$b)"},
             {"&", @"bitwise(""&"",$a,$b)"},
             {"|", @"bitwise(""|"",$a,$b)"},
             {"++", @"$a=$a+1"},
@@ -472,7 +472,7 @@ namespace GreyHackTools
                 }
             }
 
-            public virtual Token Compile(Context context)
+            public virtual Token Compile(Context context, bool force = false)
             {
                 if (context.StringBuilder.Length != 0 && Prev != null && !char.IsWhiteSpace(context.StringBuilder[^1]))
                 {
@@ -480,7 +480,7 @@ namespace GreyHackTools
                 }
 
                 context.StringBuilder.Append(Value);
-                if (EndStatement && Next != null) context.StringBuilder.Append(Environment.NewLine);
+                if (EndStatement && Next != null && !force) context.StringBuilder.Append(Environment.NewLine);
                 return this;
             }
 
@@ -508,7 +508,7 @@ namespace GreyHackTools
                 {
                     Optimizable = false;
                 }
-                public override Token Compile(Context context)
+                public override Token Compile(Context context, bool force = false)
                 {
                     if (Custom)
                     {
@@ -517,7 +517,7 @@ namespace GreyHackTools
                         if (NeedsLeft&&Prev != null)
                         {
                             context.stringBuilders.Push(new StringBuilder());
-                            Prev.Compile(context);
+                            Prev.Compile(context,true);
                             s = s.Replace("$a", context.StringBuilder.ToString());
                             context.stringBuilders.Pop();
                             
@@ -535,7 +535,7 @@ namespace GreyHackTools
                         if (NeedsRight&&Next != null)
                         {
                             context.stringBuilders.Push(new StringBuilder());
-                            Next.Compile(context);
+                            Next.Compile(context,true);
                             s = s.Replace("$b", context.StringBuilder.ToString());
                             context.stringBuilders.Pop();
                             EndStatement = Next.EndStatement;
@@ -555,11 +555,11 @@ namespace GreyHackTools
 
                         Value = s;
 
-                        return base.Compile(context);
+                        return base.Compile(context,force);
                     }
                     else
                     {
-                        return base.Compile(context);
+                        return base.Compile(context,force);
                     }
                 }
 
@@ -571,7 +571,7 @@ namespace GreyHackTools
 
             public class Variable : Token
             {
-                public override Token Compile(Context context)
+                public override Token Compile(Context context, bool force = false)
                 {
                     if ((Next != null && (Next.Value == "." || Next.Value == "(")))
                     {
@@ -604,9 +604,11 @@ namespace GreyHackTools
                         context.stringBuilders.Pop();
                     }
 
-                    if (Next != null && Next is Operator o && o.NeedsLeft)
+                    Token next = Next;
+                    //if (next != null && next.Value == ")") next = next.Next;
+                    if (next != null && next is Operator o && o.NeedsLeft)
                     {
-                        if (o.NeedsValue)
+                        if (force)
                         {
                             bool b = EndStatement;
                             EndStatement = false;
@@ -622,7 +624,7 @@ namespace GreyHackTools
 
                     if (Prev != null && Prev is Operator oo && oo.NeedsRight)
                     {
-                        if (oo.NeedsValue)
+                        if (force)
                         {
                             bool b = EndStatement;
                             EndStatement = false;
@@ -648,7 +650,7 @@ namespace GreyHackTools
             public class String : Token
             {
 
-                public override Token Compile(Context context)
+                public override Token Compile(Context context, bool force = false)
                 {
                     if (Custom)
                     {
@@ -714,8 +716,9 @@ namespace GreyHackTools
                 {
                     Optimizable = false;
                 }
-                public override Token Compile(Context context)
+                public override Token Compile(Context context, bool force = false)
                 {
+                    if (Custom) return base.Compile(context, force);
                     if (Value == "(")
                     {
                         context.stringBuilders.Push(new StringBuilder());
@@ -725,33 +728,43 @@ namespace GreyHackTools
                         Token node = Next;
                         while (node!=null)
                         {
+                            bool b = node.EndStatement;
+                            node.EndStatement = false;
                             Token tmp = node.Compile(context);
+                            node.EndStatement = b;
                             if (node.Value == ")") break;
                             node = tmp.Next;
                         }
 
                         Value = context.StringBuilder.ToString();
-
-                        StringBuilder tmp_sb = context.StringBuilder;
                         context.stringBuilders.Pop();
-                        context.StringBuilder.Append(tmp_sb);
+                        Next = node?.Next;
+                        if (node != null) EndStatement = node.EndStatement;
 
-                        if (node?.Next != null)
+                        if (Prev == null)
                         {
-                            Next = node.Next;
-                            node.Next.Prev = this;
+                            context.RootToken = this;
                         }
                         else
                         {
-                            context.LastToken = this;
-                            this.Next = null;
+                            Prev.Next = this;
                         }
 
-                        return this;
+                        if (node==null || node.Next == null)
+                        {
+                            context.LastToken = this;
+                        }
+                        else
+                        {
+                            node.Next.Prev = this;
+                        }
+
+                        Custom = true;
+                        return Compile(context,force);
                     }
                     else
                     {
-                        return base.Compile(context);
+                        return base.Compile(context,force);
                     }
                 }
 
@@ -814,7 +827,7 @@ namespace GreyHackTools
 
                             string var_name = Matches[0].Groups[2].Value;
                             if (string.IsNullOrWhiteSpace(var_name) || _ignoreOptimize.Contains(var_name)) return;
-                            Value = Regex.Replace(Value, RegexString, $"$1{context.nameProvider.GetReplace(var_name)}$3");
+                            _value = Regex.Replace(Value, RegexString, $"$1{context.nameProvider.GetReplace(var_name)}$3");
                             break;
                         case ETemplate.IgnoreOptimization:
                             break;

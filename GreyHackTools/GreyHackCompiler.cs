@@ -170,9 +170,9 @@ namespace GreyHackTools
             "connect_ethernet", "connect_service", "connect_wifi", "copy", "cos", "create_folder",
             "create_group", "create_user", "current_date", "current_path", "decipher", "delete", "delete_group",
             "delete_user", "device_ports", "devices_lan_ip", "dump_lib", "essid_name", "exit", "floor",
-            "format_columns", "get_files", "get_folders", "get_lan_ip", "get_ports", "get_router", "get_shell", "group",
+            "format_columns", "get_files", "get_folders", "get_lan_ip", "get_ports", "get_router", "get_shell","globals", "group",
             "groups", "hasIndex", "has_permission", "host_computer", "include_lib", "indexOf", "indexes", "is_binary",
-            "is_closed", "is_folder", "is_lan_ip", "is_network_active", "is_valid_ip", "join", "lan_ip", "lastIndexOf",
+            "is_closed", "is_folder", "is_lan_ip", "is_network_active", "is_valid_ip", "join",  "lastIndexOf",
             "launch", "len", "lib_name", "load", "local_ip", "locals", "lower", "md5", "move", "name", "net_use",
             "network_devices", "network_gateway", "nslookup", "overflow", "owner", "parent", "parent_path", "path",
             "permissions", "pi", "ping", "ping_port", "pop", "port_info", "port_number", "print", "program_path",
@@ -183,6 +183,8 @@ namespace GreyHackTools
             "val", "values", "version", "whois", "wifi_networks", "params", "clear_screen", "wait",
 
             "content",
+            "lan_ip",
+
             "get_content",
 
             "aireplay",
@@ -270,7 +272,17 @@ namespace GreyHackTools
                     context.TokensByValue[token.Value] = new List<Token>();
                 context.TokensByValue[token.Value].Add(token);
 
+
                 context.AddToken(token);
+
+
+                if ((context.Settings & Settings.IgnoreMapVariables) != 0 && token.Prev != null && token.Prev.Value == ".")
+                {
+                    if (!_ignoreOptimize.Contains(token.Value))
+                    {
+                        _ignoreOptimize.Add(token.Value);
+                    }
+                }
             }
 
             return context;
@@ -474,7 +486,6 @@ namespace GreyHackTools
             public virtual void Optimize(Context context)
             {
                 if (Optimizable && //flag from tokenization  
-                    (Prev == null || (Prev.Value != "." || (context.Settings & Settings.IgnoreMapVariables) == 0)) && //ignore maps
                     Value.Length > 0 &&
                     !char.IsDigit(Value[0]) &&
                     !_ignoreOptimize.Contains(Value))

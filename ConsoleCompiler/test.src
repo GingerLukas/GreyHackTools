@@ -1,1 +1,2 @@
-﻿print("Sell " + selected.rarity_color + selected.name + "</color> for " + selected.value + " gold?")
+﻿globals.ITEMS = {}
+ITEMS["key"]

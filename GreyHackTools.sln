@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GreyHackTools", "GreyHackTools\GreyHackTools.csproj", "{039CD9FF-1167-48FA-9D01-4FE4FFC5697E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleCompiler", "ConsoleCompiler\ConsoleCompiler.csproj", "{AEC0B642-632E-40ED-AC98-44193F2D8AE1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleCompiler", "ConsoleCompiler\ConsoleCompiler.csproj", "{AEC0B642-632E-40ED-AC98-44193F2D8AE1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormsCompiler", "FormsCompiler\FormsCompiler.csproj", "{0B7C0F8F-BF1C-47E4-A5CA-F596DE6AD5EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{AEC0B642-632E-40ED-AC98-44193F2D8AE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEC0B642-632E-40ED-AC98-44193F2D8AE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AEC0B642-632E-40ED-AC98-44193F2D8AE1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0B7C0F8F-BF1C-47E4-A5CA-F596DE6AD5EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0B7C0F8F-BF1C-47E4-A5CA-F596DE6AD5EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0B7C0F8F-BF1C-47E4-A5CA-F596DE6AD5EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0B7C0F8F-BF1C-47E4-A5CA-F596DE6AD5EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

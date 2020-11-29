@@ -1,2 +1,1 @@
-﻿map["index"]
-lines = string.split("\n")
+﻿lines = string.split("\n")

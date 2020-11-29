@@ -448,7 +448,7 @@ namespace GreyHackTools
             } while (context.PlainInput.Count > 0 && separator(context));
 
             string tmp_value = sb.ToString();
-            if (IsTemplate(tmp_value, out string regex,out MatchCollection matches,out ETemplate template))
+            if (t is not Token.String&&IsTemplate(tmp_value, out string regex,out MatchCollection matches,out ETemplate template))
             {
                 t = new Token.Template(template, matches, regex);
             }

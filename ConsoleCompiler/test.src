@@ -1,5 +1,1 @@
-﻿func = function()
-
-end function
-
-f = @func
+﻿lines = string.split("\n")

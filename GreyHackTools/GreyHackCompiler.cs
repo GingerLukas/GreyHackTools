@@ -321,7 +321,7 @@ namespace GreyHackTools
 
             if (context.PlainInput.Peek() == '\\')
             {
-                token = new Token();
+                token = new Token.Template();
                 return x=> !_tokenBrackets.Contains(x.PlainInput.Peek()) &&
                            !_tokenSeparators.Contains(x.PlainInput.Peek()) &&
                            !_tokenOperators.Contains(x.PlainInput.Peek()) &&
@@ -863,6 +863,10 @@ namespace GreyHackTools
                     return Value[0] == '"' && Value[^1] == '"';
                 }
 
+                public Template()
+                {
+                    
+                }
                 public Template(ETemplate template,MatchCollection matches,string regex) : base()
                 {
                     TemplateType = template;

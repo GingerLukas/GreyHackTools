@@ -24,8 +24,8 @@ namespace ConsoleCompiler
             Console.WriteLine();
             
             //Console.WriteLine(noOptimize);
-            Console.WriteLine(onlyVariables);
-            //Console.WriteLine(fullOptimize);
+            //Console.WriteLine(onlyVariables);
+            Console.WriteLine(fullOptimize);
 
             Console.ReadKey();
         }

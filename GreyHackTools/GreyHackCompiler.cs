@@ -210,13 +210,15 @@ namespace GreyHackTools
         {
             None,
             IterationIndex,
-            IgnoreOptimization
+            IgnoreOptimization,
+            TernaryOperator
         }
 
         private static Dictionary<string,ETemplate> _templates = new Dictionary<string, ETemplate>()
         {
             { @"(__)(.*)(_idx)",ETemplate.IterationIndex }, // __var_idx
             { @"(\\)(\S*)",ETemplate.IgnoreOptimization }, // \exact_var_name
+            { @"\?{1}",ETemplate.IgnoreOptimization }, // 
 
         };
 
@@ -426,11 +428,12 @@ namespace GreyHackTools
             {
                 t = new Token.Template(template, matches, regex);
             }
-            else if (_keywords.Contains(tmp_value))
+            else if (_keywords.Contains(tmp_value) && t is not Token.String)
             {
                 t = new Token.Keyword();
             }
-            else if (t.Optimizable && _ignoreOptimize.Contains(t.Value))
+
+            if (t.Optimizable && _ignoreOptimize.Contains(t.Value))
             {
                 t.Optimizable = false;
             }
@@ -674,7 +677,7 @@ namespace GreyHackTools
                                 if (depth == 0)
                                 {
                                     context.StringBuilder.Append("\"+(");
-                                    Context innerCodeContext = Tokenize(Value.Substring(last, i - last));
+                                    Context innerCodeContext = Tokenize(Value.Substring(last, i - last).Replace(@"""""",@""""));
                                     innerCodeContext.nameProvider = context.nameProvider;
                                     string compiled = innerCodeContext.Compile(context.optimizeEnabled);
                                     context.StringBuilder.Append(compiled);

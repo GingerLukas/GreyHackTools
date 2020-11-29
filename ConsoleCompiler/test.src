@@ -1,9 +1,15 @@
 ﻿byte = 1 << 2
+byte = 1 >> 2
+byte = 1 >>> 2
+byte = 1 | 2
+byte = 1 & 2
+byte = 1 ^ 2
 
-var = 7
-while i < 10
-	var += i
-	print($"var = {var}")
-	i++
-end while
-
+i = 0
+i++
+i--
+i += 1
+i -= 1
+i *= 1
+i /= 1
+i %= 1

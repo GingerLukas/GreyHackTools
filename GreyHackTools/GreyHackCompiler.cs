@@ -167,7 +167,7 @@ namespace GreyHackTools
         {
             "File", "abs", "acos", "active_net_card", "active_user", "aircrack", "airmon", "asin", "atan", "bitwise",
             "bssid_name", "build", "ceil", "change_password", "char", "chmod", "close_program", "code", "command_info",
-            "connect_ethernet", "connect_service", "connect_wifi", "content", "copy", "cos", "create_folder",
+            "connect_ethernet", "connect_service", "connect_wifi", "copy", "cos", "create_folder",
             "create_group", "create_user", "current_date", "current_path", "decipher", "delete", "delete_group",
             "delete_user", "device_ports", "devices_lan_ip", "dump_lib", "essid_name", "exit", "floor",
             "format_columns", "get_files", "get_folders", "get_lan_ip", "get_ports", "get_router", "get_shell", "group",
@@ -180,8 +180,20 @@ namespace GreyHackTools
             "scan", "scan_address", "scp", "set_content", "set_group", "show_procs", "shuffle", "sign", "sin", "size",
             "slice", "smtp_user_list", "sort", "split", "sqrt", "start_terminal", "str", "sum", "tan", "to_int",
             "touch", "trim", "typeof", "upper", "used_ports", "user_bank_number", "user_input", "user_mail_address",
-            "val", "values", "version", "whois", "wifi_networks", "params", 
-            
+            "val", "values", "version", "whois", "wifi_networks", "params", "clear_screen", "wait",
+
+            "content",
+            "get_content",
+
+            "aireplay",
+            "firewall_rules",
+            "kernel_version",
+            "kernel_version",
+            "rshell_server",
+            "rshell_server",
+
+
+
             "__isa",
 
 

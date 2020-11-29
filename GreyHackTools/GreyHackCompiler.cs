@@ -31,6 +31,7 @@ namespace GreyHackTools
             '+', '-', '*', '/', '%', //standard operators
             '<', '>', '=', '!', //comparators
             '^', '&', '|', //bitwise
+            '@'
         };
 
         private static HashSet<string> _tokenEndStatements = new HashSet<string>() { "\n","\r\n", ";" };

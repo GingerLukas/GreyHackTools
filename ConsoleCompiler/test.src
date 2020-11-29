@@ -1,2 +1,5 @@
-﻿globals.ITEMS = {}
-ITEMS["key"]
+﻿func = function()
+
+end function
+
+f = @func

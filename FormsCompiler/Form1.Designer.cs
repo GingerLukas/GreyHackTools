@@ -40,6 +40,8 @@ namespace FormsCompiler
             // 
             // _rtbInput
             // 
+            this._rtbInput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(37)))), ((int)(((byte)(37)))));
+            this._rtbInput.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this._rtbInput.Location = new System.Drawing.Point(12, 12);
             this._rtbInput.Name = "_rtbInput";
             this._rtbInput.Size = new System.Drawing.Size(323, 426);
@@ -48,18 +50,26 @@ namespace FormsCompiler
             // 
             // _btnCompile
             // 
+            this._btnCompile.BackColor = System.Drawing.Color.Transparent;
+            this._btnCompile.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this._btnCompile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this._btnCompile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this._btnCompile.ForeColor = System.Drawing.Color.Transparent;
             this._btnCompile.Location = new System.Drawing.Point(342, 414);
             this._btnCompile.Name = "_btnCompile";
             this._btnCompile.Size = new System.Drawing.Size(151, 23);
             this._btnCompile.TabIndex = 1;
             this._btnCompile.Text = "Compile";
-            this._btnCompile.UseVisualStyleBackColor = true;
+            this._btnCompile.UseVisualStyleBackColor = false;
             this._btnCompile.Click += new System.EventHandler(this._btnCompile_Click);
             // 
             // _rtbOutput
             // 
+            this._rtbOutput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(37)))), ((int)(((byte)(37)))));
+            this._rtbOutput.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this._rtbOutput.Location = new System.Drawing.Point(499, 12);
             this._rtbOutput.Name = "_rtbOutput";
+            this._rtbOutput.ReadOnly = true;
             this._rtbOutput.Size = new System.Drawing.Size(323, 426);
             this._rtbOutput.TabIndex = 3;
             this._rtbOutput.Text = "";
@@ -77,8 +87,10 @@ namespace FormsCompiler
             // 
             // _grpOptimization
             // 
+            this._grpOptimization.BackColor = System.Drawing.Color.Transparent;
             this._grpOptimization.Controls.Add(this._cbIgnoreMapIndexes);
             this._grpOptimization.Enabled = false;
+            this._grpOptimization.ForeColor = System.Drawing.SystemColors.Control;
             this._grpOptimization.Location = new System.Drawing.Point(341, 283);
             this._grpOptimization.Name = "_grpOptimization";
             this._grpOptimization.Size = new System.Drawing.Size(152, 100);
@@ -100,12 +112,14 @@ namespace FormsCompiler
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(28)))));
             this.ClientSize = new System.Drawing.Size(834, 450);
             this.Controls.Add(this._grpOptimization);
             this.Controls.Add(this._cbOptimize);
             this.Controls.Add(this._rtbOutput);
             this.Controls.Add(this._btnCompile);
             this.Controls.Add(this._rtbInput);
+            this.ForeColor = System.Drawing.SystemColors.Control;
             this.Name = "FormsGreyHackCompiler";
             this.Text = "Ginger\'s G++ compiler";
             this._grpOptimization.ResumeLayout(false);

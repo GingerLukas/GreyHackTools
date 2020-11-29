@@ -218,7 +218,6 @@ namespace GreyHackTools
         {
             { @"(__)(.*)(_idx)",ETemplate.IterationIndex }, // __var_idx
             { @"(\\)(\S*)",ETemplate.IgnoreOptimization }, // \exact_var_name
-            { @"\?{1}",ETemplate.IgnoreOptimization }, // 
 
         };
 

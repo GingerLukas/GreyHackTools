@@ -29,6 +29,10 @@ namespace GreyHackTools
             return sb.ToString();
         }
 
+        public bool Defined(string name)
+        {
+            return _replace.ContainsKey(name);
+        }
         public string GetReplace(string orig)
         {
             if (!_replace.ContainsKey(orig))

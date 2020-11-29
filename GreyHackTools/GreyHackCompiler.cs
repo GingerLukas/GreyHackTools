@@ -10,6 +10,17 @@ namespace GreyHackTools
 {
     public class GreyHackCompiler
     {
+        #region Settings
+
+        [Flags]
+        public enum Settings
+        {
+            None = 0,
+            IgnoreMapVariables = 1,
+        }
+
+        #endregion
+
         #region Internal
 
         private static HashSet<char> _tokenSeparators = new HashSet<char>() { ' ', '.', ',', ':'};
@@ -42,6 +53,7 @@ namespace GreyHackTools
                         {typeof(Token.Bracket), false},
                         {typeof(Token.Separator), false},
                         {typeof(Token.Include), false},
+                        {typeof(Token.Template), true},
 
                     }
                 },
@@ -55,6 +67,7 @@ namespace GreyHackTools
                         {typeof(Token.Bracket), false},
                         {typeof(Token.Separator), false},
                         {typeof(Token.Include), false},
+                        {typeof(Token.Template), false},
 
                     }
                 },
@@ -68,19 +81,21 @@ namespace GreyHackTools
                         {typeof(Token.Bracket), false},
                         {typeof(Token.Separator), false},
                         {typeof(Token.Include), false},
+                        {typeof(Token.Template), true},
 
                     }
                 },
                 {
                     typeof(Token.String), new Dictionary<Type, bool>()
                     {
-                        {typeof(Token.Keyword), true},
+                        {typeof(Token.Keyword), false},
                         {typeof(Token.Operator), false},
                         {typeof(Token.Variable), false},
                         {typeof(Token.String), false},
                         {typeof(Token.Bracket), false},
                         {typeof(Token.Separator), false},
                         {typeof(Token.Include), false},
+                        {typeof(Token.Template), false},
 
                     }
                 },
@@ -94,6 +109,7 @@ namespace GreyHackTools
                         {typeof(Token.Bracket), false},
                         {typeof(Token.Separator), false},
                         {typeof(Token.Include), false},
+                        {typeof(Token.Template), false},
 
                     }
                 },
@@ -107,6 +123,7 @@ namespace GreyHackTools
                         {typeof(Token.Bracket), false},
                         {typeof(Token.Separator), false},
                         {typeof(Token.Include), false},
+                        {typeof(Token.Template), false},
 
                     }
                 },
@@ -120,6 +137,21 @@ namespace GreyHackTools
                         {typeof(Token.Bracket), false},
                         {typeof(Token.Separator), false},
                         {typeof(Token.Include), false},
+                        {typeof(Token.Template), false},
+
+                    }
+                },
+                {
+                    typeof(Token.Template), new Dictionary<Type, bool>()
+                    {
+                        {typeof(Token.Keyword), true},
+                        {typeof(Token.Operator), false},
+                        {typeof(Token.Variable), true},
+                        {typeof(Token.String), false},
+                        {typeof(Token.Bracket), false},
+                        {typeof(Token.Separator), false},
+                        {typeof(Token.Include), false},
+                        {typeof(Token.Template), true},
 
                     }
                 },
@@ -134,7 +166,7 @@ namespace GreyHackTools
         private static HashSet<string> _ignoreOptimize = new HashSet<string>()
         {
             "File", "abs", "acos", "active_net_card", "active_user", "aircrack", "airmon", "asin", "atan", "bitwise",
-            "bssid_name", "build", "ceil", "change_password", "char", "chmod", "close_program", "command_info",
+            "bssid_name", "build", "ceil", "change_password", "char", "chmod", "close_program", "code", "command_info",
             "connect_ethernet", "connect_service", "connect_wifi", "content", "copy", "cos", "create_folder",
             "create_group", "create_user", "current_date", "current_path", "decipher", "delete", "delete_group",
             "delete_user", "device_ports", "devices_lan_ip", "dump_lib", "essid_name", "exit", "floor",
@@ -148,7 +180,9 @@ namespace GreyHackTools
             "scan", "scan_address", "scp", "set_content", "set_group", "show_procs", "shuffle", "sign", "sin", "size",
             "slice", "smtp_user_list", "sort", "split", "sqrt", "start_terminal", "str", "sum", "tan", "to_int",
             "touch", "trim", "typeof", "upper", "used_ports", "user_bank_number", "user_input", "user_mail_address",
-            "val", "values", "version", "whois", "wifi_networks", "params",
+            "val", "values", "version", "whois", "wifi_networks", "params", 
+            
+            "__isa",
 
 
             "if", "then", "else", "end", "while", "for", "in", "and", "or", "not", "true", "false", "null", "return",
@@ -172,16 +206,49 @@ namespace GreyHackTools
             {"%=", @"$a=$a%$b"},
         };
 
-        #endregion
-
-        public static string Compile(string code,bool optimize = false)
+        public enum ETemplate
         {
-            return Tokenize(code).Compile(optimize);
+            None,
+            IterationIndex,
+            IgnoreOptimization
         }
 
-        private static Context Tokenize(string plainCode)
+        private static Dictionary<string,ETemplate> _templates = new Dictionary<string, ETemplate>()
         {
-            Context context = new Context(){PlainInput = new Queue<char>(plainCode)};
+            { @"(__)(.*)(_idx)",ETemplate.IterationIndex }, // __var_idx
+            { @"(\\)(\S*)",ETemplate.IgnoreOptimization }, // \exact_var_name
+
+        };
+
+        private static bool IsTemplate(string input,out string regex,out MatchCollection matches, out ETemplate template)
+        {
+            foreach (KeyValuePair<string, ETemplate> pair in _templates)
+            {
+                matches = Regex.Matches(input, pair.Key);
+                if (matches.Count!=0)
+                {
+                    regex = pair.Key;
+                    template = pair.Value;
+                    return true;
+                }
+            }
+
+            matches = null;
+            regex = null;
+            template = ETemplate.None;
+            return false;
+        }
+
+        #endregion
+
+        public static string Compile(string code,bool optimize = false, Settings settings = Settings.None)
+        {
+            return Tokenize(code,settings).Compile(optimize);
+        }
+
+        private static Context Tokenize(string plainCode,Settings settings = Settings.None)
+        {
+            Context context = new Context(settings){PlainInput = new Queue<char>(plainCode)};
 
             Token token = null;
             while ((token = GetNextToken(context))!=null)
@@ -214,7 +281,7 @@ namespace GreyHackTools
                 {
                     case ',':
                         context.ShouldOptimizeString.Pop();
-                        context.ShouldOptimizeString.Push(true);
+                        context.ShouldOptimizeString.Push(!context.Settings.HasFlag(Settings.IgnoreMapVariables));
                         return x => false;
                         break;
                     case ':':
@@ -226,8 +293,18 @@ namespace GreyHackTools
 
             }
 
+            if (context.PlainInput.Peek() == '\\')
+            {
+                token = new Token();
+                return x=> !_tokenBrackets.Contains(x.PlainInput.Peek()) &&
+                           !_tokenSeparators.Contains(x.PlainInput.Peek()) &&
+                           !_tokenOperators.Contains(x.PlainInput.Peek()) &&
+                           !_tokenEndStatements.Contains(x.PlainInput.Peek().ToString()) &&
+                           !_tokenEndStatements.Contains(x.PlainInput.Peek().ToString() + x.PlainInput.Skip(1).FirstOrDefault().ToString());
+            }
+
             if (_tokenInclude.Contains(context.PlainInput.Peek() +
-                                       context.PlainInput.Skip(1).FirstOrDefault().ToString()))
+                                       context.PlainInput.Skip(1).FirstOrDefault().ToString())) //include
             {
                 token = new Token.Include();
                 context.PlainInput.Dequeue();
@@ -261,15 +338,16 @@ namespace GreyHackTools
                         context.ShouldOptimizeString.Pop();
                         break;
                     case '[':
-                        context.ShouldOptimizeString.Push(!(context.LastToken == null ||
-                                                            context.LastToken is Token.Operator));
+                        context.ShouldOptimizeString.Push((!(context.LastToken == null ||
+                                                             context.LastToken is Token.Operator)) &&
+                                                          (context.Settings & Settings.IgnoreMapVariables) == 0);
                         break;
                     case ']':
                         context.ShouldOptimizeString.Pop();
                         break;
                     case '{':
                         context.MapActive.Push(true);
-                        context.ShouldOptimizeString.Push(true);
+                        context.ShouldOptimizeString.Push((context.Settings & Settings.IgnoreMapVariables) == 0);
                         break;
                     case '}':
                         context.MapActive.Pop();
@@ -292,6 +370,7 @@ namespace GreyHackTools
                 if (context.PlainInput.Peek() == '$')
                 {
                     token.Custom = true;
+                    token.Optimizable = false;
                     context.PlainInput.Dequeue();
                 }
 
@@ -324,7 +403,11 @@ namespace GreyHackTools
             {
                 context.StringBuilder.Append(context.PlainInput.Dequeue());
                 GetString(context);
+                return;
             }
+
+            context.StringBuilder.Remove(0, 1);
+            context.StringBuilder.Remove(context.StringBuilder.Length - 1, 1);
         }
         private static Token GetNextToken(Context context)
         {
@@ -339,7 +422,11 @@ namespace GreyHackTools
             } while (context.PlainInput.Count > 0 && separator(context));
 
             string tmp_value = sb.ToString();
-            if (_keywords.Contains(tmp_value))
+            if (IsTemplate(tmp_value, out string regex,out MatchCollection matches,out ETemplate template))
+            {
+                t = new Token.Template(template, matches, regex);
+            }
+            else if (_keywords.Contains(tmp_value))
             {
                 t = new Token.Keyword();
             }
@@ -349,7 +436,8 @@ namespace GreyHackTools
             }
 
             t.Value = tmp_value;
-            t.EndStatement = context.PlainInput.Count == 0 || _tokenEndStatements.Contains(context.PlainInput.Peek().ToString() + context.PlainInput.Skip(1).FirstOrDefault().ToString());
+            while (context.PlainInput.Count > 0 && context.PlainInput.Peek() == ' ') context.PlainInput.Dequeue();
+            t.EndStatement = context.PlainInput.Count == 0 || _tokenEndStatements.Contains(context.PlainInput.Peek().ToString() + context.PlainInput.Skip(1).FirstOrDefault().ToString()) || _tokenEndStatements.Contains(context.PlainInput.Peek().ToString());
             
 
             return t;
@@ -359,7 +447,7 @@ namespace GreyHackTools
         {
             public Token Prev { get; set; }
             public Token Next { get; set; }
-            public string Value { get; set; }
+            public virtual string Value { get; set; }
             public virtual bool Custom { get; set; }
             public bool Optimizable { get; set; } = true;
             public bool EndStatement { get; set; }
@@ -371,7 +459,14 @@ namespace GreyHackTools
 
             public virtual void Optimize(Context context)
             {
-                if (Optimizable&&Value.Length>0&&!char.IsDigit(Value[0])&&!_ignoreOptimize.Contains(Value)) Value = context.nameProvider.GetReplace(Value);
+                if (Optimizable && //flag from tokenization  
+                    (Prev == null || (Prev.Value != "." || (context.Settings & Settings.IgnoreMapVariables) == 0)) && //ignore maps
+                    Value.Length > 0 &&
+                    !char.IsDigit(Value[0]) &&
+                    !_ignoreOptimize.Contains(Value))
+                {
+                    Value = context.nameProvider.GetReplace(Value);
+                }
             }
 
             public virtual Token Compile(Context context)
@@ -382,7 +477,7 @@ namespace GreyHackTools
                 }
 
                 context.StringBuilder.Append(Value);
-                if (EndStatement && Next != null) context.StringBuilder.Append('\n');
+                if (EndStatement && Next != null) context.StringBuilder.Append(Environment.NewLine);
                 return this;
             }
 
@@ -549,11 +644,12 @@ namespace GreyHackTools
 
             public class String : Token
             {
+
                 public override Token Compile(Context context)
                 {
                     if (Custom)
                     {
-                        context.StringBuilder.Append("(");
+                        context.StringBuilder.Append("(\"");
                         int depth = 0;
                         int last = 0;
                         for (int i = 0; i < Value.Length; i++)
@@ -590,14 +686,16 @@ namespace GreyHackTools
                                 context.StringBuilder.Append(Value[i]);
                             }
                         }
-                        context.StringBuilder.Append(")");
+                        context.StringBuilder.Append("\")");
                     }
                     else
                     {
+                        context.StringBuilder.Append('"');
                         context.StringBuilder.Append(Value);
+                        context.StringBuilder.Append('"');
                     }
 
-                    if (EndStatement) context.StringBuilder.Append('\n');
+                    if (EndStatement) context.StringBuilder.Append(Environment.NewLine);
                     return this;
                 }
 
@@ -683,6 +781,73 @@ namespace GreyHackTools
                     return $"Include: {base.ToString()}";
                 }
             }
+
+            public class Template : Token
+            {
+                public override string Value
+                {
+                    get => _value;
+                    set
+                    {
+                        if (_value != null) return;
+                        _value = value;
+                    }
+                }
+
+                private string _value = null;
+                public ETemplate TemplateType { get; set; }
+                public string RegexString { get; set; }
+                public MatchCollection Matches { get; set; }
+                public override void Optimize(Context context)
+                {
+                    switch (TemplateType)
+                    {
+                        case ETemplate.IterationIndex:
+                            if (Prev != null && Prev.Value == ".")
+                            {
+                                base.Optimize(context);
+                                return;
+                            }
+
+                            string var_name = Matches[0].Groups[2].Value;
+                            if (string.IsNullOrWhiteSpace(var_name) || _ignoreOptimize.Contains(var_name)) return;
+                            Value = Regex.Replace(Value, RegexString, $"$1{context.nameProvider.GetReplace(var_name)}$3");
+                            break;
+                        case ETemplate.IgnoreOptimization:
+                            break;
+                    }
+                }
+
+                private bool IsValueString()
+                {
+                    if (Value.Length < 2) return false;
+                    return Value[0] == '"' && Value[^1] == '"';
+                }
+
+                public Template(ETemplate template,MatchCollection matches,string regex) : base()
+                {
+                    TemplateType = template;
+                    Matches = matches;
+                    RegexString = regex;
+
+                    switch (template)
+                    {
+                        case ETemplate.IgnoreOptimization:
+                            _value = Matches[0].Groups[2].Value;
+                            if (IsValueString())
+                            {
+                                _value = _value.Substring(1, _value.Length - 2);
+                                if (!_ignoreOptimize.Contains(_value)) _ignoreOptimize.Add(_value);
+                                _value = '"'+ _value + '"';
+                            }
+                            else
+                            {
+                                if (!_ignoreOptimize.Contains(Matches[0].Groups[2].Value)) _ignoreOptimize.Add(Matches[0].Groups[2].Value);
+                            }
+                            break;
+                    }
+                }
+            }
         }
 
         internal class Context
@@ -698,6 +863,7 @@ namespace GreyHackTools
             internal Dictionary<string, List<Token>> TokensByValue = new Dictionary<string, List<Token>> ();
             internal VariableNameProvider nameProvider = new VariableNameProvider();
             internal bool optimizeEnabled = false;
+            internal Settings Settings = Settings.None;
 
             public void AddToken(Token token)
             {
@@ -713,8 +879,9 @@ namespace GreyHackTools
                     LastToken = token;
                 }
             }
-            public Context()
+            public Context(Settings settings)
             {
+                Settings = settings;
                 PlainInput = new Queue<char>();
 
                 stringBuilders.Push(new StringBuilder());
@@ -752,6 +919,7 @@ namespace GreyHackTools
             }
             public override string ToString()
             {
+                return StringBuilder.ToString();
                 StringBuilder sb = new StringBuilder();
                 Token node = RootToken;
                 while (node!=null)

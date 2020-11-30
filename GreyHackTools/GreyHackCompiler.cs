@@ -25,7 +25,6 @@ namespace GreyHackTools
 
         private static HashSet<char> _tokenSeparators = new HashSet<char>() { ' ', '.', ',', ':'};
         private static HashSet<char> _tokenBrackets = new HashSet<char>() { '(', ')', '[', ']', '{', '}', };
-
         private static HashSet<char> _tokenOperators = new HashSet<char>()
         {
             '+', '-', '*', '/', '%', //standard operators
@@ -601,12 +600,13 @@ namespace GreyHackTools
             {
                 public override Token Compile(Context context, bool force = false)
                 {
-                    if (Value == ")") return base.Compile(context);
-                    if ((Next != null && (Next.Value == "." || Next.Value == "(")))
+                    if (this is Bracket br && !br.Custom && (br.Value.Length==0 || br.Value[0] != '{')) return base.Compile(context);
+                    //if (Value == ")") return base.Compile(context);
+                    if ((Next != null && (Next.Value == "." || Next.Value == "(" ||Next.Value == "[")))
                     {
                         context.stringBuilders.Push(new StringBuilder());
                         context.StringBuilder.Append(Value);
-                        while (Next != null && (Next.Value == "." || Next.Value == "("))
+                        while (Next != null && (Next.Value == "." || Next.Value == "(" || Next.Value == "["))
                         {
                             Next.Compile(context,true);
                             if (Next.Value != ".")
@@ -748,7 +748,7 @@ namespace GreyHackTools
                 public override Token Compile(Context context, bool force = false)
                 {
                     if (Custom) return base.Compile(context, force);
-                    if (Value == "(")
+                    if (Value == "(" || Value == "[" || Value == "{")
                     {
                         context.stringBuilders.Push(new StringBuilder());
                         context.StringBuilder.Append(Value);
@@ -761,7 +761,7 @@ namespace GreyHackTools
                             node.EndStatement = false;
                             Token tmp = node.Compile(context);
                             node.EndStatement = b;
-                            if (node.Value == ")") break;
+                            if (node.Value == ")" || node.Value == "]" || node.Value == "}") break;
                             node = tmp.Next;
                         }
 

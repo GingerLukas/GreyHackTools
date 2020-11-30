@@ -48,7 +48,7 @@ namespace GreyHackTools
                     typeof(Token.Keyword), new Dictionary<Type, bool>()
                     {
                         {typeof(Token.Keyword), true},
-                        {typeof(Token.Operator), false},
+                        {typeof(Token.Operator), true},
                         {typeof(Token.Variable), true},
                         {typeof(Token.String), false},
                         {typeof(Token.Bracket), false},
@@ -61,7 +61,7 @@ namespace GreyHackTools
                 {
                     typeof(Token.Operator), new Dictionary<Type, bool>()
                     {
-                        {typeof(Token.Keyword), false},
+                        {typeof(Token.Keyword), true},
                         {typeof(Token.Operator), false},
                         {typeof(Token.Variable), false},
                         {typeof(Token.String), false},
@@ -160,8 +160,8 @@ namespace GreyHackTools
 
         private static HashSet<string> _keywords = new HashSet<string>()
         {
-            "if", "then", "else", "end", "while", "for", "in", "and", "or", "not", "true", "false", "null", "return",
-            "continue", "break", "function", "new", "self"
+            "if", "then", "else", "end", "while", "for", "in", "and", "or", "not", "true", "false",  "return",
+            "continue", "break",  "new", 
         };
 
         private static HashSet<string> _ignoreOptimize = new HashSet<string>()
@@ -182,6 +182,8 @@ namespace GreyHackTools
             "slice", "smtp_user_list", "sort", "split", "sqrt", "start_terminal", "str", "sum", "tan", "to_int",
             "touch", "trim", "typeof", "upper", "used_ports", "user_bank_number", "user_input", "user_mail_address",
             "val", "values", "version", "whois", "wifi_networks", "params", "clear_screen", "wait",
+
+            "self","null","function",
 
             "content",
             "lan_ip",

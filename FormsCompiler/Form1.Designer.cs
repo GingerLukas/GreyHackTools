@@ -42,6 +42,7 @@ namespace FormsCompiler
             // 
             this._rtbInput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(37)))), ((int)(((byte)(37)))));
             this._rtbInput.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this._rtbInput.ForeColor = System.Drawing.SystemColors.Control;
             this._rtbInput.Location = new System.Drawing.Point(12, 12);
             this._rtbInput.Name = "_rtbInput";
             this._rtbInput.Size = new System.Drawing.Size(323, 426);
@@ -67,6 +68,7 @@ namespace FormsCompiler
             // 
             this._rtbOutput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(37)))), ((int)(((byte)(37)))));
             this._rtbOutput.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this._rtbOutput.ForeColor = System.Drawing.SystemColors.Control;
             this._rtbOutput.Location = new System.Drawing.Point(499, 12);
             this._rtbOutput.Name = "_rtbOutput";
             this._rtbOutput.ReadOnly = true;

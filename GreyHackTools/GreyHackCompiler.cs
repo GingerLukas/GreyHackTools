@@ -578,6 +578,8 @@ namespace GreyHackTools
 
                         Value = s;
 
+
+
                         return base.Compile(context,force);
                     }
                     else
@@ -733,7 +735,7 @@ namespace GreyHackTools
                 }
             }
 
-            public class Bracket : Token
+            public class Bracket : Variable
             {
                 public Bracket()
                 {

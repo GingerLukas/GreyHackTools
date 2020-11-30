@@ -48,6 +48,7 @@ namespace FormsCompiler
             this._rtbInput.Size = new System.Drawing.Size(323, 426);
             this._rtbInput.TabIndex = 0;
             this._rtbInput.Text = "";
+            this._rtbInput.WordWrap = false;
             // 
             // _btnCompile
             // 
@@ -75,6 +76,7 @@ namespace FormsCompiler
             this._rtbOutput.Size = new System.Drawing.Size(323, 426);
             this._rtbOutput.TabIndex = 3;
             this._rtbOutput.Text = "";
+            this._rtbOutput.WordWrap = false;
             // 
             // _cbOptimize
             // 

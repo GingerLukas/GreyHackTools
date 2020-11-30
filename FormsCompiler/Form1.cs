@@ -27,6 +27,7 @@ namespace FormsCompiler
         {
             GreyHackCompiler.Settings settings = GreyHackCompiler.Settings.None;
             if (_cbIgnoreMapIndexes.Checked) settings |= GreyHackCompiler.Settings.IgnoreMapVariables;
+
             _rtbOutput.Text = GreyHackCompiler.Compile(_rtbInput.Text, _cbOptimize.Checked, settings);
         }
     }

@@ -527,7 +527,6 @@ namespace GreyHackTools
                     set { }
                 }
 
-                public bool NeedsValue = false;
 
                 public Operator()
                 {
@@ -537,7 +536,6 @@ namespace GreyHackTools
                 {
                     if (Custom)
                     {
-                        NeedsValue = true;
                         string s = _operators[Value];
                         if (NeedsLeft&&Prev != null)
                         {
@@ -576,11 +574,7 @@ namespace GreyHackTools
                             }
                         }
 
-                        NeedsValue = false;
-
                         Value = s;
-
-
 
                         return base.Compile(context,force);
                     }
@@ -601,7 +595,7 @@ namespace GreyHackTools
                 public override Token Compile(Context context, bool force = false)
                 {
                     if (this is Bracket br && !br.Custom && (br.Value.Length==0 || br.Value[0] != '{')) return base.Compile(context);
-                    //if (Value == ")") return base.Compile(context);
+
                     if ((Next != null && (Next.Value == "." || Next.Value == "(" ||Next.Value == "[")))
                     {
                         context.stringBuilders.Push(new StringBuilder());
@@ -633,9 +627,7 @@ namespace GreyHackTools
                         context.stringBuilders.Pop();
                     }
 
-                    Token next = Next;
-                    //if (next != null && next.Value == ")") next = next.Next;
-                    if (next != null && next is Operator o && o.NeedsLeft)
+                    if (Next != null && Next is Operator o && o.NeedsLeft)
                     {
                         if (force)
                         {
@@ -753,7 +745,6 @@ namespace GreyHackTools
                         context.stringBuilders.Push(new StringBuilder());
                         context.StringBuilder.Append(Value);
                         
-                        //TODO compile inside
                         Token node = Next;
                         while (node!=null)
                         {
@@ -939,7 +930,6 @@ namespace GreyHackTools
                 MapActive.Push(false);
             }
 
-            //TODO
             public string Compile(bool optimize = false)
             {
                 optimizeEnabled = optimize;

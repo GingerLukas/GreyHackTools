@@ -518,7 +518,7 @@ namespace GreyHackTools
                 }
             }
 
-            public class Operator : Token
+            public class Operator : Variable
             {
                 public bool NeedsLeft => _operators.ContainsKey(Value) && _operators[Value].Contains("$a");
                 public bool NeedsRight => _operators.ContainsKey(Value) && _operators[Value].Contains("$b");
@@ -601,13 +601,14 @@ namespace GreyHackTools
             {
                 public override Token Compile(Context context, bool force = false)
                 {
+                    if (Value == ")") return base.Compile(context);
                     if ((Next != null && (Next.Value == "." || Next.Value == "(")))
                     {
                         context.stringBuilders.Push(new StringBuilder());
                         context.StringBuilder.Append(Value);
                         while (Next != null && (Next.Value == "." || Next.Value == "("))
                         {
-                            Next.Compile(context);
+                            Next.Compile(context,true);
                             if (Next.Value != ".")
                             {
                                 Next = Next.Next;
@@ -615,7 +616,7 @@ namespace GreyHackTools
                             else
                             {
                                 Next = Next.Next;
-                                Next?.Compile(context);
+                                Next?.Compile(context,true);
                                 Next = Next?.Next;
                             }
                         }

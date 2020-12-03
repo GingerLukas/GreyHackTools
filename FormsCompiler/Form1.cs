@@ -18,17 +18,34 @@ namespace FormsCompiler
             InitializeComponent();
         }
 
-        private void _cbOptimize_CheckedChanged(object sender, EventArgs e)
-        {
-            _grpOptimization.Enabled = _cbOptimize.Checked;
-        }
-
-        private void _btnCompile_Click(object sender, EventArgs e)
+        private void Compile()
         {
             GreyHackCompiler.Settings settings = GreyHackCompiler.Settings.None;
             if (_cbIgnoreMapIndexes.Checked) settings |= GreyHackCompiler.Settings.IgnoreMapVariables;
 
             _rtbOutput.Text = GreyHackCompiler.Compile(_rtbInput.Text, _cbOptimize.Checked, settings);
+        }
+
+        private void _cbOptimize_CheckedChanged(object sender, EventArgs e)
+        {
+            _grpOptimization.Enabled = _cbOptimize.Checked;
+
+            Compile();
+        }
+
+        private void _btnCompile_Click(object sender, EventArgs e)
+        {
+            Compile();
+        }
+
+        private void _rtbInput_TextChanged(object sender, EventArgs e)
+        {
+            Compile();
+        }
+
+        private void _cbIgnoreMapIndexes_CheckedChanged(object sender, EventArgs e)
+        {
+            Compile();
         }
     }
 }

@@ -49,6 +49,7 @@ namespace FormsCompiler
             this._rtbInput.TabIndex = 0;
             this._rtbInput.Text = "";
             this._rtbInput.WordWrap = false;
+            this._rtbInput.TextChanged += new System.EventHandler(this._rtbInput_TextChanged);
             // 
             // _btnCompile
             // 
@@ -111,6 +112,7 @@ namespace FormsCompiler
             this._cbIgnoreMapIndexes.TabIndex = 5;
             this._cbIgnoreMapIndexes.Text = "Ignore map indexes";
             this._cbIgnoreMapIndexes.UseVisualStyleBackColor = true;
+            this._cbIgnoreMapIndexes.CheckedChanged += new System.EventHandler(this._cbIgnoreMapIndexes_CheckedChanged);
             // 
             // FormsGreyHackCompiler
             // 

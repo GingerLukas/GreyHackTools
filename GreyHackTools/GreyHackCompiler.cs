@@ -205,6 +205,8 @@ namespace GreyHackTools
             "continue", "break", "function", "new", "self"
         };
 
+        
+
         private static Dictionary<string, string> _operators = new Dictionary<string, string>()
         {
             {"<<", @"bitwise(""<<"",$a,$b)"},
@@ -281,9 +283,9 @@ namespace GreyHackTools
 
                 if ((context.Settings & Settings.IgnoreMapVariables) != 0 && token.Prev != null && token.Prev.Value == ".")
                 {
-                    if (!_ignoreOptimize.Contains(token.Value))
+                    if (!context.IgnoreOptimize(token.Value))
                     {
-                        _ignoreOptimize.Add(token.Value);
+                        context.customIgnoreOptimize.Add(token.Value);
                     }
                 }
             }
@@ -311,12 +313,10 @@ namespace GreyHackTools
                         context.ShouldOptimizeString.Pop();
                         context.ShouldOptimizeString.Push(!context.Settings.HasFlag(Settings.IgnoreMapVariables));
                         return x => false;
-                        break;
                     case ':':
                         context.ShouldOptimizeString.Pop();
                         context.ShouldOptimizeString.Push(false);
                         return x => false;
-                        break;
                 }
 
             }
@@ -452,14 +452,14 @@ namespace GreyHackTools
             string tmp_value = sb.ToString();
             if (t is not Token.String&&IsTemplate(tmp_value, out string regex,out MatchCollection matches,out ETemplate template))
             {
-                t = new Token.Template(template, matches, regex);
+                t = new Token.Template(template, matches, regex,context);
             }
             else if (_keywords.Contains(tmp_value) && t is not Token.String)
             {
                 t = new Token.Keyword();
             }
 
-            if (t.Optimizable && _ignoreOptimize.Contains(t.Value))
+            if (t.Optimizable && context.IgnoreOptimize(t.Value))
             {
                 t.Optimizable = false;
             }
@@ -491,7 +491,7 @@ namespace GreyHackTools
                 if (Optimizable && //flag from tokenization  
                     Value.Length > 0 &&
                     !char.IsDigit(Value[0]) &&
-                    !_ignoreOptimize.Contains(Value))
+                    !context.IgnoreOptimize(Value))
                 {
                     Value = context.nameProvider.GetReplace(Value);
                 }
@@ -846,7 +846,7 @@ namespace GreyHackTools
                             }
 
                             string var_name = Matches[0].Groups[2].Value;
-                            if (string.IsNullOrWhiteSpace(var_name) || _ignoreOptimize.Contains(var_name)) return;
+                            if (string.IsNullOrWhiteSpace(var_name) || context.IgnoreOptimize(var_name)) return;
                             _value = Regex.Replace(Value, RegexString, $"$1{context.nameProvider.GetReplace(var_name)}$3");
                             break;
                         case ETemplate.IgnoreOptimization:
@@ -864,7 +864,7 @@ namespace GreyHackTools
                 {
                     
                 }
-                public Template(ETemplate template,MatchCollection matches,string regex) : base()
+                public Template(ETemplate template,MatchCollection matches,string regex,Context context) : base()
                 {
                     TemplateType = template;
                     Matches = matches;
@@ -877,12 +877,12 @@ namespace GreyHackTools
                             if (IsValueString())
                             {
                                 _value = _value.Substring(1, _value.Length - 2);
-                                if (!_ignoreOptimize.Contains(_value)) _ignoreOptimize.Add(_value);
+                                if (!context.IgnoreOptimize(_value)) context.customIgnoreOptimize.Add(_value);
                                 _value = '"'+ _value + '"';
                             }
                             else
                             {
-                                if (!_ignoreOptimize.Contains(Matches[0].Groups[2].Value)) _ignoreOptimize.Add(Matches[0].Groups[2].Value);
+                                if (!context.IgnoreOptimize(Matches[0].Groups[2].Value)) context.customIgnoreOptimize.Add(Matches[0].Groups[2].Value);
                             }
                             break;
                     }
@@ -904,6 +904,9 @@ namespace GreyHackTools
             internal VariableNameProvider nameProvider = new VariableNameProvider();
             internal bool optimizeEnabled = false;
             internal Settings Settings = Settings.None;
+            internal HashSet<string> customIgnoreOptimize = new HashSet<string>();
+
+            public bool IgnoreOptimize(string value) => _ignoreOptimize.Contains(value) || customIgnoreOptimize.Contains(value);
 
             public void AddToken(Token token)
             {

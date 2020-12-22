@@ -35,6 +35,7 @@ namespace FormsCompiler
             this._cbOptimize = new System.Windows.Forms.CheckBox();
             this._grpOptimization = new System.Windows.Forms.GroupBox();
             this._cbIgnoreMapIndexes = new System.Windows.Forms.CheckBox();
+            this._cbRemoveComments = new System.Windows.Forms.CheckBox();
             this._grpOptimization.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -82,7 +83,7 @@ namespace FormsCompiler
             // _cbOptimize
             // 
             this._cbOptimize.AutoSize = true;
-            this._cbOptimize.Location = new System.Drawing.Point(342, 389);
+            this._cbOptimize.Location = new System.Drawing.Point(342, 364);
             this._cbOptimize.Name = "_cbOptimize";
             this._cbOptimize.Size = new System.Drawing.Size(123, 19);
             this._cbOptimize.TabIndex = 4;
@@ -96,7 +97,7 @@ namespace FormsCompiler
             this._grpOptimization.Controls.Add(this._cbIgnoreMapIndexes);
             this._grpOptimization.Enabled = false;
             this._grpOptimization.ForeColor = System.Drawing.SystemColors.Control;
-            this._grpOptimization.Location = new System.Drawing.Point(341, 283);
+            this._grpOptimization.Location = new System.Drawing.Point(341, 258);
             this._grpOptimization.Name = "_grpOptimization";
             this._grpOptimization.Size = new System.Drawing.Size(152, 100);
             this._grpOptimization.TabIndex = 6;
@@ -114,12 +115,24 @@ namespace FormsCompiler
             this._cbIgnoreMapIndexes.UseVisualStyleBackColor = true;
             this._cbIgnoreMapIndexes.CheckedChanged += new System.EventHandler(this._cbIgnoreMapIndexes_CheckedChanged);
             // 
+            // _cbRemoveComments
+            // 
+            this._cbRemoveComments.AutoSize = true;
+            this._cbRemoveComments.Location = new System.Drawing.Point(342, 389);
+            this._cbRemoveComments.Name = "_cbRemoveComments";
+            this._cbRemoveComments.Size = new System.Drawing.Size(129, 19);
+            this._cbRemoveComments.TabIndex = 7;
+            this._cbRemoveComments.Text = "Remove comments";
+            this._cbRemoveComments.UseVisualStyleBackColor = true;
+            this._cbRemoveComments.CheckedChanged += new System.EventHandler(this._cbRemoveComments_CheckedChanged);
+            // 
             // FormsGreyHackCompiler
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(28)))));
             this.ClientSize = new System.Drawing.Size(834, 450);
+            this.Controls.Add(this._cbRemoveComments);
             this.Controls.Add(this._grpOptimization);
             this.Controls.Add(this._cbOptimize);
             this.Controls.Add(this._rtbOutput);
@@ -143,6 +156,7 @@ namespace FormsCompiler
         private System.Windows.Forms.CheckBox _cbOptimize;
         private System.Windows.Forms.GroupBox _grpOptimization;
         private System.Windows.Forms.CheckBox _cbIgnoreMapIndexes;
+        private System.Windows.Forms.CheckBox _cbRemoveComments;
     }
 }
 

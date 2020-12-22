@@ -22,8 +22,12 @@ namespace FormsCompiler
         {
             GreyHackCompiler.Settings settings = GreyHackCompiler.Settings.None;
             if (_cbIgnoreMapIndexes.Checked) settings |= GreyHackCompiler.Settings.IgnoreMapVariables;
+            if (_cbRemoveComments.Checked) settings |= GreyHackCompiler.Settings.RemoveComments;
 
-            _rtbOutput.Text = GreyHackCompiler.Compile(_rtbInput.Text, _cbOptimize.Checked, settings);
+            if (GreyHackCompiler.TryCompile(_rtbInput.Text, out string compiledCode, _cbOptimize.Checked, settings))
+            {
+                _rtbOutput.Text = compiledCode;
+            }
         }
 
         private void _cbOptimize_CheckedChanged(object sender, EventArgs e)
@@ -44,6 +48,11 @@ namespace FormsCompiler
         }
 
         private void _cbIgnoreMapIndexes_CheckedChanged(object sender, EventArgs e)
+        {
+            Compile();
+        }
+
+        private void _cbRemoveComments_CheckedChanged(object sender, EventArgs e)
         {
             Compile();
         }

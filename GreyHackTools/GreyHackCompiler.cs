@@ -17,15 +17,16 @@ namespace GreyHackTools
         {
             None = 0,
             IgnoreMapVariables = 1,
+            RemoveComments = 2,
         }
 
         #endregion
 
         #region Internal
 
-        private static HashSet<char> _tokenSeparators = new HashSet<char>() { ' ', '.', ',', ':'};
-        private static HashSet<char> _tokenBrackets = new HashSet<char>() { '(', ')', '[', ']', '{', '}', };
-        private static HashSet<char> _tokenOperators = new HashSet<char>()
+        private static readonly HashSet<char> _tokenSeparators = new() { ' ', '.', ',', ':'};
+        private static readonly HashSet<char> _tokenBrackets = new() { '(', ')', '[', ']', '{', '}', };
+        private static readonly HashSet<char> _tokenOperators = new()
         {
             '+', '-', '*', '/', '%', //standard operators
             '<', '>', '=', '!', //comparators
@@ -33,15 +34,15 @@ namespace GreyHackTools
             '@','~',
         };
 
-        private static HashSet<string> _tokenEndStatements = new HashSet<string>() { "\n","\r\n", ";" };
+        private static readonly HashSet<string> _tokenEndStatements = new() { "\n","\r\n", ";" };
 
-        private static HashSet<string> _tokenInclude = new HashSet<string>() {"#!"};
-        private static HashSet<char> _tokenEndInclude = new HashSet<char>() {'!'};
+        private static readonly HashSet<string> _tokenInclude = new() {"#!"};
+        private static readonly HashSet<char> _tokenEndInclude = new() {'!'};
 
-        private static HashSet<char> _tokenStrings = new HashSet<char>() { '"', '$' };
+        private static readonly HashSet<char> _tokenStrings = new() { '"', '$' };
 
-        private static Dictionary<Type, Dictionary<Type, bool>> _tokenSpaces =
-            new Dictionary<Type, Dictionary<Type, bool>>()
+        private static readonly Dictionary<Type, Dictionary<Type, bool>> _tokenSpaces =
+            new()
             {
                 {
                     typeof(Token.Keyword), new Dictionary<Type, bool>()
@@ -157,13 +158,13 @@ namespace GreyHackTools
                 },
             };
 
-        private static HashSet<string> _keywords = new HashSet<string>()
+        private static readonly HashSet<string> _keywords = new()
         {
             "if", "then", "else", "end", "while", "for", "in", "and", "or", "not", "true", "false",  "return",
             "continue", "break",  "new", 
         };
 
-        private static HashSet<string> _ignoreOptimize = new HashSet<string>()
+        private static readonly HashSet<string> _ignoreOptimize = new()
         {
             "File", "abs", "acos", "active_net_card", "active_user", "aircrack", "airmon", "asin", "atan", "bitwise",
             "bssid_name", "build", "ceil", "change_password", "char", "chmod", "close_program", "code", "command_info",
@@ -207,7 +208,7 @@ namespace GreyHackTools
 
         
 
-        private static Dictionary<string, string> _operators = new Dictionary<string, string>()
+        private static readonly Dictionary<string, string> _operators = new()
         {
             {"<<", @"bitwise(""<<"",$a,$b)"},
             {">>", @"bitwise("">>"",$a,$b)"},
@@ -230,13 +231,15 @@ namespace GreyHackTools
             None,
             IterationIndex,
             IgnoreOptimization,
-            TernaryOperator
+            TernaryOperator,
+            Comment
         }
 
-        private static Dictionary<string,ETemplate> _templates = new Dictionary<string, ETemplate>()
+        private static readonly Dictionary<string,ETemplate> _templates = new()
         {
             { @"(__)(.*)(_idx)",ETemplate.IterationIndex }, // __var_idx
             { @"(\\)(\S*)",ETemplate.IgnoreOptimization }, // \exact_var_name
+            { @"(\/\/)(.*)$",ETemplate.Comment }, // //comment
 
         };
 
@@ -266,6 +269,20 @@ namespace GreyHackTools
             return Tokenize(code,settings).Compile(optimize);
         }
 
+        public static bool TryCompile(string code, out string compiledCode, bool optimize = false, Settings settings = Settings.None)
+        {
+            try
+            {
+                compiledCode = Compile(code, optimize, settings);
+                return true; 
+            }
+            catch (Exception)
+            {
+                compiledCode = null;
+                return false;
+            }
+        }
+
         private static Context Tokenize(string plainCode,Settings settings = Settings.None)
         {
             Context context = new Context(settings){PlainInput = new Queue<char>(plainCode)};
@@ -276,6 +293,10 @@ namespace GreyHackTools
                 if (!context.TokensByValue.ContainsKey(token.Value))
                     context.TokensByValue[token.Value] = new List<Token>();
                 context.TokensByValue[token.Value].Add(token);
+
+                if (!context.TokensByType.ContainsKey(token.GetType()))
+                    context.TokensByType[token.GetType()] = new List<Token>();
+                context.TokensByType[token.GetType()].Add(token);
 
 
                 context.AddToken(token);
@@ -303,6 +324,12 @@ namespace GreyHackTools
 
         private static Func<Context,bool> GetSeparationSelector(Context context, out Token token)
         {
+            if (context.PlainInput.Peek() == '/' && context.PlainInput.Skip(1).FirstOrDefault() == '/')
+            {
+                token = new Token.Template();
+                return x => !IsEndOfLine(x);
+            }
+
             if (context.MapActive.Peek())
             {
                 token = new Token.Separator();
@@ -465,12 +492,19 @@ namespace GreyHackTools
             }
 
             t.Value = tmp_value;
-            while (context.PlainInput.Count > 0 && context.PlainInput.Peek() == ' ') context.PlainInput.Dequeue();
-            t.EndStatement = context.PlainInput.Count == 0 || _tokenEndStatements.Contains(context.PlainInput.Peek().ToString() + context.PlainInput.Skip(1).FirstOrDefault().ToString()) || _tokenEndStatements.Contains(context.PlainInput.Peek().ToString());
+
+            while (context.PlainInput.Count > 0 && context.PlainInput.Peek() == ' ') 
+                context.PlainInput.Dequeue();
+
+            t.EndStatement = IsEndOfLine(context);
             
 
             return t;
         }
+
+        private static bool IsEndOfLine(Context context) => context.PlainInput.Count == 0 ||
+                _tokenEndStatements.Contains(context.PlainInput.Peek().ToString() + context.PlainInput.Skip(1).FirstOrDefault().ToString()) ||
+                _tokenEndStatements.Contains(context.PlainInput.Peek().ToString());
 
         internal class Token
         {
@@ -486,7 +520,7 @@ namespace GreyHackTools
                 return Value;
             }
 
-            public virtual void Optimize(Context context)
+            public virtual Token Optimize(Context context)
             {
                 if (Optimizable && //flag from tokenization  
                     Value.Length > 0 &&
@@ -495,6 +529,7 @@ namespace GreyHackTools
                 {
                     Value = context.nameProvider.GetReplace(Value);
                 }
+                return this;
             }
 
             public virtual Token Compile(Context context, bool force = false)
@@ -834,24 +869,24 @@ namespace GreyHackTools
                 public ETemplate TemplateType { get; set; }
                 public string RegexString { get; set; }
                 public MatchCollection Matches { get; set; }
-                public override void Optimize(Context context)
+                public override Token Optimize(Context context)
                 {
                     switch (TemplateType)
                     {
                         case ETemplate.IterationIndex:
                             if (Prev != null && Prev.Value == ".")
                             {
-                                base.Optimize(context);
-                                return;
+                                return base.Optimize(context);
                             }
 
                             string var_name = Matches[0].Groups[2].Value;
-                            if (string.IsNullOrWhiteSpace(var_name) || context.IgnoreOptimize(var_name)) return;
+                            if (string.IsNullOrWhiteSpace(var_name) || context.IgnoreOptimize(var_name)) return this;
                             _value = Regex.Replace(Value, RegexString, $"$1{context.nameProvider.GetReplace(var_name)}$3");
                             break;
                         case ETemplate.IgnoreOptimization:
                             break;
                     }
+                    return this;
                 }
 
                 private bool IsValueString()
@@ -897,14 +932,15 @@ namespace GreyHackTools
             public Token LastToken { get; set; }
             public StringBuilder StringBuilder => stringBuilders.Peek();
 
-            internal Stack<StringBuilder> stringBuilders = new Stack<StringBuilder>();
-            internal Stack<bool> ShouldOptimizeString = new Stack<bool>();
-            internal Stack<bool> MapActive = new Stack<bool>();
-            internal Dictionary<string, List<Token>> TokensByValue = new Dictionary<string, List<Token>> ();
-            internal VariableNameProvider nameProvider = new VariableNameProvider();
+            internal Stack<StringBuilder> stringBuilders = new();
+            internal Stack<bool> ShouldOptimizeString = new();
+            internal Stack<bool> MapActive = new();
+            internal Dictionary<string, List<Token>> TokensByValue = new();
+            internal Dictionary<Type, List<Token>> TokensByType = new();
+            internal VariableNameProvider nameProvider = new();
             internal bool optimizeEnabled = false;
             internal Settings Settings = Settings.None;
-            internal HashSet<string> customIgnoreOptimize = new HashSet<string>();
+            internal HashSet<string> customIgnoreOptimize = new();
 
             public bool IgnoreOptimize(string value) => _ignoreOptimize.Contains(value) || customIgnoreOptimize.Contains(value);
 
@@ -944,16 +980,44 @@ namespace GreyHackTools
                     node = RootToken;
                     while (node!=null)
                     {
-                        node.Optimize(this);
-                        node = node.Next;
+                        node = node.Optimize(this).Next;
                     }
                 }
+
+
                 
+                if (Settings.HasFlag(Settings.RemoveComments) && TokensByType.ContainsKey(typeof(Token.Template)))
+                {
+                    foreach (Token token in TokensByType[typeof(Token.Template)].Where(x=> ((Token.Template) x).TemplateType == ETemplate.Comment))
+                    {
+                        if (token.Prev != null)
+                        {
+                            token.Prev.Next = token.Next;
+                            token.Prev.EndStatement = true;
+                        }
+                        else
+                        {
+                            RootToken = token.Next;
+                        }
+
+                        if (token.Next != null)
+                        {
+                            token.Next.Prev = token.Prev;
+                        }
+                        else
+                        {
+                            LastToken = token.Prev;
+                        }
+                    }
+                }
+
                 node = RootToken;
                 while (node != null)
                 {
                     node = node.Compile(this).Next;
                 }
+                
+                
                 
 
                 optimizeEnabled = false;

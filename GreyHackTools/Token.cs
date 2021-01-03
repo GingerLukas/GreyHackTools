@@ -282,7 +282,7 @@ namespace GreyHackTools
                 public override Token Compile(Context context, bool force = false)
                 {
                     if (Custom) return base.Compile(context, force);
-                    if (Value == "(" || Value == "[" || Value == "{")
+                    if (IsOpening)
                     {
                         context.stringBuilders.Push(new StringBuilder());
                         context.StringBuilder.Append(Value);
@@ -294,7 +294,7 @@ namespace GreyHackTools
                             node.EndStatement = false;
                             Token tmp = node.Compile(context);
                             node.EndStatement = b;
-                            if (node.Value == ")" || node.Value == "]" || node.Value == "}") break;
+                            if (node is Bracket br && br.IsClosing) break;
                             node = tmp.Next;
                         }
 

@@ -5,9 +5,11 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using GreyHackTools;
+using Miniscript;
 
 namespace FormsCompiler
 {
@@ -16,6 +18,7 @@ namespace FormsCompiler
         public FormsGreyHackCompiler()
         {
             InitializeComponent();
+            _dgvVariables.DataSource = debugVariables;
         }
 
         private void Compile()
@@ -55,6 +58,90 @@ namespace FormsCompiler
         private void _cbRemoveComments_CheckedChanged(object sender, EventArgs e)
         {
             Compile();
+        }
+
+        private int line = 0;
+        private string[] codeLines;
+        BindingList<DebugVariable> debugVariables = new BindingList<DebugVariable>();
+        private EventWaitHandle debugWaitHandle = new EventWaitHandle(false,EventResetMode.AutoReset);
+        Task debugerTask = Task.CompletedTask;
+        private void _btnDebugRun_Click(object sender, EventArgs e)
+        {
+            if(!debugerTask.IsCompleted) return;
+            codeLines = _rtbOutput.Text.Split(new[] {"\n", "\r\n"}, StringSplitOptions.None);
+            Interpreter interpreter = new Interpreter(_rtbOutput.Text);
+            debugVariables.Clear();
+            debugerTask = Task.Run(() =>
+            {
+                interpreter.RunUntilDone(Double.MaxValue, true, m =>
+                {
+                    TAC.Context context = m.stack.Peek();
+                    if (context.code[context.lineNum].location == null)
+                    {
+                        _rtbOutput.Invoke((MethodInvoker) (() =>
+                        {
+                            _rtbOutput.ResetHighlight();
+                        }));
+                        debugWaitHandle.Set();
+                        return;
+                    }
+
+                    if (context.lineNum >= context.code.Count || context.code[context.lineNum].location.lineNum == line)
+                    {
+                        debugWaitHandle.Set();
+                        return;
+                    }
+
+                    line = context.code[context.lineNum].location.lineNum;
+                    _rtbOutput.Invoke((MethodInvoker) (() =>
+                    {
+                        _rtbOutput.HighlightLine(line - 1, Color.Brown);
+                    }));
+                    _dgvVariables.Invoke((MethodInvoker) (() =>
+                    {
+                        debugVariables.Clear();
+                        if (context.variables == null) return;
+                        foreach (Value key in context.variables.Keys)
+                        {
+                            debugVariables.Add(new DebugVariable()
+                                {Name = key.ToString(), Value = context.variables[key.ToString()].ToString()});
+                        }
+                    }));
+                    //MessageBox.Show(codeLines[context.code[context.lineNum].location.lineNum-1]);
+                }, debugWaitHandle);
+            });
+        }
+
+        private void _btnDebugStep_Click(object sender, EventArgs e)
+        {
+            debugWaitHandle.Set();
+        }
+
+    }
+
+    class DebugVariable
+    {
+        public string Name { get; set; }
+        public string Value { get; set; }
+    }
+    public static class FormsExtension
+    {
+        public static void HighlightLine(this RichTextBox richTextBox, int index, Color color)
+        {
+            richTextBox.SelectAll();
+            richTextBox.SelectionBackColor = richTextBox.BackColor;
+            var lines = richTextBox.Lines;
+            if (index < 0 || index >= lines.Length)
+                return;
+            var start = richTextBox.GetFirstCharIndexFromLine(index);  // Get the 1st char index of the appended text
+            var length = lines[index].Length;
+            richTextBox.Select(start, length);                 // Select from there to the end
+            richTextBox.SelectionBackColor = color;
+        }
+        public static void ResetHighlight(this RichTextBox richTextBox)
+        {
+            richTextBox.SelectAll();
+            richTextBox.SelectionBackColor = richTextBox.BackColor;
         }
     }
 }

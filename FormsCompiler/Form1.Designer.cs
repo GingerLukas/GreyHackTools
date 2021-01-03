@@ -29,6 +29,7 @@ namespace FormsCompiler
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             this._rtbInput = new System.Windows.Forms.RichTextBox();
             this._btnCompile = new System.Windows.Forms.Button();
             this._rtbOutput = new System.Windows.Forms.RichTextBox();
@@ -36,7 +37,11 @@ namespace FormsCompiler
             this._grpOptimization = new System.Windows.Forms.GroupBox();
             this._cbIgnoreMapIndexes = new System.Windows.Forms.CheckBox();
             this._cbRemoveComments = new System.Windows.Forms.CheckBox();
+            this._btnDebugStep = new System.Windows.Forms.Button();
+            this._btnDebugRun = new System.Windows.Forms.Button();
+            this._dgvVariables = new System.Windows.Forms.DataGridView();
             this._grpOptimization.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._dgvVariables)).BeginInit();
             this.SuspendLayout();
             // 
             // _rtbInput
@@ -126,12 +131,69 @@ namespace FormsCompiler
             this._cbRemoveComments.UseVisualStyleBackColor = true;
             this._cbRemoveComments.CheckedChanged += new System.EventHandler(this._cbRemoveComments_CheckedChanged);
             // 
+            // _btnDebugStep
+            // 
+            this._btnDebugStep.BackColor = System.Drawing.Color.Transparent;
+            this._btnDebugStep.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this._btnDebugStep.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this._btnDebugStep.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this._btnDebugStep.ForeColor = System.Drawing.Color.Transparent;
+            this._btnDebugStep.Location = new System.Drawing.Point(442, 214);
+            this._btnDebugStep.Name = "_btnDebugStep";
+            this._btnDebugStep.Size = new System.Drawing.Size(51, 23);
+            this._btnDebugStep.TabIndex = 8;
+            this._btnDebugStep.Text = "Step";
+            this._btnDebugStep.UseVisualStyleBackColor = false;
+            this._btnDebugStep.Click += new System.EventHandler(this._btnDebugStep_Click);
+            // 
+            // _btnDebugRun
+            // 
+            this._btnDebugRun.BackColor = System.Drawing.Color.Transparent;
+            this._btnDebugRun.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this._btnDebugRun.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this._btnDebugRun.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this._btnDebugRun.ForeColor = System.Drawing.Color.Transparent;
+            this._btnDebugRun.Location = new System.Drawing.Point(347, 214);
+            this._btnDebugRun.Name = "_btnDebugRun";
+            this._btnDebugRun.Size = new System.Drawing.Size(89, 23);
+            this._btnDebugRun.TabIndex = 9;
+            this._btnDebugRun.Text = "Run";
+            this._btnDebugRun.UseVisualStyleBackColor = false;
+            this._btnDebugRun.Click += new System.EventHandler(this._btnDebugRun_Click);
+            // 
+            // _dgvVariables
+            // 
+            this._dgvVariables.AllowUserToAddRows = false;
+            this._dgvVariables.AllowUserToDeleteRows = false;
+            this._dgvVariables.AllowUserToResizeColumns = false;
+            this._dgvVariables.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this._dgvVariables.BackgroundColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(37)))), ((int)(((byte)(37)))));
+            this._dgvVariables.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this._dgvVariables.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(37)))), ((int)(((byte)(37)))));
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(69)))), ((int)(((byte)(69)))), ((int)(((byte)(69)))));
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this._dgvVariables.DefaultCellStyle = dataGridViewCellStyle1;
+            this._dgvVariables.Location = new System.Drawing.Point(347, 13);
+            this._dgvVariables.Name = "_dgvVariables";
+            this._dgvVariables.RowHeadersVisible = false;
+            this._dgvVariables.RowTemplate.Height = 25;
+            this._dgvVariables.Size = new System.Drawing.Size(146, 195);
+            this._dgvVariables.TabIndex = 10;
+            // 
             // FormsGreyHackCompiler
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(28)))));
             this.ClientSize = new System.Drawing.Size(834, 450);
+            this.Controls.Add(this._dgvVariables);
+            this.Controls.Add(this._btnDebugRun);
+            this.Controls.Add(this._btnDebugStep);
             this.Controls.Add(this._cbRemoveComments);
             this.Controls.Add(this._grpOptimization);
             this.Controls.Add(this._cbOptimize);
@@ -143,6 +205,7 @@ namespace FormsCompiler
             this.Text = "Ginger\'s G++ compiler";
             this._grpOptimization.ResumeLayout(false);
             this._grpOptimization.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._dgvVariables)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -157,6 +220,9 @@ namespace FormsCompiler
         private System.Windows.Forms.GroupBox _grpOptimization;
         private System.Windows.Forms.CheckBox _cbIgnoreMapIndexes;
         private System.Windows.Forms.CheckBox _cbRemoveComments;
+        private System.Windows.Forms.Button _btnDebugStep;
+        private System.Windows.Forms.Button _btnDebugRun;
+        private System.Windows.Forms.DataGridView _dgvVariables;
     }
 }
 

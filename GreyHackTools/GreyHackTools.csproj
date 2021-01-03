@@ -4,4 +4,10 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Reference Include="Miniscript">
+      <HintPath>..\..\miniscript\MiniScript-cs\bin\Debug\Miniscript.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

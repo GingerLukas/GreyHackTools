@@ -1,4 +1,6 @@
 ﻿
+using FastColoredTextBoxNS;
+
 namespace FormsCompiler
 {
     partial class FormsGreyHackCompiler
@@ -29,33 +31,32 @@ namespace FormsCompiler
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            this._rtbInput = new System.Windows.Forms.RichTextBox();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormsGreyHackCompiler));
             this._btnCompile = new System.Windows.Forms.Button();
-            this._rtbOutput = new System.Windows.Forms.RichTextBox();
             this._cbOptimize = new System.Windows.Forms.CheckBox();
             this._grpOptimization = new System.Windows.Forms.GroupBox();
             this._cbIgnoreMapIndexes = new System.Windows.Forms.CheckBox();
             this._cbRemoveComments = new System.Windows.Forms.CheckBox();
             this._btnDebugStep = new System.Windows.Forms.Button();
-            this._btnDebugRun = new System.Windows.Forms.Button();
             this._dgvVariables = new System.Windows.Forms.DataGridView();
+            this._status = new System.Windows.Forms.StatusStrip();
+            this._tcBottom = new System.Windows.Forms.TabControl();
+            this._tpOutput = new System.Windows.Forms.TabPage();
+            this._rtbScriptOutput = new System.Windows.Forms.RichTextBox();
+            this._tools = new System.Windows.Forms.ToolStrip();
+            this._btnDebuggerRun = new System.Windows.Forms.ToolStripButton();
+            this._rtbOutput = new FastColoredTextBoxNS.FastColoredTextBox();
+            this._rtbInput = new FastColoredTextBoxNS.FastColoredTextBox();
             this._grpOptimization.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._dgvVariables)).BeginInit();
+            this._tcBottom.SuspendLayout();
+            this._tpOutput.SuspendLayout();
+            this._tools.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._rtbOutput)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this._rtbInput)).BeginInit();
             this.SuspendLayout();
-            // 
-            // _rtbInput
-            // 
-            this._rtbInput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(37)))), ((int)(((byte)(37)))));
-            this._rtbInput.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this._rtbInput.ForeColor = System.Drawing.SystemColors.Control;
-            this._rtbInput.Location = new System.Drawing.Point(12, 12);
-            this._rtbInput.Name = "_rtbInput";
-            this._rtbInput.Size = new System.Drawing.Size(323, 426);
-            this._rtbInput.TabIndex = 0;
-            this._rtbInput.Text = "";
-            this._rtbInput.WordWrap = false;
-            this._rtbInput.TextChanged += new System.EventHandler(this._rtbInput_TextChanged);
             // 
             // _btnCompile
             // 
@@ -71,19 +72,6 @@ namespace FormsCompiler
             this._btnCompile.Text = "Compile";
             this._btnCompile.UseVisualStyleBackColor = false;
             this._btnCompile.Click += new System.EventHandler(this._btnCompile_Click);
-            // 
-            // _rtbOutput
-            // 
-            this._rtbOutput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(37)))), ((int)(((byte)(37)))));
-            this._rtbOutput.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this._rtbOutput.ForeColor = System.Drawing.SystemColors.Control;
-            this._rtbOutput.Location = new System.Drawing.Point(499, 12);
-            this._rtbOutput.Name = "_rtbOutput";
-            this._rtbOutput.ReadOnly = true;
-            this._rtbOutput.Size = new System.Drawing.Size(323, 426);
-            this._rtbOutput.TabIndex = 3;
-            this._rtbOutput.Text = "";
-            this._rtbOutput.WordWrap = false;
             // 
             // _cbOptimize
             // 
@@ -146,21 +134,6 @@ namespace FormsCompiler
             this._btnDebugStep.UseVisualStyleBackColor = false;
             this._btnDebugStep.Click += new System.EventHandler(this._btnDebugStep_Click);
             // 
-            // _btnDebugRun
-            // 
-            this._btnDebugRun.BackColor = System.Drawing.Color.Transparent;
-            this._btnDebugRun.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this._btnDebugRun.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this._btnDebugRun.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this._btnDebugRun.ForeColor = System.Drawing.Color.Transparent;
-            this._btnDebugRun.Location = new System.Drawing.Point(347, 214);
-            this._btnDebugRun.Name = "_btnDebugRun";
-            this._btnDebugRun.Size = new System.Drawing.Size(89, 23);
-            this._btnDebugRun.TabIndex = 9;
-            this._btnDebugRun.Text = "Run";
-            this._btnDebugRun.UseVisualStyleBackColor = false;
-            this._btnDebugRun.Click += new System.EventHandler(this._btnDebugRun_Click);
-            // 
             // _dgvVariables
             // 
             this._dgvVariables.AllowUserToAddRows = false;
@@ -178,51 +151,197 @@ namespace FormsCompiler
             dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.Control;
             dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this._dgvVariables.DefaultCellStyle = dataGridViewCellStyle1;
-            this._dgvVariables.Location = new System.Drawing.Point(347, 13);
+            this._dgvVariables.Location = new System.Drawing.Point(341, 28);
             this._dgvVariables.Name = "_dgvVariables";
             this._dgvVariables.RowHeadersVisible = false;
             this._dgvVariables.RowTemplate.Height = 25;
-            this._dgvVariables.Size = new System.Drawing.Size(146, 195);
+            this._dgvVariables.Size = new System.Drawing.Size(152, 180);
             this._dgvVariables.TabIndex = 10;
+            // 
+            // _status
+            // 
+            this._status.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(122)))), ((int)(((byte)(204)))));
+            this._status.Location = new System.Drawing.Point(0, 549);
+            this._status.Name = "_status";
+            this._status.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
+            this._status.Size = new System.Drawing.Size(832, 22);
+            this._status.TabIndex = 11;
+            this._status.Text = "statusStrip1";
+            // 
+            // _tcBottom
+            // 
+            this._tcBottom.Alignment = System.Windows.Forms.TabAlignment.Bottom;
+            this._tcBottom.Controls.Add(this._tpOutput);
+            this._tcBottom.Location = new System.Drawing.Point(12, 443);
+            this._tcBottom.Name = "_tcBottom";
+            this._tcBottom.SelectedIndex = 0;
+            this._tcBottom.Size = new System.Drawing.Size(810, 100);
+            this._tcBottom.TabIndex = 12;
+            // 
+            // _tpOutput
+            // 
+            this._tpOutput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(37)))), ((int)(((byte)(37)))));
+            this._tpOutput.Controls.Add(this._rtbScriptOutput);
+            this._tpOutput.ForeColor = System.Drawing.SystemColors.Control;
+            this._tpOutput.Location = new System.Drawing.Point(4, 4);
+            this._tpOutput.Name = "_tpOutput";
+            this._tpOutput.Padding = new System.Windows.Forms.Padding(3);
+            this._tpOutput.Size = new System.Drawing.Size(802, 72);
+            this._tpOutput.TabIndex = 0;
+            this._tpOutput.Text = "Output";
+            // 
+            // _rtbScriptOutput
+            // 
+            this._rtbScriptOutput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(37)))), ((int)(((byte)(37)))));
+            this._rtbScriptOutput.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this._rtbScriptOutput.ForeColor = System.Drawing.SystemColors.Control;
+            this._rtbScriptOutput.Location = new System.Drawing.Point(4, 4);
+            this._rtbScriptOutput.Name = "_rtbScriptOutput";
+            this._rtbScriptOutput.ReadOnly = true;
+            this._rtbScriptOutput.Size = new System.Drawing.Size(795, 65);
+            this._rtbScriptOutput.TabIndex = 0;
+            this._rtbScriptOutput.Text = "";
+            // 
+            // _tools
+            // 
+            this._tools.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(28)))));
+            this._tools.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this._btnDebuggerRun});
+            this._tools.Location = new System.Drawing.Point(0, 0);
+            this._tools.Name = "_tools";
+            this._tools.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
+            this._tools.Size = new System.Drawing.Size(832, 25);
+            this._tools.TabIndex = 14;
+            this._tools.Text = "toolStrip1";
+            this._tools.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this._tools_ItemClicked);
+            // 
+            // _btnDebuggerRun
+            // 
+            this._btnDebuggerRun.Image = ((System.Drawing.Image)(resources.GetObject("_btnDebuggerRun.Image")));
+            this._btnDebuggerRun.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this._btnDebuggerRun.Name = "_btnDebuggerRun";
+            this._btnDebuggerRun.Size = new System.Drawing.Size(48, 22);
+            this._btnDebuggerRun.Text = "Run";
+            // 
+            // _rtbOutput
+            // 
+            this._rtbOutput.AutoCompleteBracketsList = new char[] {
+        '(',
+        ')',
+        '{',
+        '}',
+        '[',
+        ']',
+        '\"',
+        '\"',
+        '\'',
+        '\''};
+            this._rtbOutput.AutoIndentCharsPatterns = "^\\s*[\\w\\.]+(\\s\\w+)?\\s*(?<range>=)\\s*(?<range>[^;=]+);\n^\\s*(case|default)\\s*[^:]*(" +
+    "?<range>:)\\s*(?<range>[^;]+);";
+            this._rtbOutput.AutoScrollMinSize = new System.Drawing.Size(27, 14);
+            this._rtbOutput.BackBrush = null;
+            this._rtbOutput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
+            this._rtbOutput.CharHeight = 14;
+            this._rtbOutput.CharWidth = 8;
+            this._rtbOutput.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this._rtbOutput.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this._rtbOutput.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
+            this._rtbOutput.IsReplaceMode = false;
+            this._rtbOutput.Location = new System.Drawing.Point(499, 28);
+            this._rtbOutput.Name = "_rtbOutput";
+            this._rtbOutput.Paddings = new System.Windows.Forms.Padding(0);
+            this._rtbOutput.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
+            this._rtbOutput.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("_rtbOutput.ServiceColors")));
+            this._rtbOutput.Size = new System.Drawing.Size(323, 409);
+            this._rtbOutput.TabIndex = 17;
+            this._rtbOutput.Zoom = 100;
+            this._rtbOutput.LineClicked += new System.EventHandler<FastColoredTextBoxNS.LineClickedEventArgs>(this._rtbOutput_LineClicked);
+            // 
+            // _rtbInput
+            // 
+            this._rtbInput.AutoCompleteBracketsList = new char[] {
+        '(',
+        ')',
+        '{',
+        '}',
+        '[',
+        ']',
+        '\"',
+        '\"',
+        '\'',
+        '\''};
+            this._rtbInput.AutoIndentCharsPatterns = "^\\s*[\\w\\.]+(\\s\\w+)?\\s*(?<range>=)\\s*(?<range>[^;=]+);\n^\\s*(case|default)\\s*[^:]*(" +
+    "?<range>:)\\s*(?<range>[^;]+);";
+            this._rtbInput.AutoScrollMinSize = new System.Drawing.Size(27, 14);
+            this._rtbInput.BackBrush = null;
+            this._rtbInput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
+            this._rtbInput.CharHeight = 14;
+            this._rtbInput.CharWidth = 8;
+            this._rtbInput.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this._rtbInput.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this._rtbInput.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
+            this._rtbInput.IsReplaceMode = false;
+            this._rtbInput.Location = new System.Drawing.Point(12, 28);
+            this._rtbInput.Name = "_rtbInput";
+            this._rtbInput.Paddings = new System.Windows.Forms.Padding(0);
+            this._rtbInput.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
+            this._rtbInput.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("_rtbInput.ServiceColors")));
+            this._rtbInput.Size = new System.Drawing.Size(319, 409);
+            this._rtbInput.TabIndex = 18;
+            this._rtbInput.Zoom = 100;
+            this._rtbInput.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this._rtbInput_TextChanged);
             // 
             // FormsGreyHackCompiler
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoSize = true;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(28)))));
-            this.ClientSize = new System.Drawing.Size(834, 450);
+            this.ClientSize = new System.Drawing.Size(832, 571);
+            this.Controls.Add(this._rtbInput);
+            this.Controls.Add(this._rtbOutput);
+            this.Controls.Add(this._tools);
+            this.Controls.Add(this._status);
+            this.Controls.Add(this._tcBottom);
             this.Controls.Add(this._dgvVariables);
-            this.Controls.Add(this._btnDebugRun);
             this.Controls.Add(this._btnDebugStep);
             this.Controls.Add(this._cbRemoveComments);
             this.Controls.Add(this._grpOptimization);
             this.Controls.Add(this._cbOptimize);
-            this.Controls.Add(this._rtbOutput);
             this.Controls.Add(this._btnCompile);
-            this.Controls.Add(this._rtbInput);
             this.ForeColor = System.Drawing.SystemColors.Control;
             this.Name = "FormsGreyHackCompiler";
             this.Text = "Ginger\'s G++ compiler";
             this._grpOptimization.ResumeLayout(false);
             this._grpOptimization.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this._dgvVariables)).EndInit();
+            this._tcBottom.ResumeLayout(false);
+            this._tpOutput.ResumeLayout(false);
+            this._tools.ResumeLayout(false);
+            this._tools.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this._rtbOutput)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this._rtbInput)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.RichTextBox _rtbInput;
         private System.Windows.Forms.Button _btnCompile;
-        private System.Windows.Forms.RichTextBox _rtbOutput;
         private System.Windows.Forms.CheckBox _cbOptimize;
         private System.Windows.Forms.GroupBox _grpOptimization;
         private System.Windows.Forms.CheckBox _cbIgnoreMapIndexes;
         private System.Windows.Forms.CheckBox _cbRemoveComments;
         private System.Windows.Forms.Button _btnDebugStep;
-        private System.Windows.Forms.Button _btnDebugRun;
         private System.Windows.Forms.DataGridView _dgvVariables;
+        private System.Windows.Forms.StatusStrip _status;
+        private System.Windows.Forms.TabControl _tcBottom;
+        private System.Windows.Forms.TabPage _tpOutput;
+        private System.Windows.Forms.RichTextBox _rtbScriptOutput;
+        private System.Windows.Forms.ToolStrip _tools;
+        private System.Windows.Forms.ToolStripButton _btnDebuggerRun;
+        private FastColoredTextBoxNS.FastColoredTextBox _rtbOutput;
+        private FastColoredTextBoxNS.FastColoredTextBox _rtbInput;
     }
 }
 

@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleCompiler", "ConsoleC
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FormsCompiler", "FormsCompiler\FormsCompiler.csproj", "{0B7C0F8F-BF1C-47E4-A5CA-F596DE6AD5EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miniscript", "..\miniscript\MiniScript-cs\Miniscript.csproj", "{C3806B8F-9702-4B39-B6D9-9ECBC298565F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Miniscript", "Miniscript\Miniscript.csproj", "{C3806B8F-9702-4B39-B6D9-9ECBC298565F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

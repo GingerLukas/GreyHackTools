@@ -245,16 +245,19 @@ namespace FormsCompiler
             this._rtbOutput.CharWidth = 8;
             this._rtbOutput.Cursor = System.Windows.Forms.Cursors.IBeam;
             this._rtbOutput.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this._rtbOutput.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this._rtbOutput.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
             this._rtbOutput.IsReplaceMode = false;
             this._rtbOutput.Location = new System.Drawing.Point(499, 28);
             this._rtbOutput.Name = "_rtbOutput";
             this._rtbOutput.Paddings = new System.Windows.Forms.Padding(0);
+            this._rtbOutput.ReadOnly = true;
             this._rtbOutput.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
             this._rtbOutput.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("_rtbOutput.ServiceColors")));
             this._rtbOutput.Size = new System.Drawing.Size(323, 409);
             this._rtbOutput.TabIndex = 17;
             this._rtbOutput.Zoom = 100;
+            this._rtbOutput.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this._rtbOutput_TextChanged);
             this._rtbOutput.LineClicked += new System.EventHandler<FastColoredTextBoxNS.LineClickedEventArgs>(this._rtbOutput_LineClicked);
             // 
             // _rtbInput
@@ -272,13 +275,14 @@ namespace FormsCompiler
         '\''};
             this._rtbInput.AutoIndentCharsPatterns = "^\\s*[\\w\\.]+(\\s\\w+)?\\s*(?<range>=)\\s*(?<range>[^;=]+);\n^\\s*(case|default)\\s*[^:]*(" +
     "?<range>:)\\s*(?<range>[^;]+);";
-            this._rtbInput.AutoScrollMinSize = new System.Drawing.Size(27, 14);
+            this._rtbInput.AutoScrollMinSize = new System.Drawing.Size(187, 42);
             this._rtbInput.BackBrush = null;
             this._rtbInput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
             this._rtbInput.CharHeight = 14;
             this._rtbInput.CharWidth = 8;
             this._rtbInput.Cursor = System.Windows.Forms.Cursors.IBeam;
             this._rtbInput.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this._rtbInput.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this._rtbInput.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
             this._rtbInput.IsReplaceMode = false;
             this._rtbInput.Location = new System.Drawing.Point(12, 28);
@@ -288,6 +292,7 @@ namespace FormsCompiler
             this._rtbInput.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("_rtbInput.ServiceColors")));
             this._rtbInput.Size = new System.Drawing.Size(319, 409);
             this._rtbInput.TabIndex = 18;
+            this._rtbInput.Text = "for i in range(0,10)\r\n    print(i)\r\nend for";
             this._rtbInput.Zoom = 100;
             this._rtbInput.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this._rtbInput_TextChanged);
             // 

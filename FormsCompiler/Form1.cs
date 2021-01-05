@@ -55,6 +55,7 @@ namespace FormsCompiler
         private void StartDebugger()
         {
             if (!debugerTask.IsCompleted) return;
+            _rtbInput.ReadOnly = true;
             codeLines = _rtbOutput.Text.Split(new[] { "\n", "\r\n" }, StringSplitOptions.None);
 
             _interpreter.Reset(_rtbOutput.Text);
@@ -72,7 +73,7 @@ namespace FormsCompiler
                         TAC.Context context = m.stack.Peek();
                         if (context.code[context.lineNum].location == null)
                         {
-                            //_rtbOutput.Invoke(() => _rtbOutput.ResetHighlight()); //TODO replace with fctb equivalent
+                            //_rtbOutput.Invoke(UpdateBreakPoints);
                             debugWaitHandle.Set();
                             return;
                         }
@@ -83,6 +84,7 @@ namespace FormsCompiler
                             return;
                         }
 
+                        int lastLine = line;
                         line = context.code[context.lineNum].location.lineNum;
                         if (!(debuggerActive || breakpointLines.Contains(line)))
                         {
@@ -91,8 +93,12 @@ namespace FormsCompiler
                         }
 
                         debuggerActive = true;
-                        _rtbOutput.Invoke(() => _rtbOutput.Selection.Start = _rtbOutput.Selection.End = new Place(0,line-1));
-                        //_rtbOutput.Invoke(() => _rtbOutput.HighlightLine(line - 1, Color.Brown)); //TODO replace with fctb equivalent
+                        _rtbOutput.Invoke(() =>
+                        {
+                            _rtbOutput.HighlightLine(lastLine - 1, null);
+                            _rtbOutput.HighlightLine(line - 1, Color.Brown);
+                            _rtbOutput.Invalidate();
+                        });
                         _dgvVariables.Invoke(() =>
                         {
                             _debugVariables.Clear();
@@ -111,12 +117,22 @@ namespace FormsCompiler
                 }
 
                 _dgvVariables.Invoke(() => _debugVariables.Clear());
-                _rtbOutput.Invoke(() => _rtbOutput.Selection.GoHome(true));
-                //_rtbOutput.Invoke(() => _rtbOutput.ResetHighlight()); //TODO replace with fctb equivalent
+                _rtbOutput.Invoke(UpdateBreakPoints);
                 _status.Invoke(() => _status.BackColor = Color.FromArgb(0, 122, 204));
+                _rtbInput.ReadOnly = false;
             });
         }
 
+        private void UpdateBreakPoints()
+        {
+            _rtbOutput.Bookmarks.Clear();
+            _rtbOutput.ResetHighlight();
+            foreach (int line in breakpointLines)
+            {
+                _rtbOutput.BookmarkLine(line-1);
+                _rtbOutput.HighlightLine(line - 1, Color.FromArgb(100, Color.Brown));
+            }
+        }
 
         private void _cbOptimize_CheckedChanged(object sender, EventArgs e)
         {
@@ -170,6 +186,12 @@ namespace FormsCompiler
             {
                 breakpointLines.Add(line);
             }
+            UpdateBreakPoints();
+        }
+
+        private void _rtbOutput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateBreakPoints();
         }
     }
 
@@ -178,29 +200,12 @@ namespace FormsCompiler
         public string Name { get; set; }
         public string Value { get; set; }
     }
+    
     public static class FormsExtension
     {
         public static void Invoke(this Control control, Action action)
         {
             control.Invoke(action);
-        }
-        
-        public static void HighlightLine(this RichTextBox richTextBox, int index, Color color)
-        {
-            richTextBox.SelectAll();
-            richTextBox.SelectionBackColor = richTextBox.BackColor;
-            var lines = richTextBox.Lines;
-            if (index < 0 || index >= lines.Length)
-                return;
-            var start = richTextBox.GetFirstCharIndexFromLine(index);  // Get the 1st char index of the appended text
-            var length = lines[index].Length;
-            richTextBox.Select(start, length);                 // Select from there to the end
-            richTextBox.SelectionBackColor = color;
-        }
-        public static void ResetHighlight(this RichTextBox richTextBox)
-        {
-            richTextBox.SelectAll();
-            richTextBox.SelectionBackColor = richTextBox.BackColor;
         }
     }
 }

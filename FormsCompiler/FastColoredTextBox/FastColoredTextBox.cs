@@ -228,6 +228,31 @@ namespace FastColoredTextBoxNS
         }
 
         /// <summary>
+        /// Select all chars of text
+        /// </summary>
+        public void SelectAll()
+        {
+            Selection.SelectAll();
+        }
+
+        /// <summary>
+        /// Highlight specific line
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="color"></param>
+        public void HighlightLine(int index, Color? color)
+        {
+            if (index < 0 || index >= lines.Count) 
+                return;
+            
+            if (color != null)
+                lines[index].BackgroundBrush = new SolidBrush(color.Value);
+            else
+                lines[index].BackgroundBrush = null;
+        }
+
+
+        /// <summary>
         /// AutoComplete brackets
         /// </summary>
         [DefaultValue(false)]
@@ -2635,12 +2660,17 @@ namespace FastColoredTextBoxNS
                 InsertText(text);
         }
 
+        
+
         /// <summary>
-        /// Select all chars of text
+        /// Reset all highlighted lines to default collor
         /// </summary>
-        public void SelectAll()
+        public void ResetHighlight()
         {
-            Selection.SelectAll();
+            foreach (Line line in lines)
+            {
+                line.BackgroundBrush = null;
+            }
         }
 
         /// <summary>
@@ -5551,7 +5581,7 @@ namespace FastColoredTextBoxNS
                     Selection.Start = new Place(0, iLine);
                     Selection.End = new Place(GetLineLength(iLine), iLine);
                     Selection.EndUpdate();
-                    LineClicked.Invoke(this, new LineClickedEventArgs() {Line = iLine});
+                    LineClicked?.Invoke(this, new LineClickedEventArgs() {Line = iLine});
                     Invalidate();
                 }
             }

@@ -18,7 +18,6 @@ namespace GreyHackTools
             internal Stack<StringBuilder> stringBuilders = new();
             internal Stack<bool> ShouldOptimizeString = new();
             internal Stack<bool> MapActive = new();
-            internal Dictionary<Type, List<Token>> TokensByType = new();
             internal VariableNameProvider nameProvider = new();
             internal bool optimizeEnabled = false;
             internal Settings Settings = Settings.None;

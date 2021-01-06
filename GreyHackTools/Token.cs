@@ -47,6 +47,17 @@ namespace GreyHackTools
                 return this;
             }
 
+            private bool CompareBeginningOfValue(string s)
+            {
+                if (s.Length > Value.Length) return false;
+                for (int i = 0; i < s.Length; i++)
+                {
+                    if (Value[i] != s[i]) return false;
+                }
+
+                return true;
+            }
+
             public class Keyword : Token
             {
                 public Keyword()
@@ -135,12 +146,12 @@ namespace GreyHackTools
                 public override Token Compile(Context context, bool force = false)
                 {
                     if (this is Bracket br && !br.Custom && (br.Value.Length == 0 || br.Value[0] != '{')) return base.Compile(context);
-
-                    if ((Next != null && (Next.Value == "." || Next.Value == "(" || Next.Value == "[")))
+                    
+                    if ((Next != null && !_tokenOperators.Contains(Value.First()) && (Next.Value == "." || Next.Value == "(" || Next.Value == "[")))
                     {
                         context.stringBuilders.Push(new StringBuilder());
                         context.StringBuilder.Append(Value);
-                        while (Next != null && (Next.Value == "." || Next.Value == "(" || Next.Value == "["))
+                        while (Next != null && !_tokenOperators.Contains(Value.First()) && (Next.Value == "." || Next.Value == "(" || Next.Value == "["))
                         {
                             Next.Compile(context, true);
                             if (Next.Value != ".")
@@ -271,35 +282,111 @@ namespace GreyHackTools
                 }
             }
 
+            
+            
             public class Bracket : Variable
             {
                 public bool IsOpening => Value == "(" || Value == "[" || Value == "{";
                 public bool IsClosing => Value == ")" || Value == "]" || Value == "}";
+
+                private Dictionary<char, char> _openingToClosing = new Dictionary<char, char>()
+                    {{'(', ')'}, {'[', ']'}, {'{', '}'}};
                 public Bracket()
                 {
                     Optimizable = false;
                 }
+
+                private Token CompileInside(Context context,bool includeLastBracket = true,bool customBody = false,string postfix = "")
+                {
+                    
+                    bool b = false;
+                    Token last = null;
+                    Token node = Next;
+                    while (node != null)
+                    {
+                        if (!customBody)
+                        {
+                            b = node.EndStatement;
+                            node.EndStatement = false;
+                        }
+                        //check for last bracket before compiling it
+                        if (!includeLastBracket && node is Bracket tb && tb.IsClosing &&
+                                 tb.Value.Last() == _openingToClosing[Value.Last()])
+                        {
+                            if (tb.EndStatement && last != null &&
+                                                    !last.EndStatement && !last.Value.Contains(Environment.NewLine))
+                            {
+                                context.StringBuilder.AppendLine();
+                            }
+
+                            break;
+                        }
+                        
+                        Token tmp = node.Compile(context);
+                        if (!customBody) node.EndStatement = b;
+                        //checking for last bracket after compile
+                        if (node is Bracket br && br.IsClosing) break;
+                        last = node;
+                        node = tmp.Next;
+                    }
+
+                    context.StringBuilder.Append(postfix);
+                    Value = context.StringBuilder.ToString();
+                    context.stringBuilders.Pop();
+                    return node;
+                }
+                
                 public override Token Compile(Context context, bool force = false)
                 {
                     if (Custom) return base.Compile(context, force);
                     if (IsOpening)
                     {
-                        context.stringBuilders.Push(new StringBuilder());
-                        context.StringBuilder.Append(Value);
-
                         Token node = Next;
-                        while (node != null)
-                        {
-                            bool b = node.EndStatement;
-                            node.EndStatement = false;
-                            Token tmp = node.Compile(context);
-                            node.EndStatement = b;
-                            if (node is Bracket br && br.IsClosing) break;
-                            node = tmp.Next;
-                        }
+                        context.stringBuilders.Push(new StringBuilder());
 
-                        Value = context.StringBuilder.ToString();
-                        context.stringBuilders.Pop();
+                        if (Value == "{" && Prev.Value.LastOrDefault() == ')')
+                        {
+                            if (!EndStatement) EndStatement = true;
+                            Token t;
+                            string type = "";
+                            if (Prev.CompareBeginningOfValue("function"))
+                            {
+                                type = "function";
+                                t = Prev;
+                            }
+                            else
+                            {
+                                t = Prev.Prev;
+                            }
+
+                            if ((bool) t?.CompareBeginningOfValue("if"))
+                            {
+                                type = "if";
+                                context.StringBuilder.Append(" then");
+                            }
+                            else if ((bool) t?.CompareBeginningOfValue("for"))
+                            {
+                                type = "for";
+                            }
+                            else if ((bool) t?.CompareBeginningOfValue("while"))
+                            {
+                                type = "while";
+                            }
+
+                            if (t.EndStatement||EndStatement) context.StringBuilder.AppendLine();
+                            node = CompileInside(context,false,true,$"end {type}");
+                        }
+                        else if (Prev is Keyword k && k.Value == "for")
+                        {
+                            context.StringBuilder.Append(' ');
+                            node = CompileInside(context,false);
+                        }
+                        else
+                        {
+                            context.StringBuilder.Append(Value);
+                            node = CompileInside(context);
+                        }
+                        
                         Next = node?.Next;
                         if (node != null) EndStatement = node.EndStatement;
 
@@ -332,7 +419,7 @@ namespace GreyHackTools
 
                 public override string ToString()
                 {
-                    return $"Bracket: {base.ToString()}";
+                    return $"Bracket: {Value}";
                 }
             }
 
@@ -344,7 +431,7 @@ namespace GreyHackTools
                 }
                 public override string ToString()
                 {
-                    return $"Separator: {base.ToString()}";
+                    return $"Separator: {Value}";
                 }
             }
 

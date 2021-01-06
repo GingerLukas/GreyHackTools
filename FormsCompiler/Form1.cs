@@ -31,6 +31,28 @@ namespace FormsCompiler
             });
             _interpreter.errorOutput = _interpreter.standardOutput;
             _interpreter.implicitOutput = _interpreter.standardOutput;
+
+            _rtbOutput.BookmarkColor = Color.Brown;
+
+            this._rtbInput.Text = @"for (i in range(0,10)){ print(i) }
+//
+//
+add = (a,b) => { return a + b }
+//
+//
+sub = (a,b) => {
+    return a - b
+}
+//
+//
+mul = function(a,b){
+    return(a*b)
+}
+//
+//
+while (true) {}
+//
+if (true) {}";
         }
 
         private void Compile()
@@ -45,26 +67,26 @@ namespace FormsCompiler
             }
         }
 
-        private int line = 0;
-        private string[] codeLines;
-        private bool debuggerActive = false;
-        private HashSet<int> breakpointLines = new HashSet<int>();
-        BindingList<DebugVariable> _debugVariables = new BindingList<DebugVariable>();
+        private int _line = 0;
+        private string[] _codeLines;
+        private bool _debuggerActive = false;
+        private HashSet<int> _breakpointLines = new HashSet<int>();
+        private BindingList<DebugVariable> _debugVariables = new BindingList<DebugVariable>();
         private EventWaitHandle debugWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
-        Task debugerTask = Task.CompletedTask;
+        private Task _debugerTask = Task.CompletedTask;
         private void StartDebugger()
         {
-            if (!debugerTask.IsCompleted) return;
+            if (!_debugerTask.IsCompleted) return;
             _rtbInput.ReadOnly = true;
-            codeLines = _rtbOutput.Text.Split(new[] { "\n", "\r\n" }, StringSplitOptions.None);
+            _codeLines = _rtbOutput.Text.Split(new[] { "\n", "\r\n" }, StringSplitOptions.None);
 
             _interpreter.Reset(_rtbOutput.Text);
 
             _debugVariables.Clear();
-            debugerTask = Task.Run(() =>
+            _debugerTask = Task.Run(() =>
             {
-                line = 0;
-                debuggerActive = false;
+                _line = 0;
+                _debuggerActive = false;
                 _status.Invoke(() => _status.BackColor = Color.FromArgb(202, 81, 0));
                 try
                 {
@@ -78,25 +100,26 @@ namespace FormsCompiler
                             return;
                         }
 
-                        if (context.lineNum >= context.code.Count || context.code[context.lineNum].location.lineNum == line)
+                        if (context.lineNum >= context.code.Count || context.code[context.lineNum].location.lineNum == _line)
                         {
                             debugWaitHandle.Set();
                             return;
                         }
 
-                        int lastLine = line;
-                        line = context.code[context.lineNum].location.lineNum;
-                        if (!(debuggerActive || breakpointLines.Contains(line)))
+                        int lastLine = _line;
+                        _line = context.code[context.lineNum].location.lineNum;
+                        if (!(_debuggerActive || _breakpointLines.Contains(_line)))
                         {
                             debugWaitHandle.Set();
                             return;
                         }
 
-                        debuggerActive = true;
+                        _debuggerActive = true;
                         _rtbOutput.Invoke(() =>
                         {
                             _rtbOutput.HighlightLine(lastLine - 1, null);
-                            _rtbOutput.HighlightLine(line - 1, Color.Brown);
+                            UpdateBreakPoints();
+                            _rtbOutput.HighlightLine(_line - 1, Color.Brown);
                             _rtbOutput.Invalidate();
                         });
                         _dgvVariables.Invoke(() =>
@@ -127,7 +150,7 @@ namespace FormsCompiler
         {
             _rtbOutput.Bookmarks.Clear();
             _rtbOutput.ResetHighlight();
-            foreach (int line in breakpointLines)
+            foreach (int line in _breakpointLines)
             {
                 _rtbOutput.BookmarkLine(line-1);
                 _rtbOutput.HighlightLine(line - 1, Color.FromArgb(100, Color.Brown));
@@ -178,13 +201,13 @@ namespace FormsCompiler
         private void _rtbOutput_LineClicked(object sender, LineClickedEventArgs e)
         {
             int line = e.Line + 1;
-            if (breakpointLines.Contains(line))
+            if (_breakpointLines.Contains(line))
             {
-                breakpointLines.Remove(line);
+                _breakpointLines.Remove(line);
             }
             else
             {
-                breakpointLines.Add(line);
+                _breakpointLines.Add(line);
             }
             UpdateBreakPoints();
         }

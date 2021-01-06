@@ -224,6 +224,7 @@ namespace GreyHackTools
             {"*=", @"$a=$a*$b"},
             {"/=", @"$a=$a/$b"},
             {"%=", @"$a=$a%$b"},
+            {"=>", @"function$a"},
         };
 
         public enum ETemplate
@@ -232,14 +233,14 @@ namespace GreyHackTools
             IterationIndex,
             IgnoreOptimization,
             TernaryOperator,
-            Comment
+            Comment,
         }
 
         private static readonly Dictionary<string,ETemplate> _templates = new()
         {
             { @"(__)(.*)(_idx)",ETemplate.IterationIndex }, // __var_idx
-            { @"(\\)(\S*)",ETemplate.IgnoreOptimization }, // \exact_var_name
-            { @"(\/\/)(.*)$",ETemplate.Comment }, // //comment
+            { @"(\\)(\S*)",ETemplate.IgnoreOptimization },  // \exact_var_name
+            { @"(\/\/)(.*)$",ETemplate.Comment },           //comment
 
         };
 
@@ -289,16 +290,7 @@ namespace GreyHackTools
 
             Token token = null;
             while ((token = GetNextToken(context))!=null)
-            {/*
-                if (!context.TokensByValue.ContainsKey(token.Value))
-                    context.TokensByValue[token.Value] = new List<Token>();
-                context.TokensByValue[token.Value].Add(token);
-
-                if (!context.TokensByType.ContainsKey(token.GetType()))
-                    context.TokensByType[token.GetType()] = new List<Token>();
-                context.TokensByType[token.GetType()].Add(token);*/
-
-
+            {
                 context.AddToken(token);
 
 

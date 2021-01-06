@@ -292,7 +292,6 @@ namespace FormsCompiler
             this._rtbInput.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("_rtbInput.ServiceColors")));
             this._rtbInput.Size = new System.Drawing.Size(319, 409);
             this._rtbInput.TabIndex = 18;
-            this._rtbInput.Text = "for i in range(0,10)\r\n    print(i)\r\nend for";
             this._rtbInput.Zoom = 100;
             this._rtbInput.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this._rtbInput_TextChanged);
             // 

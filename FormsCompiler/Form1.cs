@@ -53,6 +53,8 @@ mul = function(a,b){
 while (true) {}
 //
 if (true) {}";
+
+            splitContainer3.SplitterDistance = splitContainer3.Size.Width / 2;
         }
 
         private void Compile()
@@ -215,6 +217,54 @@ if (true) {}";
         private void _rtbOutput_TextChanged(object sender, TextChangedEventArgs e)
         {
             UpdateBreakPoints();
+        }
+
+        private void splitContainer2_Panel2_Resize(object sender, EventArgs e)
+        {
+            _tcBottom.Size = new Size(splitContainer2.Panel2.Size.Width - 10, splitContainer2.Panel2.Size.Height - 6);
+        }
+
+        private void _tpOutput_Resize(object sender, EventArgs e)
+        {
+            _rtbScriptOutput.Size =
+                new Size(_tpOutput.Size.Width - (_rtbScriptOutput.Margin.Left + _rtbScriptOutput.Margin.Right),
+                    _tpOutput.Size.Height - (_rtbScriptOutput.Margin.Top + _rtbScriptOutput.Margin.Bottom));
+            _rtbScriptOutput.ScrollToCaret();
+        }
+
+        private void splitContainer1_Panel1_Resize(object sender, EventArgs e)
+        {
+            splitContainer2.Size = new Size(
+                splitContainer1.Panel1.Size.Width - (splitContainer2.Margin.Left + splitContainer2.Margin.Right),
+                splitContainer1.Panel1.Size.Height - (splitContainer2.Margin.Top + splitContainer2.Margin.Bottom));
+        }
+
+        private void FormsGreyHackCompiler_Resize(object sender, EventArgs e)
+        {
+            splitContainer1.Size = new Size(
+                Size.Width - (splitContainer1.Margin.Left + splitContainer1.Margin.Right),
+                Size.Height - 92);
+        }
+
+        private void splitContainer2_Panel1_Resize(object sender, EventArgs e)
+        {
+            splitContainer3.Size = new Size(
+                splitContainer2.Panel1.Size.Width - (splitContainer3.Margin.Left + splitContainer3.Margin.Right),
+                splitContainer2.Panel1.Size.Height - (splitContainer3.Margin.Top + splitContainer3.Margin.Bottom));
+        }
+
+        private void splitContainer3_Panel2_Resize(object sender, EventArgs e)
+        {
+            _rtbOutput.Size = new Size(
+                splitContainer3.Panel2.Size.Width - (_rtbOutput.Margin.Left + _rtbOutput.Margin.Right),
+                splitContainer3.Panel2.Size.Height - (_rtbOutput.Margin.Top + _rtbOutput.Margin.Bottom));
+        }
+
+        private void splitContainer3_Panel1_Resize(object sender, EventArgs e)
+        {
+            _rtbInput.Size = new Size(
+                splitContainer3.Panel1.Size.Width - (_rtbInput.Margin.Left + _rtbInput.Margin.Right),
+                splitContainer3.Panel1.Size.Height - (_rtbInput.Margin.Top + _rtbInput.Margin.Bottom));
         }
     }
 

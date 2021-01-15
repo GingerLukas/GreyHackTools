@@ -49,6 +49,9 @@ namespace FormsCompiler
             this._btnDebuggerRun = new System.Windows.Forms.ToolStripButton();
             this._rtbOutput = new FastColoredTextBoxNS.FastColoredTextBox();
             this._rtbInput = new FastColoredTextBoxNS.FastColoredTextBox();
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.splitContainer3 = new System.Windows.Forms.SplitContainer();
             this._grpOptimization.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._dgvVariables)).BeginInit();
             this._tcBottom.SuspendLayout();
@@ -56,6 +59,18 @@ namespace FormsCompiler
             this._tools.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this._rtbOutput)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this._rtbInput)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
+            this.splitContainer1.Panel2.SuspendLayout();
+            this.splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
+            this.splitContainer2.Panel1.SuspendLayout();
+            this.splitContainer2.Panel2.SuspendLayout();
+            this.splitContainer2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).BeginInit();
+            this.splitContainer3.Panel1.SuspendLayout();
+            this.splitContainer3.Panel2.SuspendLayout();
+            this.splitContainer3.SuspendLayout();
             this.SuspendLayout();
             // 
             // _btnCompile
@@ -65,7 +80,7 @@ namespace FormsCompiler
             this._btnCompile.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this._btnCompile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this._btnCompile.ForeColor = System.Drawing.Color.Transparent;
-            this._btnCompile.Location = new System.Drawing.Point(342, 414);
+            this._btnCompile.Location = new System.Drawing.Point(15, 418);
             this._btnCompile.Name = "_btnCompile";
             this._btnCompile.Size = new System.Drawing.Size(151, 23);
             this._btnCompile.TabIndex = 1;
@@ -76,7 +91,7 @@ namespace FormsCompiler
             // _cbOptimize
             // 
             this._cbOptimize.AutoSize = true;
-            this._cbOptimize.Location = new System.Drawing.Point(342, 364);
+            this._cbOptimize.Location = new System.Drawing.Point(15, 368);
             this._cbOptimize.Name = "_cbOptimize";
             this._cbOptimize.Size = new System.Drawing.Size(123, 19);
             this._cbOptimize.TabIndex = 4;
@@ -90,7 +105,7 @@ namespace FormsCompiler
             this._grpOptimization.Controls.Add(this._cbIgnoreMapIndexes);
             this._grpOptimization.Enabled = false;
             this._grpOptimization.ForeColor = System.Drawing.SystemColors.Control;
-            this._grpOptimization.Location = new System.Drawing.Point(341, 258);
+            this._grpOptimization.Location = new System.Drawing.Point(14, 262);
             this._grpOptimization.Name = "_grpOptimization";
             this._grpOptimization.Size = new System.Drawing.Size(152, 100);
             this._grpOptimization.TabIndex = 6;
@@ -111,7 +126,7 @@ namespace FormsCompiler
             // _cbRemoveComments
             // 
             this._cbRemoveComments.AutoSize = true;
-            this._cbRemoveComments.Location = new System.Drawing.Point(342, 389);
+            this._cbRemoveComments.Location = new System.Drawing.Point(15, 393);
             this._cbRemoveComments.Name = "_cbRemoveComments";
             this._cbRemoveComments.Size = new System.Drawing.Size(129, 19);
             this._cbRemoveComments.TabIndex = 7;
@@ -126,7 +141,7 @@ namespace FormsCompiler
             this._btnDebugStep.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this._btnDebugStep.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this._btnDebugStep.ForeColor = System.Drawing.Color.Transparent;
-            this._btnDebugStep.Location = new System.Drawing.Point(442, 214);
+            this._btnDebugStep.Location = new System.Drawing.Point(115, 218);
             this._btnDebugStep.Name = "_btnDebugStep";
             this._btnDebugStep.Size = new System.Drawing.Size(51, 23);
             this._btnDebugStep.TabIndex = 8;
@@ -151,11 +166,11 @@ namespace FormsCompiler
             dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.Control;
             dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this._dgvVariables.DefaultCellStyle = dataGridViewCellStyle1;
-            this._dgvVariables.Location = new System.Drawing.Point(341, 28);
+            this._dgvVariables.Location = new System.Drawing.Point(3, 6);
             this._dgvVariables.Name = "_dgvVariables";
             this._dgvVariables.RowHeadersVisible = false;
             this._dgvVariables.RowTemplate.Height = 25;
-            this._dgvVariables.Size = new System.Drawing.Size(152, 180);
+            this._dgvVariables.Size = new System.Drawing.Size(185, 180);
             this._dgvVariables.TabIndex = 10;
             // 
             // _status
@@ -164,7 +179,7 @@ namespace FormsCompiler
             this._status.Location = new System.Drawing.Point(0, 549);
             this._status.Name = "_status";
             this._status.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
-            this._status.Size = new System.Drawing.Size(832, 22);
+            this._status.Size = new System.Drawing.Size(835, 22);
             this._status.TabIndex = 11;
             this._status.Text = "statusStrip1";
             // 
@@ -172,10 +187,10 @@ namespace FormsCompiler
             // 
             this._tcBottom.Alignment = System.Windows.Forms.TabAlignment.Bottom;
             this._tcBottom.Controls.Add(this._tpOutput);
-            this._tcBottom.Location = new System.Drawing.Point(12, 443);
+            this._tcBottom.Location = new System.Drawing.Point(3, 3);
             this._tcBottom.Name = "_tcBottom";
             this._tcBottom.SelectedIndex = 0;
-            this._tcBottom.Size = new System.Drawing.Size(810, 100);
+            this._tcBottom.Size = new System.Drawing.Size(584, 94);
             this._tcBottom.TabIndex = 12;
             // 
             // _tpOutput
@@ -186,19 +201,20 @@ namespace FormsCompiler
             this._tpOutput.Location = new System.Drawing.Point(4, 4);
             this._tpOutput.Name = "_tpOutput";
             this._tpOutput.Padding = new System.Windows.Forms.Padding(3);
-            this._tpOutput.Size = new System.Drawing.Size(802, 72);
+            this._tpOutput.Size = new System.Drawing.Size(576, 66);
             this._tpOutput.TabIndex = 0;
             this._tpOutput.Text = "Output";
+            this._tpOutput.Resize += new System.EventHandler(this._tpOutput_Resize);
             // 
             // _rtbScriptOutput
             // 
             this._rtbScriptOutput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(37)))), ((int)(((byte)(37)))));
             this._rtbScriptOutput.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this._rtbScriptOutput.ForeColor = System.Drawing.SystemColors.Control;
-            this._rtbScriptOutput.Location = new System.Drawing.Point(4, 4);
+            this._rtbScriptOutput.Location = new System.Drawing.Point(3, 3);
             this._rtbScriptOutput.Name = "_rtbScriptOutput";
             this._rtbScriptOutput.ReadOnly = true;
-            this._rtbScriptOutput.Size = new System.Drawing.Size(795, 65);
+            this._rtbScriptOutput.Size = new System.Drawing.Size(570, 60);
             this._rtbScriptOutput.TabIndex = 0;
             this._rtbScriptOutput.Text = "";
             // 
@@ -210,7 +226,7 @@ namespace FormsCompiler
             this._tools.Location = new System.Drawing.Point(0, 0);
             this._tools.Name = "_tools";
             this._tools.RenderMode = System.Windows.Forms.ToolStripRenderMode.System;
-            this._tools.Size = new System.Drawing.Size(832, 25);
+            this._tools.Size = new System.Drawing.Size(835, 25);
             this._tools.TabIndex = 14;
             this._tools.Text = "toolStrip1";
             this._tools.ItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this._tools_ItemClicked);
@@ -245,16 +261,15 @@ namespace FormsCompiler
             this._rtbOutput.CharWidth = 8;
             this._rtbOutput.Cursor = System.Windows.Forms.Cursors.IBeam;
             this._rtbOutput.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
-            this._rtbOutput.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this._rtbOutput.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
             this._rtbOutput.IsReplaceMode = false;
-            this._rtbOutput.Location = new System.Drawing.Point(499, 28);
+            this._rtbOutput.Location = new System.Drawing.Point(3, 3);
             this._rtbOutput.Name = "_rtbOutput";
             this._rtbOutput.Paddings = new System.Windows.Forms.Padding(0);
             this._rtbOutput.ReadOnly = true;
             this._rtbOutput.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
             this._rtbOutput.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("_rtbOutput.ServiceColors")));
-            this._rtbOutput.Size = new System.Drawing.Size(323, 409);
+            this._rtbOutput.Size = new System.Drawing.Size(398, 391);
             this._rtbOutput.TabIndex = 17;
             this._rtbOutput.Zoom = 100;
             this._rtbOutput.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this._rtbOutput_TextChanged);
@@ -275,47 +290,100 @@ namespace FormsCompiler
         '\''};
             this._rtbInput.AutoIndentCharsPatterns = "^\\s*[\\w\\.]+(\\s\\w+)?\\s*(?<range>=)\\s*(?<range>[^;=]+);\n^\\s*(case|default)\\s*[^:]*(" +
     "?<range>:)\\s*(?<range>[^;]+);";
-            this._rtbInput.AutoScrollMinSize = new System.Drawing.Size(187, 42);
+            this._rtbInput.AutoScrollMinSize = new System.Drawing.Size(27, 14);
             this._rtbInput.BackBrush = null;
             this._rtbInput.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
             this._rtbInput.CharHeight = 14;
             this._rtbInput.CharWidth = 8;
             this._rtbInput.Cursor = System.Windows.Forms.Cursors.IBeam;
             this._rtbInput.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
-            this._rtbInput.Font = new System.Drawing.Font("Courier New", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this._rtbInput.IndentBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
             this._rtbInput.IsReplaceMode = false;
-            this._rtbInput.Location = new System.Drawing.Point(12, 28);
+            this._rtbInput.Location = new System.Drawing.Point(3, 3);
             this._rtbInput.Name = "_rtbInput";
             this._rtbInput.Paddings = new System.Windows.Forms.Padding(0);
             this._rtbInput.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
             this._rtbInput.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("_rtbInput.ServiceColors")));
-            this._rtbInput.Size = new System.Drawing.Size(319, 409);
+            this._rtbInput.Size = new System.Drawing.Size(170, 391);
             this._rtbInput.TabIndex = 18;
             this._rtbInput.Zoom = 100;
             this._rtbInput.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this._rtbInput_TextChanged);
+            // 
+            // splitContainer1
+            // 
+            this.splitContainer1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.splitContainer1.Location = new System.Drawing.Point(0, 28);
+            this.splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.splitContainer2);
+            this.splitContainer1.Panel1.Resize += new System.EventHandler(this.splitContainer1_Panel1_Resize);
+            // 
+            // splitContainer1.Panel2
+            // 
+            this.splitContainer1.Panel2.Controls.Add(this._dgvVariables);
+            this.splitContainer1.Panel2.Controls.Add(this._grpOptimization);
+            this.splitContainer1.Panel2.Controls.Add(this._btnCompile);
+            this.splitContainer1.Panel2.Controls.Add(this._cbOptimize);
+            this.splitContainer1.Panel2.Controls.Add(this._btnDebugStep);
+            this.splitContainer1.Panel2.Controls.Add(this._cbRemoveComments);
+            this.splitContainer1.Size = new System.Drawing.Size(832, 518);
+            this.splitContainer1.SplitterDistance = 627;
+            this.splitContainer1.TabIndex = 19;
+            // 
+            // splitContainer2
+            // 
+            this.splitContainer2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.splitContainer2.Location = new System.Drawing.Point(3, 3);
+            this.splitContainer2.Name = "splitContainer2";
+            this.splitContainer2.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer2.Panel1
+            // 
+            this.splitContainer2.Panel1.Controls.Add(this.splitContainer3);
+            this.splitContainer2.Panel1.Resize += new System.EventHandler(this.splitContainer2_Panel1_Resize);
+            // 
+            // splitContainer2.Panel2
+            // 
+            this.splitContainer2.Panel2.Controls.Add(this._tcBottom);
+            this.splitContainer2.Panel2.Resize += new System.EventHandler(this.splitContainer2_Panel2_Resize);
+            this.splitContainer2.Size = new System.Drawing.Size(619, 510);
+            this.splitContainer2.SplitterDistance = 404;
+            this.splitContainer2.TabIndex = 19;
+            // 
+            // splitContainer3
+            // 
+            this.splitContainer3.Location = new System.Drawing.Point(3, 2);
+            this.splitContainer3.Name = "splitContainer3";
+            // 
+            // splitContainer3.Panel1
+            // 
+            this.splitContainer3.Panel1.Controls.Add(this._rtbInput);
+            this.splitContainer3.Panel1.Resize += new System.EventHandler(this.splitContainer3_Panel1_Resize);
+            // 
+            // splitContainer3.Panel2
+            // 
+            this.splitContainer3.Panel2.Controls.Add(this._rtbOutput);
+            this.splitContainer3.Panel2.Resize += new System.EventHandler(this.splitContainer3_Panel2_Resize);
+            this.splitContainer3.Size = new System.Drawing.Size(611, 397);
+            this.splitContainer3.SplitterDistance = 203;
+            this.splitContainer3.TabIndex = 19;
             // 
             // FormsGreyHackCompiler
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.AutoSize = true;
+            this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(28)))), ((int)(((byte)(28)))), ((int)(((byte)(28)))));
-            this.ClientSize = new System.Drawing.Size(832, 571);
-            this.Controls.Add(this._rtbInput);
-            this.Controls.Add(this._rtbOutput);
+            this.ClientSize = new System.Drawing.Size(835, 571);
+            this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this._tools);
             this.Controls.Add(this._status);
-            this.Controls.Add(this._tcBottom);
-            this.Controls.Add(this._dgvVariables);
-            this.Controls.Add(this._btnDebugStep);
-            this.Controls.Add(this._cbRemoveComments);
-            this.Controls.Add(this._grpOptimization);
-            this.Controls.Add(this._cbOptimize);
-            this.Controls.Add(this._btnCompile);
             this.ForeColor = System.Drawing.SystemColors.Control;
             this.Name = "FormsGreyHackCompiler";
             this.Text = "Ginger\'s G++ compiler";
+            this.Resize += new System.EventHandler(this.FormsGreyHackCompiler_Resize);
             this._grpOptimization.ResumeLayout(false);
             this._grpOptimization.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this._dgvVariables)).EndInit();
@@ -325,6 +393,19 @@ namespace FormsCompiler
             this._tools.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this._rtbOutput)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this._rtbInput)).EndInit();
+            this.splitContainer1.Panel1.ResumeLayout(false);
+            this.splitContainer1.Panel2.ResumeLayout(false);
+            this.splitContainer1.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
+            this.splitContainer1.ResumeLayout(false);
+            this.splitContainer2.Panel1.ResumeLayout(false);
+            this.splitContainer2.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
+            this.splitContainer2.ResumeLayout(false);
+            this.splitContainer3.Panel1.ResumeLayout(false);
+            this.splitContainer3.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer3)).EndInit();
+            this.splitContainer3.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -346,6 +427,9 @@ namespace FormsCompiler
         private System.Windows.Forms.ToolStripButton _btnDebuggerRun;
         private FastColoredTextBoxNS.FastColoredTextBox _rtbOutput;
         private FastColoredTextBoxNS.FastColoredTextBox _rtbInput;
+        private System.Windows.Forms.SplitContainer splitContainer1;
+        private System.Windows.Forms.SplitContainer splitContainer2;
+        private System.Windows.Forms.SplitContainer splitContainer3;
     }
 }
 

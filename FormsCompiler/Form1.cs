@@ -16,24 +16,42 @@ namespace FormsCompiler
 {
     public partial class FormsGreyHackCompiler : Form
     {
-        private Interpreter _interpreter;
+        private GreyHackDebugger _debugger;
+        private TabPage _prevPage;
+
         public FormsGreyHackCompiler()
         {
+            _debugger = new GreyHackDebugger();
+            _debugger.AutomaticallyClearDebugVariables = false;
+            
             InitializeComponent();
             
-            _dgvVariables.DataSource = _debugVariables;
-            
-            _interpreter = new Interpreter(_rtbOutput.Text);
-            _interpreter.standardOutput = s => _rtbScriptOutput.Invoke(() =>
+            _dgvVariables.DataSource = _debugger.DebugVariables;
+
+            SetupInterpreter();
+
+            _rtbOutput.BookmarkColor = Color.Brown;
+
+            SetupDemoUi();
+
+            SetupEvents();
+        }
+
+        #region Setup
+
+        private void SetupInterpreter()
+        {
+            _debugger.Interpreter.standardOutput = s => _rtbScriptOutput.Invoke(() =>
             {
                 _rtbScriptOutput.AppendText(s + '\n');
                 _rtbScriptOutput.ScrollToCaret();
             });
-            _interpreter.errorOutput = _interpreter.standardOutput;
-            _interpreter.implicitOutput = _interpreter.standardOutput;
+            _debugger.Interpreter.errorOutput = _debugger.Interpreter.standardOutput;
+            _debugger.Interpreter.implicitOutput = _debugger.Interpreter.standardOutput;
+        }
 
-            _rtbOutput.BookmarkColor = Color.Brown;
-
+        private void SetupDemoUi()
+        {
             this._rtbInput.Text = @"for (i in range(0,10)){ print(i) }
 //
 //
@@ -57,6 +75,22 @@ if (true) {}";
             splitContainer3.SplitterDistance = splitContainer3.Size.Width / 2;
         }
 
+        private void SetupEvents()
+        {
+            _btnDebuggerRun.Click += BtnDebuggerRunOnClick;
+            _btnDebuggerStep.Click += BtnDebuggerStepOnClick;
+            _btnDebuggerStop.Click += BtnDebuggerStopOnClick;
+
+            _debugger.Started += OnDebuggerStarted;
+            _debugger.Ended += OnDebuggerEnded;
+            _debugger.Step += OnDebuggerStep;
+        }
+
+        
+
+        #endregion
+
+
         private void Compile()
         {
             GreyHackCompiler.Settings settings = GreyHackCompiler.Settings.None;
@@ -69,105 +103,174 @@ if (true) {}";
             }
         }
 
-        private int _line = 0;
-        private string[] _codeLines;
-        private bool _debuggerActive = false;
-        private HashSet<int> _breakpointLines = new HashSet<int>();
-        private BindingList<DebugVariable> _debugVariables = new BindingList<DebugVariable>();
-        private EventWaitHandle debugWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
-        private Task _debugerTask = Task.CompletedTask;
-        private void StartDebugger()
+
+        #region Debugger
+
+        #region UI
+
+        private void BtnDebuggerStepOnClick(object? sender, EventArgs e)
         {
-            if (!_debugerTask.IsCompleted) return;
-            _rtbInput.ReadOnly = true;
-            _codeLines = _rtbOutput.Text.Split(new[] { "\n", "\r\n" }, StringSplitOptions.None);
+            _debugger.NextStep();
+        }
 
-            _interpreter.Reset(_rtbOutput.Text);
-
-            _debugVariables.Clear();
-            _debugerTask = Task.Run(() =>
+        private void BtnDebuggerRunOnClick(object? sender, EventArgs e)
+        {
+            if (_debugger.Running)
             {
-                _line = 0;
-                _debuggerActive = false;
-                _status.Invoke(() => _status.BackColor = Color.FromArgb(202, 81, 0));
-                try
+                _debugger.Continue();
+            }
+            else
+            {
+                _debugger.Start();
+            }
+        }
+        private void BtnDebuggerStopOnClick(object? sender, EventArgs e)
+        {
+            _debugger.Stop();
+        }
+
+        #endregion
+
+        #region Events
+
+        private void OnDebuggerStarted(GreyHackDebugger debugger)
+        {
+            Compile();
+            _rtbInput.ReadOnly = true;
+
+            debugger.Interpreter.Reset(_rtbOutput.Text);
+            debugger.DebugVariables.Clear();
+            
+            _status.BackColor = Color.FromArgb(202, 81, 0);
+            _prevPage = _tcRight.SelectedTab;
+            _tcRight.SelectTab(_tpDebug);
+
+            _btnDebuggerRun.Text = "Continue";
+        }
+
+        private void OnDebuggerEnded(GreyHackDebugger debugger)
+        {
+            _dgvVariables.Invoke(() => debugger.DebugVariables.Clear());
+
+            _rtbOutput.Invoke(UpdateBreakPoints);
+            _status.Invoke(() => _status.BackColor = Color.FromArgb(0, 122, 204));
+            _tcRight.Invoke(() => _tcRight.SelectTab(_prevPage));
+            _rtbInput.ReadOnly = false;
+
+            _btnDebuggerRun.Text = "Run";
+        }
+
+        private void OnDebuggerStep(GreyHackDebugger debugger,TAC.Context context, int lastLine, int currentLine)
+        {
+            //line highlight
+            _rtbOutput.Invoke(() =>
+            {
+                _rtbOutput.HighlightLine(lastLine - 1, null);
+                UpdateBreakPoints();
+                _rtbOutput.HighlightLine(currentLine - 1, Color.Brown);
+                _rtbOutput.Invalidate();
+            });
+
+            //variables update
+            _dgvVariables.Invoke(() =>
+            {
+                debugger.DebugVariables.Clear();
+                if (context.variables == null) return;
+                foreach (Value key in context.variables.Keys)
                 {
-                    _interpreter.RunUntilDone(Double.MaxValue, true, m =>
-                    {
-                        TAC.Context context = m.stack.Peek();
-                        if (context.code[context.lineNum].location == null)
-                        {
-                            //_rtbOutput.Invoke(UpdateBreakPoints);
-                            debugWaitHandle.Set();
-                            return;
-                        }
-
-                        if (context.lineNum >= context.code.Count || context.code[context.lineNum].location.lineNum == _line)
-                        {
-                            debugWaitHandle.Set();
-                            return;
-                        }
-
-                        int lastLine = _line;
-                        _line = context.code[context.lineNum].location.lineNum;
-                        if (!(_debuggerActive || _breakpointLines.Contains(_line)))
-                        {
-                            debugWaitHandle.Set();
-                            return;
-                        }
-
-                        _debuggerActive = true;
-                        _rtbOutput.Invoke(() =>
-                        {
-                            _rtbOutput.HighlightLine(lastLine - 1, null);
-                            UpdateBreakPoints();
-                            _rtbOutput.HighlightLine(_line - 1, Color.Brown);
-                            _rtbOutput.Invalidate();
-                        });
-                        _dgvVariables.Invoke(() =>
-                        {
-                            _debugVariables.Clear();
-                            if (context.variables == null) return;
-                            foreach (Value key in context.variables.Keys)
-                            {
-                                _debugVariables.Add(new DebugVariable()
-                                    { Name = key.ToString(), Value = context.variables[key.ToString()].ToString() });
-                            }
-                        });
-                    }, debugWaitHandle);
+                    debugger.DebugVariables.Add(new DebugVariable()
+                        { Name = key.ToString(), Value = context.variables[key.ToString()].ToString() });
                 }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e.Message, "Runtime error");
-                }
-
-                _dgvVariables.Invoke(() => _debugVariables.Clear());
-                _rtbOutput.Invoke(UpdateBreakPoints);
-                _status.Invoke(() => _status.BackColor = Color.FromArgb(0, 122, 204));
-                _rtbInput.ReadOnly = false;
             });
         }
+
+        #endregion
+
+        #endregion
+
+        #region Breakpoints
 
         private void UpdateBreakPoints()
         {
             _rtbOutput.Bookmarks.Clear();
             _rtbOutput.ResetHighlight();
-            foreach (int line in _breakpointLines)
+            foreach (int line in _debugger.BreakpointLines)
             {
-                _rtbOutput.BookmarkLine(line-1);
+                _rtbOutput.BookmarkLine(line - 1);
                 _rtbOutput.HighlightLine(line - 1, Color.FromArgb(100, Color.Brown));
             }
+        }
+
+        private void _rtbOutput_LineClicked(object sender, LineClickedEventArgs e)
+        {
+            int line = e.Line + 1;
+            if (_debugger.BreakpointLines.Contains(line))
+            {
+                _debugger.BreakpointLines.Remove(line);
+            }
+            else
+            {
+                _debugger.BreakpointLines.Add(line);
+            }
+            UpdateBreakPoints();
+        }
+
+        #endregion
+
+        #region Resize
+
+        private void splitContainer2_Panel2_Resize(object sender, EventArgs e)
+        {
+            _tcBottom.ResizeToFit(splitContainer2.Panel2);
+        }
+
+        private void _tpOutput_Resize(object sender, EventArgs e)
+        {
+            _rtbScriptOutput.ResizeToFit(_tpOutput);
+            _rtbScriptOutput.ScrollToCaret();
+        }
+
+        private void splitContainer1_Panel1_Resize(object sender, EventArgs e)
+        {
+            splitContainer2.ResizeToFit(splitContainer1.Panel1);
+        }
+
+        private void FormsGreyHackCompiler_Resize(object sender, EventArgs e)
+        {
+            //why 10? no idea.
+            splitContainer1.Size = new Size(
+                Size.Width - (splitContainer1.Margin.Left + splitContainer1.Margin.Right+10),
+                Size.Height - 92);
+        }
+
+        private void splitContainer2_Panel1_Resize(object sender, EventArgs e)
+        {
+            splitContainer3.ResizeToFit(splitContainer2.Panel1);
+        }
+
+        private void splitContainer3_Panel2_Resize(object sender, EventArgs e)
+        {
+            _rtbOutput.ResizeToFit(splitContainer3.Panel2,3);
+        }
+
+        private void splitContainer3_Panel1_Resize(object sender, EventArgs e)
+        {
+            _rtbInput.ResizeToFit(splitContainer3.Panel1,3);
+        }
+
+        #endregion
+
+        #region StateChanged
+
+        private void _rtbOutput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateBreakPoints();
         }
 
         private void _cbOptimize_CheckedChanged(object sender, EventArgs e)
         {
             _grpOptimization.Enabled = _cbOptimize.Checked;
 
-            Compile();
-        }
-
-        private void _btnCompile_Click(object sender, EventArgs e)
-        {
             Compile();
         }
 
@@ -181,104 +284,34 @@ if (true) {}";
             Compile();
         }
 
-        
-        private void _btnDebugStep_Click(object sender, EventArgs e)
-        {
-            debugWaitHandle.Set();
-        }
-
-        private void _tools_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
-        {
-            if (e.ClickedItem == _btnDebuggerRun)
-            {
-                StartDebugger();
-            }
-        }
-
         private void _rtbInput_TextChanged(object sender, FastColoredTextBoxNS.TextChangedEventArgs e)
         {
             Compile();
         }
 
-        private void _rtbOutput_LineClicked(object sender, LineClickedEventArgs e)
-        {
-            int line = e.Line + 1;
-            if (_breakpointLines.Contains(line))
-            {
-                _breakpointLines.Remove(line);
-            }
-            else
-            {
-                _breakpointLines.Add(line);
-            }
-            UpdateBreakPoints();
-        }
+        #endregion
 
-        private void _rtbOutput_TextChanged(object sender, TextChangedEventArgs e)
+        private void splitContainer1_Panel2_Resize(object sender, EventArgs e)
         {
-            UpdateBreakPoints();
-        }
-
-        private void splitContainer2_Panel2_Resize(object sender, EventArgs e)
-        {
-            _tcBottom.Size = new Size(splitContainer2.Panel2.Size.Width - 10, splitContainer2.Panel2.Size.Height - 6);
-        }
-
-        private void _tpOutput_Resize(object sender, EventArgs e)
-        {
-            _rtbScriptOutput.Size =
-                new Size(_tpOutput.Size.Width - (_rtbScriptOutput.Margin.Left + _rtbScriptOutput.Margin.Right),
-                    _tpOutput.Size.Height - (_rtbScriptOutput.Margin.Top + _rtbScriptOutput.Margin.Bottom));
-            _rtbScriptOutput.ScrollToCaret();
-        }
-
-        private void splitContainer1_Panel1_Resize(object sender, EventArgs e)
-        {
-            splitContainer2.Size = new Size(
-                splitContainer1.Panel1.Size.Width - (splitContainer2.Margin.Left + splitContainer2.Margin.Right),
-                splitContainer1.Panel1.Size.Height - (splitContainer2.Margin.Top + splitContainer2.Margin.Bottom));
-        }
-
-        private void FormsGreyHackCompiler_Resize(object sender, EventArgs e)
-        {
-            splitContainer1.Size = new Size(
-                Size.Width - (splitContainer1.Margin.Left + splitContainer1.Margin.Right),
-                Size.Height - 92);
-        }
-
-        private void splitContainer2_Panel1_Resize(object sender, EventArgs e)
-        {
-            splitContainer3.Size = new Size(
-                splitContainer2.Panel1.Size.Width - (splitContainer3.Margin.Left + splitContainer3.Margin.Right),
-                splitContainer2.Panel1.Size.Height - (splitContainer3.Margin.Top + splitContainer3.Margin.Bottom));
-        }
-
-        private void splitContainer3_Panel2_Resize(object sender, EventArgs e)
-        {
-            _rtbOutput.Size = new Size(
-                splitContainer3.Panel2.Size.Width - (_rtbOutput.Margin.Left + _rtbOutput.Margin.Right),
-                splitContainer3.Panel2.Size.Height - (_rtbOutput.Margin.Top + _rtbOutput.Margin.Bottom));
-        }
-
-        private void splitContainer3_Panel1_Resize(object sender, EventArgs e)
-        {
-            _rtbInput.Size = new Size(
-                splitContainer3.Panel1.Size.Width - (_rtbInput.Margin.Left + _rtbInput.Margin.Right),
-                splitContainer3.Panel1.Size.Height - (_rtbInput.Margin.Top + _rtbInput.Margin.Bottom));
+            _tcRight.ResizeToFit(splitContainer1.Panel2);
+            //_tcRight.Size = new Size(splitContainer1.Panel2.Size.Width - 18, splitContainer1.Panel2.Size.Height - 6);
         }
     }
 
-    class DebugVariable
-    {
-        public string Name { get; set; }
-        public string Value { get; set; }
-    }
-    
     public static class FormsExtension
     {
         public static void Invoke(this Control control, Action action)
         {
             control.Invoke(action);
         }
+
+        public static void ResizeToFit(this Control control, Control parent,int xOffset = 0, int yOffset = 0)
+        {
+            control.Size = new Size(
+                (parent.Size.Width - (control.Margin.Left + control.Margin.Right + control.Location.X - 1)) + xOffset,
+                (parent.Size.Height - (control.Margin.Top + control.Margin.Bottom + control.Location.Y - 1)) + yOffset);
+        }
     }
+
+    
 }

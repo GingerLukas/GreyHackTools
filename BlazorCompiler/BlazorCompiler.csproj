@@ -3,6 +3,10 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+    <Version>1.0.1</Version>
+    <Authors>Lukáš Šafránek</Authors>
+    <Company>Ginger</Company>
+    <Product>GppCompiler</Product>
   </PropertyGroup>
 
   <ItemGroup>

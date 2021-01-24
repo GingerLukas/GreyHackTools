@@ -31,6 +31,7 @@ function enableBracketCompletion(id) {
             // set textarea value to: text before caret + bracket + text after caret
             this.value = this.value.substring(0, start) +
                 e.key +
+                this.value.substring(start, end) +
                 brackets[e.key] +
                 this.value.substring(end);
 

@@ -38,6 +38,17 @@ namespace GreyHackTools
         public BindingList<DebugVariable> DebugVariables = new BindingList<DebugVariable>();
         private EventWaitHandle _debugWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
         private Task _debugerTask = Task.CompletedTask;
+
+        private bool _intrisicsAdded = false;
+        public GreyHackDebugger()
+        {
+            if (!_intrisicsAdded)
+            {
+                AddIntrisics();
+                _intrisicsAdded = true;
+            }
+        }
+
         public void Start()
         {
             if (!_debugerTask.IsCompleted) return;
@@ -103,6 +114,61 @@ namespace GreyHackTools
             _forceStopped = true;
             _debugWaitHandle.Set();
         }
+
+        private void AddIntrisics()
+        {
+            Intrinsic bitwise = Intrinsic.Create("bitwise");
+            bitwise.AddParam("operator");
+            bitwise.AddParam("num1");
+            bitwise.AddParam("num2");
+            bitwise.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                ValString valString = context.GetVar("operator") as ValString;
+                ValNumber valNumber = context.GetVar("num1") as ValNumber;
+                ValNumber valNumber2 = context.GetVar("num2") as ValNumber;
+                if (valString == null || valNumber == null)
+                {
+                    return Intrinsic.Result.Null;
+                }
+                string value = valString.value;
+                int num = valNumber.IntValue();
+                if (value == "~")
+                {
+                    return new Intrinsic.Result((double)(~num));
+                }
+                if (valNumber2 == null)
+                {
+                    return Intrinsic.Result.Null;
+                }
+                int num2 = valNumber2.IntValue();
+                if (value == "&")
+                {
+                    return new Intrinsic.Result((double)(num & num2));
+                }
+                if (value == "|")
+                {
+                    return new Intrinsic.Result((double)(num | num2));
+                }
+                if (value == "^")
+                {
+                    return new Intrinsic.Result((double)(num ^ num2));
+                }
+                if (value == "<<")
+                {
+                    return new Intrinsic.Result((double)(num << num2));
+                }
+                if (value == ">>")
+                {
+                    return new Intrinsic.Result((double)(num >> num2));
+                }
+                if (value == ">>>")
+                {
+                    return new Intrinsic.Result((double)((uint)num >> num2));
+                }
+                return Intrinsic.Result.Null;
+            };
+        }
+
     }
     public class DebugVariable
     {

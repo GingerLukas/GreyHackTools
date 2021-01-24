@@ -1,0 +1,335 @@
+﻿@page "/compiler"
+@using GreyHackTools
+@using System.Text
+@inject IJSRuntime js
+
+
+<style>
+    .sapalert-toast-box {
+        background-color: rgb(37, 37, 37);
+    }
+
+    body {
+        color: whitesmoke;
+    }
+
+    button:focus {
+        outline: none;
+    }
+
+    textarea {
+        width: 100%;
+        height: 100%;
+        resize: none;
+        border: none;
+        color: whitesmoke;
+        background-color: inherit;
+        padding: 5px;
+    }
+
+    .compiler-bg-main {
+        background-color: rgb(45, 45, 48);
+    }
+
+    .compiler-bg-container {
+        background-color: rgb(28, 28, 28);
+    }
+
+    .compiler-bg-content {
+        background-color: rgb(37, 37, 37);
+    }
+
+    .compiler {
+        grid-template-rows: 80% 1fr;
+        grid-template-columns: 20% 1fr 20%;
+        display: grid;
+        width: 100%;
+        height: 100%;
+    }
+
+    .utilityStrip {
+        grid-column: span 1;
+        margin: 10px;
+        padding: 10px;
+    }
+
+    .compiler-main {
+        padding: 0;
+        grid-template-rows: auto 1fr;
+        grid-auto-columns: 100%;
+        display: grid;
+    }
+
+    .compiler-nav {
+        background: rgb(45, 45, 48);
+        border: none;
+        grid-column: span 1;
+    }
+
+    .compiler-main div {
+        grid-column: span 1;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: whitesmoke;
+        border: none;
+        background-color: rgb(37, 37, 37);
+    }
+    .nav-link {
+        color: whitesmoke;
+        background-color: rgb(40, 40, 40);
+    }
+
+    .nav-tabs .nav-item {
+        margin-bottom: -2px;
+    }
+
+    :focus {
+        outline: none;
+    }
+
+</style>
+
+<SAPToastArea 
+              
+    @ref="ToastArea"
+     ToastAreatPosition="@SAPToastAreatPosition.Right"
+     SAPToastDirection="SAPToastDirection.Column"
+     AnimationType="@AnimateBook.Specials.JackInTheBox"
+>
+
+</SAPToastArea>
+
+@if (ShowDialog)
+{
+
+    <div class="modal fade show d-block" id="compiled-code-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document" style="max-height: 60%; max-width: 50%;">
+            <div class="modal-content compiler-bg-main">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="titleLabel">Compiled code</h5>
+                    <button type="button" class="close" @onclick="() => ShowDialog = false" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="compiled-code" class="compiler-bg-content" style="overflow: auto; height: 60vh;" onclick="this.focus();this.select()" readonly>@OutputCode</textarea>
+                </div>
+                <div class="modal-footer">
+                    <button @onclick="CopyCodeToClipboard" class="btn btn-primary">Copy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+<div class="compiler compiler-bg-main">
+    <div class="utilityStrip compiler-bg-container" style="grid-row: span 2"></div>
+    
+    <!--Main-->
+    <div class="utilityStrip compiler-bg-content compiler-main">
+        <ul class="nav nav-tabs compiler-nav">
+            <li class="nav-item">
+                <button class="nav-link @IsActive(EMainPage.Gpp)" @onclick="() => Page = EMainPage.Gpp">G++</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @IsActive(EMainPage.MiniScript)" @onclick="() => Page = EMainPage.MiniScript">MiniScript</button>
+            </li>
+        </ul>
+        <div>
+            <textarea id="gpp-code" @bind="MainPageContent" spellcheck="false"></textarea>
+        </div>
+    </div>
+
+    <div class="utilityStrip compiler-bg-container" style="grid-row: span 2">
+        <table style="width: 100%">
+            <tr>
+                <td><button @onclick="CompileAndShow" style="width: 100%" class="btn btn-primary">Compile</button></td>
+
+            </tr>
+            <tr>
+                <td style="padding-bottom: 15px;"><button @onclick="StartDebugger" style="width: 100%" class="btn btn-primary">Start Debugger</button></td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="form-check">
+                        <input id="check-optimize" class="form-check-input" type="checkbox" value="" @bind="Optimize" />
+                        <label for="check-optimize" class="form-check-label" >Optimize</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="form-check">
+                        <input id="check-ignore-map" class="form-check-input" type="checkbox" value="" @bind="IgnoreMapIndexes" />
+                        <label for="check-ignore-map" class="form-check-label" >Ignore map indexes</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div class="form-check">
+                        <input id="check-remove-comments" class="form-check-input" type="checkbox" value="" @bind="RemoveComments" />
+                        <label for="check-remove-comments" class="form-check-label" >Remove comments</label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!--Output-->
+    <div class="utilityStrip compiler-bg-container" style="grid-template-rows: 2rem 1fr; grid-template-columns: 100%; display: grid;">
+        <div style="grid-column: span 1">Output:</div>
+        <div style="grid-column: span 1"><textarea id="ms-output" class="compiler-bg-content" readonly></textarea></div>
+        
+    </div>
+</div>
+
+
+
+
+@code {
+    public StringBuilder OutputBuilder { get; set; } = new StringBuilder();
+    public string MainPageContent
+    {
+        get
+        {
+            switch (Page)
+            {
+                case EMainPage.Gpp:
+                    return InputCode;
+                case EMainPage.MiniScript:
+                    Compile();
+                    return OutputCode;
+                default:
+                    return InputCode;
+            }
+        }
+        set
+        {
+            switch (Page)
+            {
+                case EMainPage.Gpp:
+                    InputCode = value;
+                    break;
+                case EMainPage.MiniScript:
+                    break;
+                default:
+                    InputCode = value;
+                    break;
+            }
+        }
+    }
+
+    public string InputCode { get; set; }
+    public string OutputCode { get; set; }
+
+    public GreyHackDebugger GreyHackDebugger { get; set; } = new GreyHackDebugger();
+
+    public bool Optimize { get; set; }
+    public bool IgnoreMapIndexes { get; set; }
+    public bool RemoveComments { get; set; }
+
+    public GreyHackCompiler.Settings Settings
+    {
+        get
+        {
+            GreyHackCompiler.Settings s = GreyHackCompiler.Settings.None;
+            if (IgnoreMapIndexes) s |= GreyHackCompiler.Settings.IgnoreMapVariables;
+            if (RemoveComments) s |= GreyHackCompiler.Settings.RemoveComments;
+            return s;
+        }
+    }
+
+    public bool ShowDialog { get; set; }
+
+    public SAPToastArea ToastArea { get; set; }
+
+    public EMainPage Page { get; set; } = EMainPage.Gpp;
+
+    private string IsActive(EMainPage page)
+    {
+        return page == Page ? "active" : "";
+    }
+
+    void CreateToast(string text, SAPAlertType type, int time = 2)
+    {
+        var toast = new SAPToast
+        {
+            Title = text,
+            AlertType = type,
+            AutoCloseDelay = TimeSpan.FromSeconds(time)
+        };
+        ToastArea.CreateToast(toast);
+    }
+
+    private void CompileAndShow()
+    {
+        Compile();
+        if(string.IsNullOrWhiteSpace(InputCode)) return;
+        ShowDialog = true;
+    }
+
+    private void Compile()
+    {
+        if (string.IsNullOrWhiteSpace(InputCode)) return;
+
+        OutputCode = GreyHackCompiler.Compile(InputCode, Optimize, Settings);
+    }
+
+    private void StartDebugger()
+    {
+        Compile();
+        GreyHackDebugger.Start();
+    }
+
+    private async Task CopyCodeToClipboard()
+    {
+        await js.InvokeVoidAsync("copyToClipboard", OutputCode);
+        CreateToast("Copied to clipboard!", SAPAlertType.Success);
+    }
+
+    protected override void OnInitialized()
+    {
+        GreyHackDebugger.Interpreter.implicitOutput = GreyHackDebugger.Interpreter.standardOutput = output =>
+        {
+            if (OutputBuilder.Length != 0) OutputBuilder.AppendLine();
+            OutputBuilder.Append(output);
+        };
+        GreyHackDebugger.Interpreter.errorOutput = error => CreateToast(error, SAPAlertType.Danger);
+        GreyHackDebugger.Started += GreyHackDebuggerOnStarted;
+        GreyHackDebugger.Ended += GreyHackDebuggerOnEnded;
+
+        InputCode = "for(i in range(10)){\n\tprint(i)\n}";
+    }
+
+
+
+    private void GreyHackDebuggerOnStarted(GreyHackDebugger debugger)
+    {
+        OutputBuilder = new StringBuilder();
+        debugger.Interpreter.Reset(OutputCode);
+        CreateToast("Debugger started", SAPAlertType.Info);
+    }
+
+    private void GreyHackDebuggerOnEnded(GreyHackDebugger debugger)
+    {
+        CreateToast("Debugger returned", SAPAlertType.Info);
+        int maxLen = 10000;
+        js.InvokeVoidAsync("setTextarea", "ms-output", OutputBuilder.ToString(Math.Max(0, OutputBuilder.Length - maxLen), Math.Min(OutputBuilder.Length, maxLen)));
+        js.InvokeVoidAsync("scrollToEnd", "ms-output");
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender) js.InvokeVoidAsync("enableTabAccept", "gpp-code");
+        if (firstRender) js.InvokeVoidAsync("enableBracketCompletion", "gpp-code");
+    }
+
+    public enum EMainPage
+    {
+        Gpp,
+        MiniScript
+    }
+}

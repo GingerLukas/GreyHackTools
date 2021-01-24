@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Miniscript\Miniscript.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Miniscript">
       <HintPath>..\..\miniscript\MiniScript-cs\bin\Debug\Miniscript.dll</HintPath>
     </Reference>

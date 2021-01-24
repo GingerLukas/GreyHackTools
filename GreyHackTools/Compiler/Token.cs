@@ -343,8 +343,8 @@ namespace GreyHackTools
                     {
                         Token node = Next;
                         context.stringBuilders.Push(new StringBuilder());
-
-                        if (Value == "{" && Prev.Value.LastOrDefault() == ')')
+                        
+                        if (Value == "{" && (Prev is Bracket {Custom: true} || Prev.CompareBeginningOfValue("function")))
                         {
                             if (!EndStatement) EndStatement = true;
                             Token t;

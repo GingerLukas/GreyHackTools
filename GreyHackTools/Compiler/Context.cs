@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -22,6 +24,7 @@ namespace GreyHackTools
             internal bool optimizeEnabled = false;
             internal Settings Settings = Settings.None;
             internal HashSet<string> customIgnoreOptimize = new();
+            internal HttpClient httpClient = new HttpClient();
 
             public bool IgnoreOptimize(string value) => _ignoreOptimize.Contains(value) || customIgnoreOptimize.Contains(value);
 

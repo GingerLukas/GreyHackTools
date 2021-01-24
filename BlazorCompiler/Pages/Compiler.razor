@@ -223,7 +223,22 @@
     }
 
     public string InputCode { get; set; }
-    public string OutputCode { get; set; }
+
+    Task compileTask = Task.CompletedTask;
+    private string outCode = null;
+    public string OutputCode
+    {
+        get
+        {
+            if (outCode == null)
+            {
+                return "Loading...";
+            }
+            string s = outCode;
+            outCode = null;
+            return s;
+        }
+    }
 
     public GreyHackDebugger GreyHackDebugger { get; set; } = new GreyHackDebugger();
 
@@ -275,7 +290,8 @@
     {
         if (string.IsNullOrWhiteSpace(InputCode)) return;
 
-        OutputCode = GreyHackCompiler.Compile(InputCode, Optimize, Settings);
+        if (compileTask.IsCompleted) compileTask = Task.Run(() => outCode = GreyHackCompiler.Compile(InputCode, Optimize, Settings)).ContinueWith(x => StateHasChanged());
+
     }
 
     private void StartDebugger()

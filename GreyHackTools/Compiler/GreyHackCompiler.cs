@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -240,7 +241,7 @@ namespace GreyHackTools
         {
             { @"(__)(.*)(_idx)",ETemplate.IterationIndex }, // __var_idx
             { @"(\\)(\S*)",ETemplate.IgnoreOptimization },  // \exact_var_name
-            { @"(\/\/)(.*)$",ETemplate.Comment },           //comment
+            { @"^(\/\/)(.*)$", ETemplate.Comment },           //comment
 
         };
 
@@ -264,7 +265,7 @@ namespace GreyHackTools
         }
 
         #endregion
-
+        
         public static string Compile(string code,bool optimize = false, Settings settings = Settings.None)
         {
             return Tokenize(code,settings).Compile(optimize);

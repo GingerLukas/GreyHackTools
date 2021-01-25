@@ -44,7 +44,7 @@ namespace GreyHackTools
                 }
 
                 context.StringBuilder.Append(Value);
-                if (EndStatement && Next != null && !force) context.StringBuilder.Append(Environment.NewLine);
+                if (EndStatement && Next != null && !force) context.StringBuilder.Append(_separator);
                 return this;
             }
 
@@ -273,7 +273,7 @@ namespace GreyHackTools
                         context.StringBuilder.Append('"');
                     }
 
-                    if (EndStatement) context.StringBuilder.Append(Environment.NewLine);
+                    if (EndStatement) context.StringBuilder.Append(_separator);
                     return this;
                 }
 
@@ -315,9 +315,9 @@ namespace GreyHackTools
                                  tb.Value.Last() == _openingToClosing[Value.Last()])
                         {
                             if (tb.EndStatement && last != null &&
-                                                    !last.EndStatement && !last.Value.Contains(Environment.NewLine))
+                                                    !last.EndStatement && !last.Value.Contains(_separator))
                             {
-                                context.StringBuilder.AppendLine();
+                                context.StringBuilder.Append(_separator);
                             }
 
                             break;
@@ -374,7 +374,7 @@ namespace GreyHackTools
                                 type = "while";
                             }
 
-                            if (t.EndStatement||EndStatement) context.StringBuilder.AppendLine();
+                            if (t.EndStatement||EndStatement) context.StringBuilder.Append(_separator);
                             node = CompileInside(context,false,true,$"end {type}");
                         }
                         else if (Prev is Keyword k && k.Value == "for")
@@ -504,7 +504,7 @@ namespace GreyHackTools
                                     if (!Prev.EndStatement)
                                     {
                                         Prev.EndStatement = true;
-                                        context.StringBuilder.Append(Environment.NewLine);
+                                        context.StringBuilder.Append(_separator);
                                     }
                                 }
                                 else

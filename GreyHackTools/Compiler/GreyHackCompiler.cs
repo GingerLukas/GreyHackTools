@@ -25,6 +25,8 @@ namespace GreyHackTools
 
         #region Internal
 
+        private static string _separator = Environment.NewLine;
+        //private static string _separator = ";";
         private static readonly HashSet<char> _tokenSeparators = new() { ' ', '.', ',', ':'};
         private static readonly HashSet<char> _tokenBrackets = new() { '(', ')', '[', ']', '{', '}', };
         private static readonly HashSet<char> _tokenOperators = new()
@@ -278,9 +280,9 @@ namespace GreyHackTools
                 compiledCode = Compile(code, optimize, settings);
                 return true; 
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                compiledCode = null;
+                compiledCode = e.Message;
                 return false;
             }
         }

@@ -1,45 +1,53 @@
 ﻿function enableTabAccept(id) {
-    document.getElementById(id).addEventListener('keydown',
-        function(e) {
-            if (e.key == 'Tab') {
-                e.preventDefault();
-                var start = this.selectionStart;
-                var end = this.selectionEnd;
+    document.getElementById(id).addEventListener('keydown', (x) => onKeyDownHandler(x, this));
+}
 
-                // set textarea value to: text before caret + tab + text after caret
-                this.value = this.value.substring(0, start) +
-                    "\t" +
-                    this.value.substring(end);
+function getSelectionStart(id) {
+    return document.getElementById(id).selectionStart;
+}
 
-                // put caret at right position again
-                this.selectionStart =
-                    this.selectionEnd = start + 1;
-            }
-        });
+function getSelectionEnd(id) {
+    return document.getElementById(id).selectionEnd;
 }
 
 var brackets = { "(": ")", "[": "]", "{": "}", '"': '"', "'": "'" };
 
 function enableBracketCompletion(id) {
-    
-    document.getElementById(id).addEventListener('keydown', function (e) {
-        if (brackets.hasOwnProperty(e.key)) {
-            e.preventDefault();
-            var start = this.selectionStart;
-            var end = this.selectionEnd;
-            
-            // set textarea value to: text before caret + bracket + text after caret
-            this.value = this.value.substring(0, start) +
-                e.key +
-                this.value.substring(start, end) +
-                brackets[e.key] +
-                this.value.substring(end);
 
-            // put caret at right position again
-            this.selectionStart =
-                this.selectionEnd = start + 1;
-        }
-    });
+    document.getElementById(id).addEventListener('keydown', (x) => onKeyDownHandler(x, this));
+}
+
+function onKeyDownHandler(e,t) {
+    if (e.key == 'Tab') {
+        e.preventDefault();
+        var start = t.selectionStart;
+        var end = t.selectionEnd;
+
+        // set textarea value to: text before caret + tab + text after caret
+        t.value = t.value.substring(0, start) +
+            "\t" +
+            t.value.substring(end);
+
+        // put caret at right position again
+        t.selectionStart =
+            t.selectionEnd = start + 1;
+    }
+    else if (brackets.hasOwnProperty(e.key)) {
+        e.preventDefault();
+        var start = t.selectionStart;
+        var end = t.selectionEnd;
+
+        // set textarea value to: text before caret + bracket + text after caret
+        t.value = t.value.substring(0, start) +
+            e.key +
+            t.value.substring(start, end) +
+            brackets[e.key] +
+            t.value.substring(end);
+
+        // put caret at right position again
+        t.selectionStart =
+            t.selectionEnd = start + 1;
+    }
 }
 
 function copyToClipboard(text) {

@@ -134,11 +134,21 @@
                 <button class="nav-link @IsActive(EMainPage.Gpp)" @onclick="() => Page = EMainPage.Gpp">G++</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link @IsActive(EMainPage.MiniScript)" @onclick="() => Page = EMainPage.MiniScript">MiniScript</button>
+                <button class="nav-link @IsActive(EMainPage.MiniScript)" @onclick="() => { Compile(); Page = EMainPage.MiniScript; }">MiniScript</button>
             </li>
         </ul>
         <div>
-            <textarea id="gpp-code" @bind="MainPageContent" spellcheck="false"></textarea>
+            @switch (Page)
+                {
+                    case EMainPage.Gpp:
+                        <textarea id="gpp-code" @bind="InputCode" onkeydown="onKeyDownHandler(event,this)" spellcheck="false"></textarea>
+                        break;
+                    case EMainPage.MiniScript:
+                        <textarea id="gpp-code" @bind="OutputCode" spellcheck="false" readonly></textarea>
+                        break;
+                }
+
+
         </div>
     </div>
 
@@ -191,54 +201,10 @@
 
 @code {
     public StringBuilder OutputBuilder { get; set; } = new StringBuilder();
-    public string MainPageContent
-    {
-        get
-        {
-            switch (Page)
-            {
-                case EMainPage.Gpp:
-                    return InputCode;
-                case EMainPage.MiniScript:
-                    Compile();
-                    return OutputCode;
-                default:
-                    return InputCode;
-            }
-        }
-        set
-        {
-            switch (Page)
-            {
-                case EMainPage.Gpp:
-                    InputCode = value;
-                    break;
-                case EMainPage.MiniScript:
-                    break;
-                default:
-                    InputCode = value;
-                    break;
-            }
-        }
-    }
+
 
     public string InputCode { get; set; }
-
-    Task compileTask = Task.CompletedTask;
-    private string outCode = null;
-    public string OutputCode
-    {
-        get
-        {
-            if (outCode == null)
-            {
-                return "Loading...";
-            }
-            string s = outCode;
-            outCode = null;
-            return s;
-        }
-    }
+    public string OutputCode { get; set; }
 
     public GreyHackDebugger GreyHackDebugger { get; set; } = new GreyHackDebugger();
 
@@ -290,8 +256,16 @@
     {
         if (string.IsNullOrWhiteSpace(InputCode)) return;
 
-        if (compileTask.IsCompleted) compileTask = Task.Run(() => outCode = GreyHackCompiler.Compile(InputCode, Optimize, Settings)).ContinueWith(x => StateHasChanged());
 
+        if (GreyHackCompiler.TryCompile(InputCode, out string output, Optimize, Settings))
+        {
+            OutputCode = output;
+        }
+        else
+        {
+            CreateToast("Compilation error", SAPAlertType.Danger);
+            OutputCode = output;
+        }
     }
 
     private void StartDebugger()
@@ -348,10 +322,10 @@ print(XOR.Encrypt(enc,""Ginger""))";
         js.InvokeVoidAsync("scrollToEnd", "ms-output");
     }
 
+    private Dictionary<string, string> _autocomplete = new Dictionary<string, string>() {{"(", ")"}, {"[", "]"}, {"{", "}"}, {"\"", "\""}, {"'", "'"}};
+
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender) js.InvokeVoidAsync("enableTabAccept", "gpp-code");
-        if (firstRender) js.InvokeVoidAsync("enableBracketCompletion", "gpp-code");
     }
 
     public enum EMainPage

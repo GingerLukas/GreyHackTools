@@ -4,8 +4,10 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using GreyHackTools.Debugger;
 using Miniscript;
 
 namespace GreyHackTools
@@ -167,7 +169,181 @@ namespace GreyHackTools
                 }
                 return Intrinsic.Result.Null;
             };
-        }
+			Intrinsic intrinsic = Intrinsic.Create("md5");
+			intrinsic.AddParam("value");
+			intrinsic.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+			{
+				ValString valString = context.GetVar("value") as ValString;
+				if (valString == null)
+				{
+					throw new RuntimeException("md5: Invalid arguments");
+				}
+
+				return new Intrinsic.Result(MD5.Calculate(new UTF8Encoding().GetBytes(valString.value)).PadLeft(32, '0'));
+				
+			};
+			Intrinsic intrinsic2 = Intrinsic.Create("reverse");
+			intrinsic2.AddParam("self");
+			intrinsic2.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+			{
+				Value var = context.GetVar("self");
+				if (var is ValList)
+				{
+					((ValList)var).values.Reverse();
+				}
+				return Intrinsic.Result.Null;
+			};
+			Intrinsic intrinsic3 = Intrinsic.Create("join");
+			intrinsic3.AddParam("self");
+			intrinsic3.AddParam("delimiter", " ");
+			intrinsic3.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+			{
+				Value var = context.GetVar("self");
+				string text = context.GetVar("delimiter").ToString();
+				if (!(var is ValList))
+				{
+					return new Intrinsic.Result(var, true);
+				}
+				ValList valList = var as ValList;
+				if ((long)valList.values.Count > 1000000L)
+				{
+					throw new RuntimeException("join: string too large");
+				}
+				if (text.Length > 128)
+				{
+					throw new RuntimeException("join: delimiter too large");
+				}
+				List<string> list = new List<string>(valList.values.Count);
+				for (int i = 0; i < valList.values.Count; i++)
+				{
+					if (valList.values[i] == null)
+					{
+						list.Add("null");
+					}
+					else
+					{
+						list.Add(valList.values[i].ToString());
+					}
+				}
+				return new Intrinsic.Result(string.Join(text, list.ToArray()));
+			};
+			Intrinsic intrinsic4 = Intrinsic.Create("split");
+			intrinsic4.AddParam("self");
+			intrinsic4.AddParam("pattern");
+			intrinsic4.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+			{
+				Value var = context.GetVar("self");
+				ValString valString = context.GetVar("pattern") as ValString;
+				if (var is ValString && valString != null)
+				{
+					string value = valString.value;
+					if (string.IsNullOrEmpty(value))
+					{
+						throw new RuntimeException("split: Invalid arguments");
+					}
+					string value2 = ((ValString)var).value;
+					try
+					{
+						string[] array = Regex.Split(value2, value.Replace(".", "\\."));
+						List<Value> list = new List<Value>(array.Length);
+						for (int i = 0; i < array.Length; i++)
+						{
+							list.Add(new ValString(array[i]));
+						}
+						return new Intrinsic.Result(new ValList(list), true);
+					}
+					catch (Exception ex)
+					{
+						throw new RuntimeException(ex.Message);
+					}
+				}
+				return Intrinsic.Result.Null;
+			};
+			Intrinsic intrinsic5 = Intrinsic.Create("replace");
+			intrinsic5.AddParam("self");
+			intrinsic5.AddParam("oldval");
+			intrinsic5.AddParam("newval");
+			intrinsic5.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+			{
+				Value var = context.GetVar("self");
+				if (!(var is ValString))
+				{
+					throw new TypeException("Type Error: 'replace' requires string");
+				}
+				Value var2 = context.GetVar("oldval");
+				Value var3 = context.GetVar("newval");
+				if (var2 == null || var3 == null)
+				{
+					throw new TypeException("replace: Invalid arguments");
+				}
+				string text = var.ToString();
+				string text2 = var2.ToString();
+				string text3 = var3.ToString();
+				if (string.IsNullOrEmpty(text2))
+				{
+					throw new TypeException("Type Error: 'replace' oldVal can't be empty or null");
+				}
+				if (string.IsNullOrEmpty(text))
+				{
+					return new Intrinsic.Result(text);
+				}
+				int num = 0;
+				while(true)
+				{
+					num = text.IndexOf(text2, num, StringComparison.Ordinal);
+					if (num < 0)
+					{
+						break;
+					}
+					text = text.Substring(0, num) + text3 + text.Substring(num + text2.Length);
+					num += text3.Length;
+				}
+				return new Intrinsic.Result(text);
+			};
+			Intrinsic intrinsic6 = Intrinsic.Create("trim");
+			intrinsic6.AddParam("self");
+			intrinsic6.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+			{
+				Value var = context.GetVar("self");
+				if (var is ValString)
+				{
+					return new Intrinsic.Result(((ValString)var).value.Trim());
+				}
+				return Intrinsic.Result.Null;
+			};
+			Intrinsic intrinsic7 = Intrinsic.Create("lastIndexOf");
+			intrinsic7.AddParam("self");
+			intrinsic7.AddParam("searchStr");
+			intrinsic7.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+			{
+				Value var = context.GetVar("self");
+				ValString valString = context.GetVar("searchStr") as ValString;
+				if (var is ValString && valString != null)
+				{
+					string value = valString.value;
+					return new Intrinsic.Result((double)((ValString)var).value.LastIndexOf(value, StringComparison.Ordinal));
+				}
+				return Intrinsic.Result.Null;
+			};
+			Intrinsic intrinsic8 = Intrinsic.Create("to_int");
+			intrinsic8.AddParam("self");
+			intrinsic8.AddParam("value", new ValString(""));
+			intrinsic8.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+			{
+				Value var = context.GetVar("self");
+				if (!(var is ValString))
+				{
+					return Intrinsic.Result.Null;
+				}
+				string text = var.ToString();
+				int num;
+				if (!string.IsNullOrEmpty(text) && int.TryParse(text, out num))
+				{
+					return new Intrinsic.Result((double)num);
+				}
+				return new Intrinsic.Result(var.ToString());
+			};
+		}
 
     }
     public class DebugVariable

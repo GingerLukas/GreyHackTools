@@ -1,0 +1,75 @@
+{
+	"name": "gpp-compiler",
+	"displayName": "G++ compiler for GreyScript/MiniScript",
+	"description": "This allows you to minify your code and use features like bodies for ifs, loops and functions or even lambda '=>' for functions.",
+	"version": "0.0.3",
+	"publisher": "lukas-safranek",
+	"repository": {
+		"url": "https://github.com/GingerLukas/GreyHackTools",
+		"type": "git"
+	},
+	"engines": {
+		"vscode": "^1.52.0"
+	},
+	"categories": [
+		"Other",
+		"Formatters"
+	],
+	"activationEvents": [
+		"onCommand:gpp.compile",
+		"onCommand:gpp.init",
+		"onView:gppCompilerSettings"
+	],
+	"main": "./out/src/extension",
+	"contributes": {
+		"commands": [
+			{
+				"command": "gpp.compile",
+				"title": "Compile current file",
+				"category": "Gpp"
+			},
+			{
+				"command": "gpp.settings.toggle",
+				"title": "Toggle"
+			}
+		],
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "gpp.compile"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "gpp.settings.toggle",
+					"when": "view == gppCompilerSettings && viewItem == compilerMenuItem",
+					"group": "inline"
+				}
+			]
+		},
+		"views": {
+			"explorer":[
+				{
+					"id": "gppCompilerSettings",
+					"name": "G++ Compiler Settings",
+					"contextualTitle": "G++ COmpiler Settings"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"lint": "eslint . --ext .ts,.tsx",
+		"watch": "tsc -watch -p ./"
+	},
+	"devDependencies": {
+		"@types/node": "^12.12.0",
+		"@types/vscode": "^1.52.0",
+		"@typescript-eslint/eslint-plugin": "^3.0.2",
+		"@typescript-eslint/parser": "^3.0.2",
+		"eslint": "^7.1.0",
+		"typescript": "^4.0.2"
+	},
+	"dependencies": {}
+}

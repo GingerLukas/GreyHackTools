@@ -1517,21 +1517,20 @@ namespace Miniscript {
 		public static ValMap ListType() {
 			if (_listType == null) {
 				_listType = new ValMap();
-				_listType["hasIndex"] = Intrinsic.GetByName("hasIndex").GetFunc();
-				_listType["indexes"] = Intrinsic.GetByName("indexes").GetFunc();
-				_listType["indexOf"] = Intrinsic.GetByName("indexOf").GetFunc();
-				_listType["insert"] = Intrinsic.GetByName("insert").GetFunc();
-				_listType["join"] = Intrinsic.GetByName("join").GetFunc();
-				_listType["len"] = Intrinsic.GetByName("len").GetFunc();
-				_listType["pop"] = Intrinsic.GetByName("pop").GetFunc();
-				_listType["pull"] = Intrinsic.GetByName("pull").GetFunc();
-				_listType["push"] = Intrinsic.GetByName("push").GetFunc();
-				_listType["shuffle"] = Intrinsic.GetByName("shuffle").GetFunc();
-				_listType["sort"] = Intrinsic.GetByName("sort").GetFunc();
-				_listType["sum"] = Intrinsic.GetByName("sum").GetFunc();
+                _listType["hasIndex"] = Intrinsic.GetByName("hasIndex").GetFunc();
+                _listType["indexes"] = Intrinsic.GetByName("indexes").GetFunc();
+                _listType["indexOf"] = Intrinsic.GetByName("indexOf").GetFunc();
+                _listType["len"] = Intrinsic.GetByName("len").GetFunc();
+                _listType["pop"] = Intrinsic.GetByName("pop").GetFunc();
+                _listType["pull"] = Intrinsic.GetByName("pull").GetFunc();
+                _listType["push"] = Intrinsic.GetByName("push").GetFunc();
+                _listType["shuffle"] = Intrinsic.GetByName("shuffle").GetFunc();
+                _listType["sort"] = Intrinsic.GetByName("sort").GetFunc();
+                _listType["sum"] = Intrinsic.GetByName("sum").GetFunc();
                 _listType["remove"] = Intrinsic.GetByName("remove").GetFunc();
-                _listType["replace"] = Intrinsic.GetByName("replace").GetFunc();
                 _listType["values"] = Intrinsic.GetByName("values").GetFunc();
+                _listType["reverse"] = Intrinsic.GetByName("reverse").GetFunc();
+                _listType["join"] = Intrinsic.GetByName("join").GetFunc();
 			}
 			return _listType;
 		}
@@ -1541,22 +1540,25 @@ namespace Miniscript {
 		/// StringType: a static map that represents the String type, and provides
 		/// intrinsic methods that can be invoked on it via dot syntax.
 		/// </summary>
-		public static ValMap StringType() {
+		public static ValMap StringType()
+        {
 			if (_stringType == null) {
-				_stringType = new ValMap();
-				_stringType["hasIndex"] = Intrinsic.GetByName("hasIndex").GetFunc();
-				_stringType["indexes"] = Intrinsic.GetByName("indexes").GetFunc();
-				_stringType["indexOf"] = Intrinsic.GetByName("indexOf").GetFunc();
-				_stringType["insert"] = Intrinsic.GetByName("insert").GetFunc();
-				_stringType["code"] = Intrinsic.GetByName("code").GetFunc();
-				_stringType["len"] = Intrinsic.GetByName("len").GetFunc();
-				_stringType["lower"] = Intrinsic.GetByName("lower").GetFunc();
-				_stringType["val"] = Intrinsic.GetByName("val").GetFunc();
-				_stringType["remove"] = Intrinsic.GetByName("remove").GetFunc();
-                _stringType["replace"] = Intrinsic.GetByName("replace").GetFunc();
-				_stringType["split"] = Intrinsic.GetByName("split").GetFunc();
+                _stringType = new ValMap();
+                _stringType["hasIndex"] = Intrinsic.GetByName("hasIndex").GetFunc();
+                _stringType["indexes"] = Intrinsic.GetByName("indexes").GetFunc();
+                _stringType["indexOf"] = Intrinsic.GetByName("indexOf").GetFunc();
+                _stringType["code"] = Intrinsic.GetByName("code").GetFunc();
+                _stringType["len"] = Intrinsic.GetByName("len").GetFunc();
+                _stringType["lower"] = Intrinsic.GetByName("lower").GetFunc();
+                _stringType["val"] = Intrinsic.GetByName("val").GetFunc();
+                _stringType["remove"] = Intrinsic.GetByName("remove").GetFunc();
                 _stringType["upper"] = Intrinsic.GetByName("upper").GetFunc();
                 _stringType["values"] = Intrinsic.GetByName("values").GetFunc();
+                _stringType["split"] = Intrinsic.GetByName("split").GetFunc();
+                _stringType["replace"] = Intrinsic.GetByName("replace").GetFunc();
+                _stringType["trim"] = Intrinsic.GetByName("trim").GetFunc();
+                _stringType["lastIndexOf"] = Intrinsic.GetByName("lastIndexOf").GetFunc();
+                _stringType["to_int"] = Intrinsic.GetByName("to_int").GetFunc();
 			}
 			return _stringType;
 		}
@@ -1569,16 +1571,15 @@ namespace Miniscript {
 		public static ValMap MapType() {
 			if (_mapType == null) {
 				_mapType = new ValMap();
-				_mapType["hasIndex"] = Intrinsic.GetByName("hasIndex").GetFunc();
-				_mapType["indexes"] = Intrinsic.GetByName("indexes").GetFunc();
-				_mapType["indexOf"] = Intrinsic.GetByName("indexOf").GetFunc();
-				_mapType["len"] = Intrinsic.GetByName("len").GetFunc();
-				_mapType["pop"] = Intrinsic.GetByName("pop").GetFunc();
-				_mapType["push"] = Intrinsic.GetByName("push").GetFunc();
-				_mapType["shuffle"] = Intrinsic.GetByName("shuffle").GetFunc();
-				_mapType["sum"] = Intrinsic.GetByName("sum").GetFunc();
+                _mapType["hasIndex"] = Intrinsic.GetByName("hasIndex").GetFunc();
+                _mapType["indexes"] = Intrinsic.GetByName("indexes").GetFunc();
+                _mapType["indexOf"] = Intrinsic.GetByName("indexOf").GetFunc();
+                _mapType["len"] = Intrinsic.GetByName("len").GetFunc();
+                _mapType["pop"] = Intrinsic.GetByName("pop").GetFunc();
+                _mapType["push"] = Intrinsic.GetByName("push").GetFunc();
+                _mapType["shuffle"] = Intrinsic.GetByName("shuffle").GetFunc();
+                _mapType["sum"] = Intrinsic.GetByName("sum").GetFunc();
                 _mapType["remove"] = Intrinsic.GetByName("remove").GetFunc();
-                _mapType["replace"] = Intrinsic.GetByName("replace").GetFunc();
                 _mapType["values"] = Intrinsic.GetByName("values").GetFunc();
 			}
 			return _mapType;

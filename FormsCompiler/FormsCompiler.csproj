@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GreyHackTools\GreyHackTools.csproj" />
-    <ProjectReference Include="..\Miniscript\Miniscript.csproj" />
   </ItemGroup>
 
   <ItemGroup>

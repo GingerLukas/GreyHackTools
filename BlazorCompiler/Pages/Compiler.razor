@@ -113,7 +113,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <textarea id="compiled-code" class="compiler-bg-content" style="overflow: auto; height: 60vh;" onclick="this.focus();this.select()" readonly>@OutputCode</textarea>
+                    <textarea id="compiled-code" class="compiler-bg-content" style="overflow: auto; height: 60vh; font-family: monospace;" onclick="this.focus();this.select()" readonly>@OutputCode</textarea>
                 </div>
                 <div class="modal-footer">
                     <button @onclick="CopyCodeToClipboard" class="btn btn-primary">Copy</button>
@@ -141,10 +141,10 @@
             @switch (Page)
                 {
                     case EMainPage.Gpp:
-                        <textarea id="gpp-code" @bind="InputCode" onkeydown="onKeyDownHandler(event,this)" spellcheck="false"></textarea>
+                        <textarea id="gpp-code" @bind="InputCode" style="font-family: monospace;" onkeydown="onKeyDownHandler(event,this)" spellcheck="false"></textarea>
                         break;
                     case EMainPage.MiniScript:
-                        <textarea id="gpp-code" @bind="OutputCode" spellcheck="false" readonly></textarea>
+                        <textarea id="gpp-code" @bind="OutputCode" style="font-family: monospace;" spellcheck="false" readonly></textarea>
                         break;
                 }
 
@@ -159,7 +159,7 @@
 
             </tr>
             <tr>
-                <td style="padding-bottom: 15px;"><button @onclick="StartDebugger" style="width: 100%" class="btn btn-primary">Start Debugger</button></td>
+                <td style="padding-bottom: 15px;"><button id="debugger-start" @onclick="StartDebugger" style="width: 100%" class="btn btn-primary">Start Debugger</button></td>
             </tr>
             <tr>
                 <td>
@@ -268,7 +268,8 @@
         }
     }
 
-    private void StartDebugger()
+    [JSInvokable("StartDebugger")]
+    public void StartDebugger()
     {
         Compile();
         GreyHackDebugger.Start();
@@ -287,9 +288,10 @@
             if (OutputBuilder.Length != 0) OutputBuilder.AppendLine();
             OutputBuilder.Append(output);
         };
-        GreyHackDebugger.Interpreter.errorOutput = error => CreateToast(error, SAPAlertType.Danger);
+        GreyHackDebugger.Interpreter.errorOutput = error => CreateToast(error, SAPAlertType.Danger, 0);
         GreyHackDebugger.Started += GreyHackDebuggerOnStarted;
         GreyHackDebugger.Ended += GreyHackDebuggerOnEnded;
+        GreyHackDebugger.RuntimeError += (debugger, exception) => CreateToast(exception.Message, SAPAlertType.Danger, 20);
 
         InputCode = @"XOR = {}
 XOR.Encrypt = (text, key) => {

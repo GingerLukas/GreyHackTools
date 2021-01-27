@@ -1,4 +1,20 @@
-﻿function enableTabAccept(id) {
+﻿
+
+
+
+
+
+document.addEventListener('keydown',(x)=>
+{
+    if (x.ctrlKey && x.key == "Enter") {
+        document.getElementById('debugger-start').click();
+    }
+});
+
+
+
+
+function enableTabAccept(id) {
     document.getElementById(id).addEventListener('keydown', (x) => onKeyDownHandler(x, this));
 }
 

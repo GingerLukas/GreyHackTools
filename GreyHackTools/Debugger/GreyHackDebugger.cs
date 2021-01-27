@@ -341,7 +341,63 @@ namespace GreyHackTools
 				}
 				return new Intrinsic.Result(var.ToString());
 			};
-		}
+			Intrinsic intrinsic9 = Intrinsic.Create("typeof");
+            intrinsic9.AddParam("type_object");
+            intrinsic9.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                Value var = context.GetVar("type_object");
+                if (var == null)
+                {
+                    return new Intrinsic.Result("null");
+                }
+                string resultStr = "undefined";
+                if (var is ValString)
+                {
+                    resultStr = "string";
+                }
+                else if (var is ValList)
+                {
+                    resultStr = "list";
+                }
+                else if (var is ValMap)
+                {
+                    ValMap valMap = var as ValMap;
+                    if (valMap.ContainsKey("classID"))
+                    {
+                        resultStr = valMap["classID"].ToString();
+                    }
+                    else
+                    {
+                        resultStr = "map";
+                    }
+                }
+                else if (var is ValNumber)
+                {
+                    resultStr = "number";
+                }
+                else if (var is ValFunction)
+                {
+                    resultStr = "function";
+                }
+                return new Intrinsic.Result(resultStr);
+            };
+			Intrinsic.Create("clear_screen").code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                return Intrinsic.Result.Null;
+            };
+            Intrinsic intrinsic10 = Intrinsic.Create("exit");
+            intrinsic10.AddParam("msg", new ValString(""));
+            intrinsic10.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                Value var = context.GetVar("msg");
+                if (var != null)
+                {
+                    context.vm.standardOutput(var.ToString());
+                }
+                context.interpreter.vm.Stop();
+                return Intrinsic.Result.Null;
+            };
+        }
 
     }
     public class DebugVariable

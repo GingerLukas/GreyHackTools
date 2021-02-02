@@ -210,7 +210,9 @@ namespace GreyHackTools
 
         private static readonly Dictionary<string, string> _operators = new()
         {
-            {"<<", @"bitwise(""<<"",$a,$b)"},
+            { "&&", @" and " },
+            { "||", @" or " },
+            { "<<", @"bitwise(""<<"",$a,$b)"},
             {">>", @"bitwise("">>"",$a,$b)"},
             {">>>", @"bitwise("">>>"",$a,$b)"},
             {"^^", @"bitwise(""^"",$a,$b)"},

@@ -48,7 +48,7 @@ namespace GreyHackTools
                     typeof(Token.Keyword), new Dictionary<Type, bool>()
                     {
                         {typeof(Token.Keyword), true},
-                        {typeof(Token.Operator), true},
+                        {typeof(Token.Operator), false},
                         {typeof(Token.Variable), true},
                         {typeof(Token.String), false},
                         {typeof(Token.Bracket), false},

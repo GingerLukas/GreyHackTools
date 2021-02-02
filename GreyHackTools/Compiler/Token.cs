@@ -63,6 +63,13 @@ namespace GreyHackTools
                 {
                     Optimizable = false;
                 }
+
+                public override Token Optimize(Context context)
+                {
+                    if (Value == "true") Value = "1";
+                    if (Value == "false") Value = "0";
+                    return base.Optimize(context);
+                }
             }
 
             public class Operator : Variable

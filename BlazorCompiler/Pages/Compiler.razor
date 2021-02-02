@@ -208,9 +208,39 @@
 
     public GreyHackDebugger GreyHackDebugger { get; set; } = new GreyHackDebugger();
 
-    public bool Optimize { get; set; }
-    public bool IgnoreMapIndexes { get; set; }
-    public bool RemoveComments { get; set; }
+    private bool _optimize;
+    public bool Optimize
+    {
+        get { return _optimize;}
+        set
+        {
+            _optimize = value;
+            Compile();
+        }
+    }
+
+    private bool _ignoreMapIndexes;
+    public bool IgnoreMapIndexes
+    {
+        get { return _ignoreMapIndexes;}
+        set
+        {
+            _ignoreMapIndexes = value;
+            Compile();
+        }
+    }
+
+    private bool _removeComments;
+
+    public bool RemoveComments
+    {
+        get { return _removeComments; }
+        set
+        {
+            _removeComments = value;
+            Compile();
+        }
+    }
 
     public GreyHackCompiler.Settings Settings
     {
@@ -286,7 +316,7 @@
         GreyHackDebugger.Interpreter.implicitOutput = GreyHackDebugger.Interpreter.standardOutput = output =>
         {
             if (OutputBuilder.Length != 0) OutputBuilder.AppendLine();
-            OutputBuilder.Append(output);
+            OutputBuilder.Append(output.Replace("\\n", Environment.NewLine));
         };
         GreyHackDebugger.Interpreter.errorOutput = error => CreateToast(error, SAPAlertType.Danger, 0);
         GreyHackDebugger.Started += GreyHackDebuggerOnStarted;

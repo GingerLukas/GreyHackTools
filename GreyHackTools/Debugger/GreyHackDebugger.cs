@@ -385,6 +385,11 @@ namespace GreyHackTools
             {
                 return Intrinsic.Result.Null;
             };
+            Intrinsic.Create("current_date").code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                var date = DateTime.Now;
+                return new Intrinsic.Result($"{date.Day}-{date.Month}-{date.Year} {date.Hour:D2}:{date.Minute:D2}");
+            };
             Intrinsic intrinsic10 = Intrinsic.Create("exit");
             intrinsic10.AddParam("msg", new ValString(""));
             intrinsic10.code = delegate (TAC.Context context, Intrinsic.Result partialResult)

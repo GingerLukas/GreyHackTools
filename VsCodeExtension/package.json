@@ -1,9 +1,10 @@
 {
-	"name": "gpp-compiler",
-	"displayName": "G++ compiler for GreyScript/MiniScript",
-	"description": "This allows you to minify your code and use features like bodies for ifs, loops and functions or even lambda '=>' for functions.",
-	"version": "0.0.3",
+	"name": "gspp-compiler",
+	"displayName": "GreyScript++",
+	"description": "Snippets and highlights for standard GreyScript/MiniScript as well as for GreyScript++, the compiler for minification is also included.",
+	"version": "0.0.8",
 	"publisher": "lukas-safranek",
+	"license": "gpl-3.0",
 	"repository": {
 		"url": "https://github.com/GingerLukas/GreyHackTools",
 		"type": "git"
@@ -16,33 +17,33 @@
 		"Formatters"
 	],
 	"activationEvents": [
-		"onCommand:gpp.compile",
-		"onCommand:gpp.init",
-		"onView:gppCompilerSettings"
+		"onCommand:gspp.compile",
+		"onCommand:gspp.init",
+		"onView:gsppCompilerSettings"
 	],
 	"main": "./out/src/extension",
 	"contributes": {
 		"commands": [
 			{
-				"command": "gpp.compile",
+				"command": "gspp.compile",
 				"title": "Compile current file",
-				"category": "Gpp"
+				"category": "GSpp"
 			},
 			{
-				"command": "gpp.settings.toggle",
+				"command": "gspp.settings.toggle",
 				"title": "Toggle"
 			}
 		],
 		"menus": {
 			"commandPalette": [
 				{
-					"command": "gpp.compile"
+					"command": "gspp.compile"
 				}
 			],
 			"view/item/context": [
 				{
-					"command": "gpp.settings.toggle",
-					"when": "view == gppCompilerSettings && viewItem == compilerMenuItem",
+					"command": "gspp.settings.toggle",
+					"when": "view == gsppCompilerSettings && viewItem == compilerMenuItem",
 					"group": "inline"
 				}
 			]
@@ -50,12 +51,35 @@
 		"views": {
 			"explorer":[
 				{
-					"id": "gppCompilerSettings",
-					"name": "G++ Compiler Settings",
-					"contextualTitle": "G++ COmpiler Settings"
+					"id": "gsppCompilerSettings",
+					"name": "GS++ Compiler Settings",
+					"contextualTitle": "GS++ Compiler Settings"
 				}
 			]
-		}
+		},
+		"languages": [
+			{
+				"id": "gspp",
+				"extensions": [
+					".gp",
+					".gspp",
+					".gsp",
+					".gpp"
+				],
+				"aliases": ["GreyScript++","GS++","gs++","GSpp","gspp"],
+				"configuration": "./gs-config.json"
+			},
+			{
+				"id": "gs",
+				"extensions": [
+					".src",
+					".gs",
+					".ms"
+				],
+				"aliases": ["GreyScript","GS","gs"],
+				"configuration": "./gs-config.json"
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -73,3 +97,5 @@
 	},
 	"dependencies": {}
 }
+
+

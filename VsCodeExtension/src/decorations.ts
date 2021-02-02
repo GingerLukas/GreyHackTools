@@ -23,3 +23,7 @@ export const numbers = vscode.window.createTextEditorDecorationType({
 export const variables = vscode.window.createTextEditorDecorationType({
     color: 'rgb(156,220,254)'
 });
+
+export const comments = vscode.window.createTextEditorDecorationType({
+    color: 'rgb(106,153,85)'
+});

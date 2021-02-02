@@ -133,6 +133,7 @@ export function activate(context: vscode.ExtensionContext) {
         activeEditor.setDecorations(decorations.strings, decor.strings);
         activeEditor.setDecorations(decorations.numbers, decor.numbers);
         activeEditor.setDecorations(decorations.variables, decor.variables);
+        activeEditor.setDecorations(decorations.comments, decor.comments);
     }
 
     function triggerUpdateDecorations() {
@@ -261,7 +262,7 @@ function getParamsSnippet(params?:string[]) {
 }
 
 function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
-    const regEx = /(".*?")|(if|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)/g;
+    const regEx = /(".*?")|(if|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
     let match;
 
     const strings: vscode.Range[] = [];
@@ -270,6 +271,7 @@ function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
     const functions: vscode.Range[] = [];
     const numbers: vscode.Range[] = [];
     const variables: vscode.Range[] = [];
+    const comments: vscode.Range[] = [];
     let matchIndex = 0;
     let output: vscode.Range[] = [];
     while ((match = regEx.exec(text))) {
@@ -297,6 +299,10 @@ function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
             matchIndex = 7;
             output = variables;
         }
+        else if (match[8]) {
+            matchIndex = 8;
+            output = comments;
+        }
         else {
             continue;
         }
@@ -305,5 +311,5 @@ function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
         output.push(new vscode.Range(start, end));
     }
 
-    return { functions: functions, keywords: keywords, keywords2: keywords2, strings: strings, numbers: numbers, variables: variables };
+    return { functions: functions, keywords: keywords, keywords2: keywords2, strings: strings, numbers: numbers, variables: variables, comments: comments };
 }

@@ -38,7 +38,9 @@ namespace GreyHackTools
             {
                 if (context.StringBuilder.Length != 0 && Prev != null && !char.IsWhiteSpace(context.StringBuilder[^1]))
                 {
-                    if (_tokenSpaces[Prev.GetType()][GetType()]) context.StringBuilder.Append(' ');
+                    bool last = char.IsLetterOrDigit(Prev.Value.Last());
+                    bool current = char.IsLetterOrDigit(Value.First());
+                    if (last && current) context.StringBuilder.Append(' ');
                 }
 
                 context.StringBuilder.Append(Value);

@@ -41,123 +41,6 @@ namespace GreyHackTools
 
         private static readonly HashSet<char> _tokenStrings = new() { '"', '$' };
 
-        private static readonly Dictionary<Type, Dictionary<Type, bool>> _tokenSpaces =
-            new()
-            {
-                {
-                    typeof(Token.Keyword), new Dictionary<Type, bool>()
-                    {
-                        {typeof(Token.Keyword), true},
-                        {typeof(Token.Operator), false},
-                        {typeof(Token.Variable), true},
-                        {typeof(Token.String), false},
-                        {typeof(Token.Bracket), false},
-                        {typeof(Token.Separator), false},
-                        {typeof(Token.Include), false},
-                        {typeof(Token.Template), true},
-
-                    }
-                },
-                {
-                    typeof(Token.Operator), new Dictionary<Type, bool>()
-                    {
-                        {typeof(Token.Keyword), true},
-                        {typeof(Token.Operator), false},
-                        {typeof(Token.Variable), false},
-                        {typeof(Token.String), false},
-                        {typeof(Token.Bracket), false},
-                        {typeof(Token.Separator), false},
-                        {typeof(Token.Include), false},
-                        {typeof(Token.Template), false},
-
-                    }
-                },
-                {
-                    typeof(Token.Variable), new Dictionary<Type, bool>()
-                    {
-                        {typeof(Token.Keyword), true},
-                        {typeof(Token.Operator), false},
-                        {typeof(Token.Variable), true},
-                        {typeof(Token.String), false},
-                        {typeof(Token.Bracket), false},
-                        {typeof(Token.Separator), false},
-                        {typeof(Token.Include), false},
-                        {typeof(Token.Template), true},
-
-                    }
-                },
-                {
-                    typeof(Token.String), new Dictionary<Type, bool>()
-                    {
-                        {typeof(Token.Keyword), false},
-                        {typeof(Token.Operator), false},
-                        {typeof(Token.Variable), false},
-                        {typeof(Token.String), false},
-                        {typeof(Token.Bracket), false},
-                        {typeof(Token.Separator), false},
-                        {typeof(Token.Include), false},
-                        {typeof(Token.Template), false},
-
-                    }
-                },
-                {
-                    typeof(Token.Bracket), new Dictionary<Type, bool>()
-                    {
-                        {typeof(Token.Keyword), false},
-                        {typeof(Token.Operator), false},
-                        {typeof(Token.Variable), false},
-                        {typeof(Token.String), false},
-                        {typeof(Token.Bracket), false},
-                        {typeof(Token.Separator), false},
-                        {typeof(Token.Include), false},
-                        {typeof(Token.Template), false},
-
-                    }
-                },
-                {
-                    typeof(Token.Separator), new Dictionary<Type, bool>()
-                    {
-                        {typeof(Token.Keyword), false},
-                        {typeof(Token.Operator), false},
-                        {typeof(Token.Variable), false},
-                        {typeof(Token.String), false},
-                        {typeof(Token.Bracket), false},
-                        {typeof(Token.Separator), false},
-                        {typeof(Token.Include), false},
-                        {typeof(Token.Template), false},
-
-                    }
-                },
-                {
-                    typeof(Token.Include), new Dictionary<Type, bool>()
-                    {
-                        {typeof(Token.Keyword), false},
-                        {typeof(Token.Operator), false},
-                        {typeof(Token.Variable), false},
-                        {typeof(Token.String), false},
-                        {typeof(Token.Bracket), false},
-                        {typeof(Token.Separator), false},
-                        {typeof(Token.Include), false},
-                        {typeof(Token.Template), false},
-
-                    }
-                },
-                {
-                    typeof(Token.Template), new Dictionary<Type, bool>()
-                    {
-                        {typeof(Token.Keyword), true},
-                        {typeof(Token.Operator), false},
-                        {typeof(Token.Variable), true},
-                        {typeof(Token.String), false},
-                        {typeof(Token.Bracket), false},
-                        {typeof(Token.Separator), false},
-                        {typeof(Token.Include), false},
-                        {typeof(Token.Template), true},
-
-                    }
-                },
-            };
-
         private static readonly HashSet<string> _keywords = new()
         {
             "if", "then", "else", "end", "while", "for", "in", "and", "or", "not", "true", "false",  "return",
@@ -491,7 +374,7 @@ namespace GreyHackTools
                 context.PlainInput.Dequeue();
 
             t.EndStatement = IsEndOfLine(context);
-            
+            if (context.PlainInput.Count > 0 && context.PlainInput.Peek() == ';') context.PlainInput.Dequeue();
 
             return t;
         }

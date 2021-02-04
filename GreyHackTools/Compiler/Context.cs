@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 
@@ -53,6 +54,8 @@ namespace GreyHackTools
             {
                 optimizeEnabled = optimize;
                 StringBuilder.Clear();
+                
+                
 
                 Token node;
                 if (optimize)

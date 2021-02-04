@@ -1,6 +1,7 @@
 ﻿@page "/compiler"
 @using GreyHackTools
 @using System.Text
+@using System.Threading
 @inject IJSRuntime js
 
 
@@ -73,7 +74,7 @@
     .nav-tabs .nav-link.active {
         color: whitesmoke;
         border: none;
-        background-color: rgb(37, 37, 37);
+        background-color: rgb(30, 30, 30);
     }
     .nav-link {
         color: whitesmoke;
@@ -131,25 +132,13 @@
     <div class="utilityStrip compiler-bg-content compiler-main">
         <ul class="nav nav-tabs compiler-nav">
             <li class="nav-item">
-                <button class="nav-link @IsActive(EMainPage.Gpp)" @onclick="() => Page = EMainPage.Gpp">G++</button>
+                <button class="nav-link @IsActive(EMainPage.Gpp)" @onclick="() => { SetPage(EMainPage.Gpp); }">G++</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link @IsActive(EMainPage.MiniScript)" @onclick="() => { Compile(); Page = EMainPage.MiniScript; }">MiniScript</button>
+                <button class="nav-link @IsActive(EMainPage.MiniScript)" @onclick="() => { SetPage(EMainPage.MiniScript); }">MiniScript</button>
             </li>
         </ul>
-        <div>
-            @switch (Page)
-                {
-                    case EMainPage.Gpp:
-                        <textarea id="gpp-code" @bind="InputCode" style="font-family: monospace;" onkeydown="onKeyDownHandler(event,this)" spellcheck="false"></textarea>
-                        break;
-                    case EMainPage.MiniScript:
-                        <textarea id="gpp-code" @bind="OutputCode" style="font-family: monospace;" spellcheck="false" readonly></textarea>
-                        break;
-                }
-
-
-        </div>
+        <div id="code"></div>
     </div>
 
     <div class="utilityStrip compiler-bg-container" style="grid-row: span 2">
@@ -204,6 +193,7 @@
 
 
     public string InputCode { get; set; }
+
     public string OutputCode { get; set; }
 
     public GreyHackDebugger GreyHackDebugger { get; set; } = new GreyHackDebugger();
@@ -257,11 +247,44 @@
 
     public SAPToastArea ToastArea { get; set; }
 
-    public EMainPage Page { get; set; } = EMainPage.Gpp;
+    public EMainPage Page { get; set; }
 
     private string IsActive(EMainPage page)
     {
         return page == Page ? "active" : "";
+    }
+
+    public async Task UpdateCode(EMainPage page = EMainPage.Gpp)
+    {
+        if (page == EMainPage.Gpp)
+        {
+            InputCode = await js.InvokeAsync<string>("editor.getValue", CancellationToken.None);
+            Compile();
+        }
+    }
+
+    public async Task SetPage(EMainPage page)
+    {
+        if (Page != page)
+        {
+            EMainPage p = Page;
+            Page = page;
+            StateHasChanged();
+            switch (p)
+            {
+                case EMainPage.Gpp:
+                    await UpdateCode(p);
+                    await js.InvokeVoidAsync("editor.setValue", CancellationToken.None, OutputCode);
+                    break;
+                case EMainPage.MiniScript:
+                    await js.InvokeVoidAsync("editor.setValue", CancellationToken.None, InputCode);
+                    break;
+            }
+            return;
+        }
+
+        Page = page;
+        StateHasChanged();
     }
 
     void CreateToast(string text, SAPAlertType type, int time = 2)
@@ -301,8 +324,7 @@
     [JSInvokable("StartDebugger")]
     public void StartDebugger()
     {
-        Compile();
-        GreyHackDebugger.Start();
+        UpdateCode(Page).ContinueWith(x => GreyHackDebugger.Start());
     }
 
     private async Task CopyCodeToClipboard()
@@ -358,6 +380,16 @@ print(XOR.Encrypt(enc,""Ginger""))";
 
     protected override void OnAfterRender(bool firstRender)
     {
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await js.InvokeVoidAsync("setupEditor", "code");
+            await js.InvokeVoidAsync("editor.setValue", InputCode);
+        }
     }
 
     public enum EMainPage

@@ -36,11 +36,10 @@ namespace GreyHackTools
 
             public virtual Token Compile(Context context, bool force = false)
             {
-                if (context.StringBuilder.Length != 0 && Prev != null && !char.IsWhiteSpace(context.StringBuilder[^1]))
+                if (context.StringBuilder.Length != 0 && char.IsLetterOrDigit(context.StringBuilder[^1]) &&
+                    Value.Length > 0 && char.IsLetterOrDigit(Value.First()))
                 {
-                    bool last = char.IsLetterOrDigit(Prev.Value.Last());
-                    bool current = char.IsLetterOrDigit(Value.First());
-                    if (last && current) context.StringBuilder.Append(' ');
+                    context.StringBuilder.Append(' ');
                 }
 
                 context.StringBuilder.Append(Value);

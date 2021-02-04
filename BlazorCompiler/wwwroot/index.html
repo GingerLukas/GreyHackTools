@@ -13,6 +13,8 @@
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link href="_content/SAPBlazorAnimate/animate.min.css" rel="stylesheet" />
     <link href="_content/SAPBlazorAlert/style.css" rel="stylesheet" />
+    <link data-name="vs/editor/editor.main" rel="stylesheet"
+          href="node_modules/monaco-editor/min/vs/editor/editor.main.css">
 </head>
 
 <body>
@@ -31,6 +33,14 @@
     <script src="_framework/blazor.webassembly.js"></script>
     <script>navigator.serviceWorker.register('service-worker.js');</script>
     <script src="js/helper.js"></script>
+
+    <script>var require = { paths: { 'vs': 'node_modules/monaco-editor/min/vs' } };</script>
+
+    <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script src="node_modules/monaco-editor/min/vs/editor/editor.main.nls.js"></script>
+    <script src="node_modules/monaco-editor/min/vs/editor/editor.main.js"></script>
+
+    <script src="out/main.js"></script>
 </body>
 
 </html>

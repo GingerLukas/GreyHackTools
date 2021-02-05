@@ -2,6 +2,7 @@
 @using GreyHackTools
 @using System.Text
 @using System.Threading
+@using GreyHackTools.Debugger
 @inject IJSRuntime js
 
 
@@ -191,6 +192,9 @@
 @code {
     public StringBuilder OutputBuilder { get; set; } = new StringBuilder();
 
+    public bool LastOptimize { get; set; } = false;
+    public GreyHackCompiler.Settings LastSettings { get; set; }
+    public string LastHash { get; set; } = "";
 
     public string InputCode { get; set; }
 
@@ -205,7 +209,7 @@
         set
         {
             _optimize = value;
-            SetPage(Page);
+            SetPage(Page,Page == EMainPage.MiniScript);
         }
     }
 
@@ -216,7 +220,7 @@
         set
         {
             _ignoreMapIndexes = value;
-            SetPage(Page);
+            SetPage(Page,Page == EMainPage.MiniScript);
         }
     }
 
@@ -228,7 +232,7 @@
         set
         {
             _removeComments = value;
-            SetPage(Page);
+            SetPage(Page,Page == EMainPage.MiniScript);
         }
     }
 
@@ -266,7 +270,7 @@
         Compile();
     }
 
-    public async Task SetPage(EMainPage page)
+    public async Task SetPage(EMainPage page,bool force = true)
     {
         if (Page != page)
         {
@@ -286,7 +290,7 @@
             }
             return;
         }
-        else
+        else if(force)
         {
             switch (Page)
             {
@@ -325,7 +329,14 @@
     private void Compile()
     {
         if (string.IsNullOrWhiteSpace(InputCode)) return;
-
+        string temp = "";
+        if ((temp = MD5.Calculate(Encoding.UTF8.GetBytes(InputCode))) == LastHash && LastSettings == Settings && LastOptimize == Optimize)
+        {
+            return;
+        }
+        LastOptimize = Optimize;
+        LastHash = temp;
+        LastSettings = Settings;
 
         if (GreyHackCompiler.TryCompile(InputCode, out string output, Optimize, Settings))
         {

@@ -137,13 +137,9 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     function triggerUpdateDecorations() {
-		if (timeout) {
-			clearTimeout(timeout);
-			timeout = undefined;
-		}
-		timeout = setTimeout(updateDecorations, 500);
+        updateDecorations();
 	}
-
+    
 	if (activeEditor) {
 		triggerUpdateDecorations();
 	}

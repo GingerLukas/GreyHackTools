@@ -444,10 +444,6 @@ function setupEditor(id) {
     gsCompletion = getStaticItems(false);
 }
 function triggerUpdateDecorations() {
-    if (timeout) {
-        clearTimeout(timeout);
-        timeout = undefined;
-    }
-    timeout = setTimeout(updateDecorations, 500);
+    updateDecorations();
 }
 //# sourceMappingURL=main.js.map

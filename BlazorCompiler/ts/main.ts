@@ -4,9 +4,11 @@ monaco.languages.register({ id: 'gspp' });
 monaco.languages.register({ id: 'gs' });
 monaco.languages.registerCompletionItemProvider('gspp', {
     provideCompletionItems: function (model, position) {
+        const out = getStaticItems(true);
+        getCompletionItems(model.getValue(), undefined, out);
         return {
-            suggestions: [...getCompletionItems(model.getValue()),...gsppCompletion]
-        };
+            suggestions: out
+    };
     }, triggerCharacters: [".", "_", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "(", "[", "{"]
 });
 
@@ -152,42 +154,44 @@ function getParamsSnippet(params?: string[]) {
     return out.join(', ');
 }
 
-let loaded = false;
-let gsppStaticItems: CompletionItem[] = [];
-let gsStaticItems: CompletionItem[] = [];
-
 function getStaticItems(gspp: boolean) {
 
     //#region gspp snippets
-    const gsppForCompletion = new CompletionItem('for', CompletionItemKind.Snippet);
-    gsppForCompletion.insertText = 'for(${1:var} in ${2:array}){\n\t${3:body}\n}\n${0}';
+    let gsppItems;
+    if (gspp) {
+        const gsppForCompletion = new CompletionItem('for', CompletionItemKind.Snippet);
+        gsppForCompletion.insertText = 'for(${1:var} in ${2:array}){\n\t${3:body}\n}\n${0}';
 
-    const gsppIfCompletion = new CompletionItem('if', CompletionItemKind.Snippet);
-    gsppIfCompletion.insertText = 'if(${1:condition}){\n\t${2:body}\n}\n${0}';
+        const gsppIfCompletion = new CompletionItem('if', CompletionItemKind.Snippet);
+        gsppIfCompletion.insertText = 'if(${1:condition}){\n\t${2:body}\n}\n${0}';
 
-    const gsppWhileCompletion = new CompletionItem('while', CompletionItemKind.Snippet);
-    gsppWhileCompletion.insertText = 'while(${1:condition}){\n\t${2:body}\n}\n${0}';
+        const gsppWhileCompletion = new CompletionItem('while', CompletionItemKind.Snippet);
+        gsppWhileCompletion.insertText = 'while(${1:condition}){\n\t${2:body}\n}\n${0}';
 
-    const gsppFuncCompletion = new CompletionItem('func', CompletionItemKind.Snippet);
-    gsppFuncCompletion.insertText = '(${1:params}) => {\n\t${2:body}\n}\n${0}';
+        const gsppFuncCompletion = new CompletionItem('func', CompletionItemKind.Snippet);
+        gsppFuncCompletion.insertText = '(${1:params}) => {\n\t${2:body}\n}\n${0}';
 
-    const gsppItems = [gsppForCompletion, gsppIfCompletion, gsppWhileCompletion, gsppFuncCompletion];
+        gsppItems = [gsppForCompletion, gsppIfCompletion, gsppWhileCompletion, gsppFuncCompletion];
+    }
     //#endregion
 
     //#region gs snippets
-    const gsForCompletion = new CompletionItem('for', CompletionItemKind.Snippet);
-    gsForCompletion.insertText = 'for ${1:var} in ${2:array}\n\t${3:body}\nend for\n${0}';
+    let gsItems;
+    if (!gspp) {
+        const gsForCompletion = new CompletionItem('for', CompletionItemKind.Snippet);
+        gsForCompletion.insertText = 'for ${1:var} in ${2:array}\n\t${3:body}\nend for\n${0}';
 
-    const gsIfCompletion = new CompletionItem('if', CompletionItemKind.Snippet);
-    gsIfCompletion.insertText = 'if ${1:condition} then\n\t${2:body}\nend if\n${0}';
+        const gsIfCompletion = new CompletionItem('if', CompletionItemKind.Snippet);
+        gsIfCompletion.insertText = 'if ${1:condition} then\n\t${2:body}\nend if\n${0}';
 
-    const gsWhileCompletion = new CompletionItem('while', CompletionItemKind.Snippet);
-    gsWhileCompletion.insertText = 'while ${1:condition}\n\t${2:body}\nend while\n${0}';
+        const gsWhileCompletion = new CompletionItem('while', CompletionItemKind.Snippet);
+        gsWhileCompletion.insertText = 'while ${1:condition}\n\t${2:body}\nend while\n${0}';
 
-    const gsFuncCompletion = new CompletionItem('func', CompletionItemKind.Snippet);
-    gsFuncCompletion.insertText = 'function(${1:params})\n\t${2:body}\nend function\n${0}';
+        const gsFuncCompletion = new CompletionItem('func', CompletionItemKind.Snippet);
+        gsFuncCompletion.insertText = 'function(${1:params})\n\t${2:body}\nend function\n${0}';
 
-    const gsItems = [gsForCompletion, gsIfCompletion, gsWhileCompletion, gsFuncCompletion];
+        gsItems = [gsForCompletion, gsIfCompletion, gsWhileCompletion, gsFuncCompletion];
+    }
     //#endregion
 
     //#region constants & keywords
@@ -332,9 +336,7 @@ function getStaticItems(gspp: boolean) {
     const piCompletion = new CompletionItem('pi', CompletionItemKind.Property);
     //#endregion
 
-
-
-    loaded = true;
+    
     const items = [
         //#region constants & keywords
         trueCompletion,
@@ -420,13 +422,11 @@ function getStaticItems(gspp: boolean) {
         items.push(item);
     }
 
-    gsppStaticItems = items.concat(gsppItems);
-    gsStaticItems = items.concat(gsItems);
-
     if (gspp) {
-        return gsppStaticItems;
+        return items.concat(gsppItems);
+    } else {
+        return items.concat(gsItems);
     }
-    return gsStaticItems;
 }
 
 

@@ -1,17 +1,12 @@
 /// <reference path="../wwwroot/node_modules/monaco-editor/monaco.d.ts"/>
-var __spreadArrays = (this && this.__spreadArrays) || function () {
-    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-    for (var r = Array(s), k = 0, i = 0; i < il; i++)
-        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-            r[k] = a[j];
-    return r;
-};
 monaco.languages.register({ id: 'gspp' });
 monaco.languages.register({ id: 'gs' });
 monaco.languages.registerCompletionItemProvider('gspp', {
     provideCompletionItems: function (model, position) {
+        var out = getStaticItems(true);
+        getCompletionItems(model.getValue(), undefined, out);
         return {
-            suggestions: __spreadArrays(getCompletionItems(model.getValue()), gsppCompletion)
+            suggestions: out
         };
     },
     triggerCharacters: [".", "_", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "(", "[", "{"]
@@ -138,31 +133,34 @@ function getParamsSnippet(params) {
     }
     return out.join(', ');
 }
-var loaded = false;
-var gsppStaticItems = [];
-var gsStaticItems = [];
 function getStaticItems(gspp) {
     //#region gspp snippets
-    var gsppForCompletion = new CompletionItem('for', CompletionItemKind.Snippet);
-    gsppForCompletion.insertText = 'for(${1:var} in ${2:array}){\n\t${3:body}\n}\n${0}';
-    var gsppIfCompletion = new CompletionItem('if', CompletionItemKind.Snippet);
-    gsppIfCompletion.insertText = 'if(${1:condition}){\n\t${2:body}\n}\n${0}';
-    var gsppWhileCompletion = new CompletionItem('while', CompletionItemKind.Snippet);
-    gsppWhileCompletion.insertText = 'while(${1:condition}){\n\t${2:body}\n}\n${0}';
-    var gsppFuncCompletion = new CompletionItem('func', CompletionItemKind.Snippet);
-    gsppFuncCompletion.insertText = '(${1:params}) => {\n\t${2:body}\n}\n${0}';
-    var gsppItems = [gsppForCompletion, gsppIfCompletion, gsppWhileCompletion, gsppFuncCompletion];
+    var gsppItems;
+    if (gspp) {
+        var gsppForCompletion = new CompletionItem('for', CompletionItemKind.Snippet);
+        gsppForCompletion.insertText = 'for(${1:var} in ${2:array}){\n\t${3:body}\n}\n${0}';
+        var gsppIfCompletion = new CompletionItem('if', CompletionItemKind.Snippet);
+        gsppIfCompletion.insertText = 'if(${1:condition}){\n\t${2:body}\n}\n${0}';
+        var gsppWhileCompletion = new CompletionItem('while', CompletionItemKind.Snippet);
+        gsppWhileCompletion.insertText = 'while(${1:condition}){\n\t${2:body}\n}\n${0}';
+        var gsppFuncCompletion = new CompletionItem('func', CompletionItemKind.Snippet);
+        gsppFuncCompletion.insertText = '(${1:params}) => {\n\t${2:body}\n}\n${0}';
+        gsppItems = [gsppForCompletion, gsppIfCompletion, gsppWhileCompletion, gsppFuncCompletion];
+    }
     //#endregion
     //#region gs snippets
-    var gsForCompletion = new CompletionItem('for', CompletionItemKind.Snippet);
-    gsForCompletion.insertText = 'for ${1:var} in ${2:array}\n\t${3:body}\nend for\n${0}';
-    var gsIfCompletion = new CompletionItem('if', CompletionItemKind.Snippet);
-    gsIfCompletion.insertText = 'if ${1:condition} then\n\t${2:body}\nend if\n${0}';
-    var gsWhileCompletion = new CompletionItem('while', CompletionItemKind.Snippet);
-    gsWhileCompletion.insertText = 'while ${1:condition}\n\t${2:body}\nend while\n${0}';
-    var gsFuncCompletion = new CompletionItem('func', CompletionItemKind.Snippet);
-    gsFuncCompletion.insertText = 'function(${1:params})\n\t${2:body}\nend function\n${0}';
-    var gsItems = [gsForCompletion, gsIfCompletion, gsWhileCompletion, gsFuncCompletion];
+    var gsItems;
+    if (!gspp) {
+        var gsForCompletion = new CompletionItem('for', CompletionItemKind.Snippet);
+        gsForCompletion.insertText = 'for ${1:var} in ${2:array}\n\t${3:body}\nend for\n${0}';
+        var gsIfCompletion = new CompletionItem('if', CompletionItemKind.Snippet);
+        gsIfCompletion.insertText = 'if ${1:condition} then\n\t${2:body}\nend if\n${0}';
+        var gsWhileCompletion = new CompletionItem('while', CompletionItemKind.Snippet);
+        gsWhileCompletion.insertText = 'while ${1:condition}\n\t${2:body}\nend while\n${0}';
+        var gsFuncCompletion = new CompletionItem('func', CompletionItemKind.Snippet);
+        gsFuncCompletion.insertText = 'function(${1:params})\n\t${2:body}\nend function\n${0}';
+        gsItems = [gsForCompletion, gsIfCompletion, gsWhileCompletion, gsFuncCompletion];
+    }
     //#endregion
     //#region constants & keywords
     var trueCompletion = new CompletionItem('true', CompletionItemKind.Constant);
@@ -255,7 +253,6 @@ function getStaticItems(gspp) {
     var toIntCompletion = new CompletionItem('to_int', CompletionItemKind.Property);
     var piCompletion = new CompletionItem('pi', CompletionItemKind.Property);
     //#endregion
-    loaded = true;
     var items = [
         //#region constants & keywords
         trueCompletion,
@@ -335,12 +332,12 @@ function getStaticItems(gspp) {
         item.insertText = snippet;
         items.push(item);
     }
-    gsppStaticItems = items.concat(gsppItems);
-    gsStaticItems = items.concat(gsItems);
     if (gspp) {
-        return gsppStaticItems;
+        return items.concat(gsppItems);
     }
-    return gsStaticItems;
+    else {
+        return items.concat(gsItems);
+    }
 }
 var apiMembers = "Property;params;params\nMethod;print;print(${1:data})\nMethod;wait;wait(${1:duration})\nProperty;time;time\nMethod;typeof;typeof(${1:var})\nMethod;md5;md5(${1:str})\nMethod;get_router;get_router(${1:IP})\nMethod;get_shell;get_shell(${1:user}, ${2:password})\nMethod;nslookup;nslookup(${1:domain})\nMethod;whois;whois(${1:IP})\nMethod;is_valid_ip;is_valid_ip(${1:string})\nMethod;is_lan_ip;is_lan_ip(${1:string})\nMethod;command_info;command_info(${1:ref})\nProperty;current_date;current_date\nProperty;current_path;current_path\nProperty;parent_path;parent_path\nProperty;home_dir;home_dir\nProperty;program_path;program_path\nProperty;active_user;active_user\nProperty;user_mail_address;user_mail_address\nProperty;user_bank_number;user_bank_number\nMethod;format_columns;format_columns(${1:str})\nMethod;user_input;user_input(${1:msg}, ${2:isPassword})\nMethod;include_lib;include_lib(${1:libpath})\nMethod;bitwise;bitwise(${1|\"&\",\"\\|\",\"^\",\"<<\",\">>\",\">>>\"|}, ${2:number}, ${3:number})\nProperty;clear_screen;clear_screen\nMethod;exit;exit(${1:null})\nProperty;public_ip;public_ip\nProperty;local_ip;local_ip\nMethod;device_ports;device_ports(${1:IP})\nProperty;computers_lan_ip;computers_lan_ip\nMethod;ping_port;ping_port(${1:port})\nMethod;port_info;port_info(${1:Port})\nProperty;used_ports;used_ports\nProperty;bssid_name;bssid_name\nProperty;essid_name;essid_name\nMethod;change_password;change_password(${1:user}, ${2:password})\nMethod;create_user;create_user(${1:user}, ${2:password})\nMethod;create_group;create_group(${1:username}, ${2:groupname})\nMethod;create_folder;create_folder(${1:path}, ${2:name})\nMethod;close_program;close_program(${1:pid})\nMethod;connect_wifi;connect_wifi(${1:interface}, ${2:bssid}, ${3:essid}, ${4:password})\nMethod;delete_user;delete_user(${1:user}, ${2:removeHome})\nMethod;delete_group;delete_group(${1:username}, ${2:groupname})\nMethod;groups;groups(${1:username})\nProperty;network_devices;network_devices\nProperty;get_ports;get_ports\nProperty;is_network_active;is_network_active\nProperty;lan_ip;lan_ip\nProperty;show_procs;show_procs\nMethod;touch;touch(${1:path}, ${2:filename})\nMethod;wifi_networks;wifi_networks(${1:interface})\nMethod;File;File(${1:path})\nMethod;copy;copy(${1:path}, ${2:newname})\nMethod;move;move(${1:path}, ${2:newname})\nMethod;rename;rename(${1:newname})\nMethod;chmod;chmod(${1:perms}, ${2:recursive})\nMethod;set_content;set_content(${1:content})\nMethod;set_group;set_group(${1:group}, ${2:recursive})\nProperty;group;group\nProperty;path;path\nProperty;content;content\nProperty;is_binary;is_binary\nProperty;is_folder;is_folder\nMethod;has_permission;has_permission(${1|\"r\",\"w\",\"x\"|})\nMethod;set_owner;set_owner(${1:owner}, ${2:recursive})\nProperty;owner;owner\nProperty;permissions;permissions\nProperty;parent;parent\nProperty;name;name\nProperty;size;size\nProperty;delete;delete\nProperty;get_folders;get_folders\nProperty;get_files;get_files\nProperty;get_lan_ip;get_lan_ip\nProperty;is_closed;is_closed\nProperty;port_number;port_number\nProperty;host_computer;host_computer\nProperty;start_terminal;start_terminal\nMethod;connect_service;connect_service(${1:IP}, ${2:port}, ${3:user}, ${4:pass}, ${5:service})\nMethod;scp;scp(${1:file}, ${2:folder}, ${3:shell})\nMethod;launch;launch(${1:program}, ${2:params})\nMethod;build;build(${1:srcpath}, ${2:buildpath})\nMethod;put;put(${1:file}, ${2:folder}, ${3:shell})\nMethod;aircrack;aircrack(${1:filepath})\nMethod;aireplay;aireplay(${1:bssid}, ${2:essid}, ${3:maxAcks})\nMethod;airmon;airmon(${1:option}, ${2:interface})\nMethod;decipher;decipher(${1:user}, ${2:encryptedPass})\nMethod;smtp_user_list;smtp_user_list(${1:IP}, ${2:port})\nMethod;overflow;overflow(${1:memoryAddress}, ${2:value}, ${3:extra})\nProperty;lib_name;lib_name\nProperty;version;version\nMethod;load;load(${1:library})\nMethod;net_use;net_use(${1:IP}, ${2:port})\nMethod;rshell_client;rshell_client(${1:IP}, ${2:port}, ${3:procName})\nProperty;rshell_server;rshell_server\nMethod;scan;scan(${1:MetaLib})\nMethod;scan_address;scan_address(${1:metalib}, ${2:memoryAddress})\nMethod;sniffer;sniffer(${1:saveEncSource})\nProperty;dump_lib;dump_lib";
 //# sourceMappingURL=main.js.map

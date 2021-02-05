@@ -49,3 +49,31 @@ a, .btn-link {
     top: 0.5rem;
 }
 
+.mtk1.gspp-strings {
+    color: rgb(206,145,120);
+}
+
+.mtk1.gspp-keywords2 {
+    color: rgb(197,134,192);
+}
+
+.mtk1.gspp-keywords {
+    color: rgb(86,156,214);
+}
+
+.mtk1.gspp-functions {
+    color: rgb(220, 220, 170);
+}
+
+.mtk1.gspp-numbers {
+    color: rgb(181,206,168);
+}
+
+.mtk1.gspp-variables {
+    color: rgb(156,220,254);
+}
+
+.mtk1.gspp-comments {
+    color: rgb(106,153,85);
+}
+

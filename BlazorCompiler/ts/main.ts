@@ -1,36 +1,5 @@
 ﻿/// <reference path="../wwwroot/node_modules/monaco-editor/monaco.d.ts"/>
 
-monaco.languages.register({ id: 'gspp' });
-monaco.languages.register({ id: 'gs' });
-monaco.languages.registerCompletionItemProvider('gspp', {
-    provideCompletionItems: function (model, position) {
-        const out = getStaticItems(true);
-        getCompletionItems(model.getValue(), undefined, out);
-        return {
-            suggestions: out
-    };
-    }, triggerCharacters: [".", "_", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "(", "[", "{"]
-});
-
-function activateEditor(id: string) {
-    const node = document.getElementById(id);
-    if (node) {
-        return monaco.editor.create(node, {
-            theme: "vs-dark",
-            language: "gspp"
-        });
-    }
-}
-
-var editor;
-var gsppCompletion;
-var gsCompletion;
-function setupEditor(id:string) {
-    editor = activateEditor(id);
-    gsppCompletion = getStaticItems(true);
-    gsCompletion = getStaticItems(false);
-}
-
 import CompletionItemKind = monaco.languages.CompletionItemKind;
 
 class CompletionItem implements monaco.languages.CompletionItem {
@@ -57,6 +26,14 @@ class CompletionItem implements monaco.languages.CompletionItem {
     }
 }
 
+class DecorationItem  implements monaco.editor.IModelDeltaDecoration{
+    range: monaco.IRange;
+    options: monaco.editor.IModelDecorationOptions;
+    constructor(range: monaco.IRange, className: string) {
+        this.range = range;
+        this.options = { inlineClassName: className };
+    }
+}
 
 function getCompletionItems(text: string, regEx?: RegExp, output?: CompletionItem[], words?: { [id: string]: { [id: number]: boolean } }) {
     if (regEx == undefined) regEx = /([_a-zA-Z][_a-zA-Z0-9]*)\s*=\s*((function\s*\((.*)\))|(\((.*)\)\s*=>)|(\(.*\))|(\[.*\])|(\{.*\})|(".*")|([0-9]+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)/g;
@@ -78,7 +55,7 @@ function getCompletionItems(text: string, regEx?: RegExp, output?: CompletionIte
                     tryAddItem(new CompletionItem(param, monaco.languages.CompletionItemKind.Variable), output, words);
                 }
             }
-            tempItem.insertText = match[1] + '(' + getParamsSnippet(fParams) + ')';
+            tempItem.insertText = match[1] + "(" + getParamsSnippet(fParams) + ")";
         }
         //bracket || array || variable
         else if (match[7] || match[8] || match[12]) {
@@ -148,10 +125,10 @@ function getParamsSnippet(params?: string[]) {
     const out = [];
     for (let index = 0; index < params.length; index++) {
         const param = params[index];
-        out.push('${' + (index + 1) + ':' + param + '}');
+        out.push("${" + (index + 1) + ":" + param + "}");
     }
 
-    return out.join(', ');
+    return out.join(", ");
 }
 
 function getStaticItems(gspp: boolean) {
@@ -159,17 +136,17 @@ function getStaticItems(gspp: boolean) {
     //#region gspp snippets
     let gsppItems;
     if (gspp) {
-        const gsppForCompletion = new CompletionItem('for', CompletionItemKind.Snippet);
-        gsppForCompletion.insertText = 'for(${1:var} in ${2:array}){\n\t${3:body}\n}\n${0}';
+        const gsppForCompletion = new CompletionItem("for", CompletionItemKind.Snippet);
+        gsppForCompletion.insertText = "for(${1:var} in ${2:array}){\n\t${3:body}\n}\n${0}";
 
-        const gsppIfCompletion = new CompletionItem('if', CompletionItemKind.Snippet);
-        gsppIfCompletion.insertText = 'if(${1:condition}){\n\t${2:body}\n}\n${0}';
+        const gsppIfCompletion = new CompletionItem("if", CompletionItemKind.Snippet);
+        gsppIfCompletion.insertText = "if(${1:condition}){\n\t${2:body}\n}\n${0}";
 
-        const gsppWhileCompletion = new CompletionItem('while', CompletionItemKind.Snippet);
-        gsppWhileCompletion.insertText = 'while(${1:condition}){\n\t${2:body}\n}\n${0}';
+        const gsppWhileCompletion = new CompletionItem("while", CompletionItemKind.Snippet);
+        gsppWhileCompletion.insertText = "while(${1:condition}){\n\t${2:body}\n}\n${0}";
 
-        const gsppFuncCompletion = new CompletionItem('func', CompletionItemKind.Snippet);
-        gsppFuncCompletion.insertText = '(${1:params}) => {\n\t${2:body}\n}\n${0}';
+        const gsppFuncCompletion = new CompletionItem("func", CompletionItemKind.Snippet);
+        gsppFuncCompletion.insertText = "(${1:params}) => {\n\t${2:body}\n}\n${0}";
 
         gsppItems = [gsppForCompletion, gsppIfCompletion, gsppWhileCompletion, gsppFuncCompletion];
     }
@@ -178,162 +155,162 @@ function getStaticItems(gspp: boolean) {
     //#region gs snippets
     let gsItems;
     if (!gspp) {
-        const gsForCompletion = new CompletionItem('for', CompletionItemKind.Snippet);
-        gsForCompletion.insertText = 'for ${1:var} in ${2:array}\n\t${3:body}\nend for\n${0}';
+        const gsForCompletion = new CompletionItem("for", CompletionItemKind.Snippet);
+        gsForCompletion.insertText = "for ${1:var} in ${2:array}\n\t${3:body}\nend for\n${0}";
 
-        const gsIfCompletion = new CompletionItem('if', CompletionItemKind.Snippet);
-        gsIfCompletion.insertText = 'if ${1:condition} then\n\t${2:body}\nend if\n${0}';
+        const gsIfCompletion = new CompletionItem("if", CompletionItemKind.Snippet);
+        gsIfCompletion.insertText = "if ${1:condition} then\n\t${2:body}\nend if\n${0}";
 
-        const gsWhileCompletion = new CompletionItem('while', CompletionItemKind.Snippet);
-        gsWhileCompletion.insertText = 'while ${1:condition}\n\t${2:body}\nend while\n${0}';
+        const gsWhileCompletion = new CompletionItem("while", CompletionItemKind.Snippet);
+        gsWhileCompletion.insertText = "while ${1:condition}\n\t${2:body}\nend while\n${0}";
 
-        const gsFuncCompletion = new CompletionItem('func', CompletionItemKind.Snippet);
-        gsFuncCompletion.insertText = 'function(${1:params})\n\t${2:body}\nend function\n${0}';
+        const gsFuncCompletion = new CompletionItem("func", CompletionItemKind.Snippet);
+        gsFuncCompletion.insertText = "function(${1:params})\n\t${2:body}\nend function\n${0}";
 
         gsItems = [gsForCompletion, gsIfCompletion, gsWhileCompletion, gsFuncCompletion];
     }
     //#endregion
 
     //#region constants & keywords
-    const trueCompletion = new CompletionItem('true', CompletionItemKind.Constant);
+    const trueCompletion = new CompletionItem("true", CompletionItemKind.Constant);
 
-    const falseCompletion = new CompletionItem('false', CompletionItemKind.Constant);
+    const falseCompletion = new CompletionItem("false", CompletionItemKind.Constant);
 
-    const nullCompletion = new CompletionItem('null', CompletionItemKind.Constant);
+    const nullCompletion = new CompletionItem("null", CompletionItemKind.Constant);
 
-    const continueCompletion = new CompletionItem('continue', CompletionItemKind.Keyword);
+    const continueCompletion = new CompletionItem("continue", CompletionItemKind.Keyword);
 
-    const breakCompletion = new CompletionItem('break', CompletionItemKind.Keyword);
+    const breakCompletion = new CompletionItem("break", CompletionItemKind.Keyword);
 
-    const selfCompletion = new CompletionItem('self', CompletionItemKind.Keyword);
+    const selfCompletion = new CompletionItem("self", CompletionItemKind.Keyword);
     //#endregion
 
     //#region operators
-    const orCompletion = new CompletionItem('or', CompletionItemKind.Operator);
+    const orCompletion = new CompletionItem("or", CompletionItemKind.Operator);
 
-    const andCompletion = new CompletionItem('and', CompletionItemKind.Operator);
+    const andCompletion = new CompletionItem("and", CompletionItemKind.Operator);
 
-    const notCompletion = new CompletionItem('not', CompletionItemKind.Operator);
+    const notCompletion = new CompletionItem("not", CompletionItemKind.Operator);
 
-    const inCompletion = new CompletionItem('in', CompletionItemKind.Operator);
+    const inCompletion = new CompletionItem("in", CompletionItemKind.Operator);
     //#endregion
 
     //#region data functions
-    const removeCompletion = new CompletionItem('remove', CompletionItemKind.Function);
-    removeCompletion.insertText = 'remove(${1:item})';
+    const removeCompletion = new CompletionItem("remove", CompletionItemKind.Function);
+    removeCompletion.insertText = "remove(${1:item})";
 
-    const hasIndexCompletion = new CompletionItem('hasIndex', CompletionItemKind.Function);
-    hasIndexCompletion.insertText = 'hasIndex(${1:index})';
+    const hasIndexCompletion = new CompletionItem("hasIndex", CompletionItemKind.Function);
+    hasIndexCompletion.insertText = "hasIndex(${1:index})";
 
-    const indexOfCompletion = new CompletionItem('indexOf', CompletionItemKind.Function);
-    indexOfCompletion.insertText = 'indexOf(${1:item,${2:null}})';
+    const indexOfCompletion = new CompletionItem("indexOf", CompletionItemKind.Function);
+    indexOfCompletion.insertText = "indexOf(${1:item,${2:null}})";
 
-    const lastIndexOfCompletion = new CompletionItem('lastIndexOf', CompletionItemKind.Function);
-    lastIndexOfCompletion.insertText = 'lastIndexOf(${1:item})';
+    const lastIndexOfCompletion = new CompletionItem("lastIndexOf", CompletionItemKind.Function);
+    lastIndexOfCompletion.insertText = "lastIndexOf(${1:item})";
 
-    const sliceCompletion = new CompletionItem('slice', CompletionItemKind.Function);
-    sliceCompletion.insertText = 'slice(${1:string},${2:start},${3:null})';
+    const sliceCompletion = new CompletionItem("slice", CompletionItemKind.Function);
+    sliceCompletion.insertText = "slice(${1:string},${2:start},${3:null})";
 
-    const splitCompletion = new CompletionItem('split', CompletionItemKind.Function);
-    splitCompletion.insertText = 'split(${1:separator})';
+    const splitCompletion = new CompletionItem("split", CompletionItemKind.Function);
+    splitCompletion.insertText = "split(${1:separator})";
 
-    const replaceCompletion = new CompletionItem('replace', CompletionItemKind.Function);
-    replaceCompletion.insertText = 'replace(${1:old},${2:new})';
+    const replaceCompletion = new CompletionItem("replace", CompletionItemKind.Function);
+    replaceCompletion.insertText = "replace(${1:old},${2:new})";
 
-    const trimCompletion = new CompletionItem('trim', CompletionItemKind.Function);
-    trimCompletion.insertText = 'trim()';
+    const trimCompletion = new CompletionItem("trim", CompletionItemKind.Function);
+    trimCompletion.insertText = "trim()";
 
-    const absCompletion = new CompletionItem('abs', CompletionItemKind.Function);
-    absCompletion.insertText = 'abs(${1:number})';
+    const absCompletion = new CompletionItem("abs", CompletionItemKind.Function);
+    absCompletion.insertText = "abs(${1:number})";
 
-    const acosCompletion = new CompletionItem('acos', CompletionItemKind.Function);
-    acosCompletion.insertText = 'acos(${1:number})';
+    const acosCompletion = new CompletionItem("acos", CompletionItemKind.Function);
+    acosCompletion.insertText = "acos(${1:number})";
 
-    const asinCompletion = new CompletionItem('asin', CompletionItemKind.Function);
-    asinCompletion.insertText = 'asin(${1:number})';
+    const asinCompletion = new CompletionItem("asin", CompletionItemKind.Function);
+    asinCompletion.insertText = "asin(${1:number})";
 
-    const atanCompletion = new CompletionItem('atan', CompletionItemKind.Function);
-    atanCompletion.insertText = 'atan(${1:number})';
+    const atanCompletion = new CompletionItem("atan", CompletionItemKind.Function);
+    atanCompletion.insertText = "atan(${1:number})";
 
-    const tanCompletion = new CompletionItem('tan', CompletionItemKind.Function);
-    tanCompletion.insertText = 'tan(${1:radian})';
+    const tanCompletion = new CompletionItem("tan", CompletionItemKind.Function);
+    tanCompletion.insertText = "tan(${1:radian})";
 
-    const cosCompletion = new CompletionItem('cos', CompletionItemKind.Function);
-    cosCompletion.insertText = 'cos(${1:radian})';
+    const cosCompletion = new CompletionItem("cos", CompletionItemKind.Function);
+    cosCompletion.insertText = "cos(${1:radian})";
 
-    const sinCompletion = new CompletionItem('sin', CompletionItemKind.Function);
-    sinCompletion.insertText = 'sin(${1:radian})';
+    const sinCompletion = new CompletionItem("sin", CompletionItemKind.Function);
+    sinCompletion.insertText = "sin(${1:radian})";
 
-    const charCompletion = new CompletionItem('char', CompletionItemKind.Function);
-    charCompletion.insertText = 'char(${1:int})';
+    const charCompletion = new CompletionItem("char", CompletionItemKind.Function);
+    charCompletion.insertText = "char(${1:int})";
 
-    const floorCompletion = new CompletionItem('floor', CompletionItemKind.Function);
-    floorCompletion.insertText = 'floor(${1:number})';
+    const floorCompletion = new CompletionItem("floor", CompletionItemKind.Function);
+    floorCompletion.insertText = "floor(${1:number})";
 
-    const rangeCompletion = new CompletionItem('range', CompletionItemKind.Function);
-    rangeCompletion.insertText = 'range(${1:start},${2:0},${3:1})';
+    const rangeCompletion = new CompletionItem("range", CompletionItemKind.Function);
+    rangeCompletion.insertText = "range(${1:start},${2:0},${3:1})";
 
-    const roundCompletion = new CompletionItem('round', CompletionItemKind.Function);
-    roundCompletion.insertText = 'round(${1:number,${2:0}})';
+    const roundCompletion = new CompletionItem("round", CompletionItemKind.Function);
+    roundCompletion.insertText = "round(${1:number,${2:0}})";
 
-    const rndCompletion = new CompletionItem('rnd', CompletionItemKind.Function);
-    rndCompletion.insertText = 'rnd(${1:null})';
+    const rndCompletion = new CompletionItem("rnd", CompletionItemKind.Function);
+    rndCompletion.insertText = "rnd(${1:null})";
 
-    const signCompletion = new CompletionItem('sign', CompletionItemKind.Function);
-    signCompletion.insertText = 'sign(${1:number})';
+    const signCompletion = new CompletionItem("sign", CompletionItemKind.Function);
+    signCompletion.insertText = "sign(${1:number})";
 
-    const sqrtCompletion = new CompletionItem('sqrt', CompletionItemKind.Function);
-    sqrtCompletion.insertText = 'sqrt(${1:number})';
+    const sqrtCompletion = new CompletionItem("sqrt", CompletionItemKind.Function);
+    sqrtCompletion.insertText = "sqrt(${1:number})";
 
-    const strCompletion = new CompletionItem('str', CompletionItemKind.Function);
-    strCompletion.insertText = 'str(${1:var})';
+    const strCompletion = new CompletionItem("str", CompletionItemKind.Function);
+    strCompletion.insertText = "str(${1:var})";
 
-    const ceilCompletion = new CompletionItem('ceil', CompletionItemKind.Function);
-    ceilCompletion.insertText = 'ceil(${1:number})';
+    const ceilCompletion = new CompletionItem("ceil", CompletionItemKind.Function);
+    ceilCompletion.insertText = "ceil(${1:number})";
 
-    const joinCompletion = new CompletionItem('join', CompletionItemKind.Function);
-    joinCompletion.insertText = 'join(${1:separator})';
+    const joinCompletion = new CompletionItem("join", CompletionItemKind.Function);
+    joinCompletion.insertText = "join(${1:separator})";
 
-    const pushCompletion = new CompletionItem('push', CompletionItemKind.Function);
-    pushCompletion.insertText = 'push(${1:value})';
+    const pushCompletion = new CompletionItem("push", CompletionItemKind.Function);
+    pushCompletion.insertText = "push(${1:value})";
 
-    const popCompletion = new CompletionItem('pop', CompletionItemKind.Function);
-    popCompletion.insertText = 'pop()';
+    const popCompletion = new CompletionItem("pop", CompletionItemKind.Function);
+    popCompletion.insertText = "pop()";
 
-    const pullCompletion = new CompletionItem('pull', CompletionItemKind.Function);
-    pullCompletion.insertText = 'pull()';
+    const pullCompletion = new CompletionItem("pull", CompletionItemKind.Function);
+    pullCompletion.insertText = "pull()";
 
-    const shuffleCompletion = new CompletionItem('shuffle', CompletionItemKind.Function);
-    shuffleCompletion.insertText = 'shuffle()';
+    const shuffleCompletion = new CompletionItem("shuffle", CompletionItemKind.Function);
+    shuffleCompletion.insertText = "shuffle()";
 
-    const reverseCompletion = new CompletionItem('reverse', CompletionItemKind.Function);
-    reverseCompletion.insertText = 'reverse()';
+    const reverseCompletion = new CompletionItem("reverse", CompletionItemKind.Function);
+    reverseCompletion.insertText = "reverse()";
 
-    const sortCompletion = new CompletionItem('sort', CompletionItemKind.Function);
-    sortCompletion.insertText = 'sort(${1:nul})';
+    const sortCompletion = new CompletionItem("sort", CompletionItemKind.Function);
+    sortCompletion.insertText = "sort(${1:nul})";
 
-    const sumCompletion = new CompletionItem('sum', CompletionItemKind.Function);
-    sumCompletion.insertText = 'sum()';
+    const sumCompletion = new CompletionItem("sum", CompletionItemKind.Function);
+    sumCompletion.insertText = "sum()";
     //#endregion 
 
     //#region data properties
-    const indexesCompletion = new CompletionItem('indexes', CompletionItemKind.Property);
+    const indexesCompletion = new CompletionItem("indexes", CompletionItemKind.Property);
 
-    const codeCompletion = new CompletionItem('code', CompletionItemKind.Property);
+    const codeCompletion = new CompletionItem("code", CompletionItemKind.Property);
 
-    const lenCompletion = new CompletionItem('len', CompletionItemKind.Property);
+    const lenCompletion = new CompletionItem("len", CompletionItemKind.Property);
 
-    const lowerCompletion = new CompletionItem('lower', CompletionItemKind.Property);
+    const lowerCompletion = new CompletionItem("lower", CompletionItemKind.Property);
 
-    const upperCompletion = new CompletionItem('upper', CompletionItemKind.Property);
+    const upperCompletion = new CompletionItem("upper", CompletionItemKind.Property);
 
-    const valCompletion = new CompletionItem('val', CompletionItemKind.Property);
+    const valCompletion = new CompletionItem("val", CompletionItemKind.Property);
 
-    const valuesCompletion = new CompletionItem('values', CompletionItemKind.Property);
+    const valuesCompletion = new CompletionItem("values", CompletionItemKind.Property);
 
-    const toIntCompletion = new CompletionItem('to_int', CompletionItemKind.Property);
+    const toIntCompletion = new CompletionItem("to_int", CompletionItemKind.Property);
 
-    const piCompletion = new CompletionItem('pi', CompletionItemKind.Property);
+    const piCompletion = new CompletionItem("pi", CompletionItemKind.Property);
     //#endregion
 
     
@@ -406,9 +383,9 @@ function getStaticItems(gspp: boolean) {
     let label;
     let snippet;
     let item;
-    const members = apiMembers.split('\n');
+    const members = apiMembers.split("\n");
     for (const member of members) {
-        const splited = member.split(';');
+        const splited = member.split(";");
         if (splited[0] == "Method") {
             kind = CompletionItemKind.Function;
         }
@@ -428,8 +405,6 @@ function getStaticItems(gspp: boolean) {
         return items.concat(gsItems);
     }
 }
-
-
 
 const apiMembers = `Property;params;params
 Method;print;print(\${1:data})
@@ -531,3 +506,113 @@ Method;scan;scan(\${1:MetaLib})
 Method;scan_address;scan_address(\${1:metalib}, \${2:memoryAddress})
 Method;sniffer;sniffer(\${1:saveEncSource})
 Property;dump_lib;dump_lib`;
+
+function updateDecorations() {
+    if (!editor) return;
+
+    const text = editor.getValue();
+    oldDecoration = editor.deltaDecorations(oldDecoration, getDecorationItems(text, editor));
+}
+
+function getDecorationItems(text: string, activeEditor: monaco.editor.IStandaloneCodeEditor) {
+    const regEx = /(".*?")|(if|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
+    let match;
+    let matchIndex = 0;
+    let output: DecorationItem[] = [];
+    let name:string = "";
+    while ((match = regEx.exec(text))) {
+        if (match[1]) {
+            matchIndex = 1;
+            name = "gspp-strings";
+        }
+        else if (match[2]) {
+            matchIndex = 2;
+            name = "gspp-keywords2";
+        }
+        else if (match[3]) {
+            matchIndex = 3;
+            name = "gspp-keywords";
+        }
+        else if (match[5]) {
+            matchIndex = 5;
+            name = "gspp-functions";
+        }
+        else if (match[6]) {
+            matchIndex = 6;
+            name = "gspp-numbers";
+        }
+        else if (match[7]) {
+            matchIndex = 7;
+            name = "gspp-variables";
+        }
+        else if (match[8]) {
+            matchIndex = 8;
+            name = "gspp-comments";
+        }
+        else {
+            continue;
+        }
+
+        const start = activeEditor.getModel().getPositionAt(match.index);
+        const end = activeEditor.getModel().getPositionAt(match.index + match[matchIndex].length);
+        output.push(
+            new DecorationItem(
+                {
+                    startColumn: start.column,
+                    startLineNumber: start.lineNumber,
+                    endColumn: end.column,
+                    endLineNumber: end.lineNumber
+                },
+                name)
+        );
+    }
+
+    return output;
+}
+
+var editor;
+var gsppCompletion;
+var gsCompletion;
+let oldDecoration = [];
+let timeout = undefined;
+
+
+monaco.languages.register({ id: "gspp" });
+monaco.languages.register({ id: "gs" });
+
+monaco.languages.registerCompletionItemProvider("gspp", {
+    provideCompletionItems: function (model, position) {
+        const out = getStaticItems(true);
+        getCompletionItems(model.getValue(), undefined, out);
+        return {
+            suggestions: out
+        };
+    }, triggerCharacters: [".", "_", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "(", "[", "{"]
+});
+
+function activateEditor(id: string) {
+    const node = document.getElementById(id);
+    if (node) {
+        return monaco.editor.create(node, {
+            theme: "vs-dark",
+            language: "gspp"
+        });
+    }
+}
+
+function setupEditor(id: string) {
+    editor = activateEditor(id);
+    editor.onDidChangeModelContent(x => triggerUpdateDecorations());
+    gsppCompletion = getStaticItems(true);
+    gsCompletion = getStaticItems(false);
+}
+
+function triggerUpdateDecorations() {
+    if (timeout) {
+        clearTimeout(timeout);
+        timeout = undefined;
+    }
+    timeout = setTimeout(updateDecorations, 500);
+}
+
+

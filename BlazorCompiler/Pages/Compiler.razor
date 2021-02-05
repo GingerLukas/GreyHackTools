@@ -132,10 +132,10 @@
     <div class="utilityStrip compiler-bg-content compiler-main">
         <ul class="nav nav-tabs compiler-nav">
             <li class="nav-item">
-                <button class="nav-link @IsActive(EMainPage.Gpp)" @onclick="() => { SetPage(EMainPage.Gpp); }">G++</button>
+                <button class="nav-link @IsActive(EMainPage.Gpp)" @onclick="() => { SetPage(EMainPage.Gpp); }">GreyScript++</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link @IsActive(EMainPage.MiniScript)" @onclick="() => { SetPage(EMainPage.MiniScript); }">MiniScript</button>
+                <button class="nav-link @IsActive(EMainPage.MiniScript)" @onclick="() => { SetPage(EMainPage.MiniScript); }">GreyScript</button>
             </li>
         </ul>
         <div id="code"></div>
@@ -205,7 +205,7 @@
         set
         {
             _optimize = value;
-            Compile();
+            SetPage(Page);
         }
     }
 
@@ -216,7 +216,7 @@
         set
         {
             _ignoreMapIndexes = value;
-            Compile();
+            SetPage(Page);
         }
     }
 
@@ -228,7 +228,7 @@
         set
         {
             _removeComments = value;
-            Compile();
+            SetPage(Page);
         }
     }
 
@@ -254,13 +254,16 @@
         return page == Page ? "active" : "";
     }
 
-    public async Task UpdateCode(EMainPage page = EMainPage.Gpp)
+    public async Task UpdateCode()
     {
-        if (page == EMainPage.Gpp)
+        switch (Page)
         {
-            InputCode = await js.InvokeAsync<string>("editor.getValue", CancellationToken.None);
-            Compile();
+            case EMainPage.Gpp:
+                InputCode = await js.InvokeAsync<string>("editor.getValue", CancellationToken.None);
+                break;
         }
+
+        Compile();
     }
 
     public async Task SetPage(EMainPage page)
@@ -273,14 +276,28 @@
             switch (p)
             {
                 case EMainPage.Gpp:
-                    await UpdateCode(p);
-                    await js.InvokeVoidAsync("editor.setValue", CancellationToken.None, OutputCode);
+                    InputCode = await js.InvokeAsync<string>("editor.getValue", CancellationToken.None);
+                    Compile();
+                    await js.InvokeVoidAsync("editor.setValue", OutputCode);
                     break;
                 case EMainPage.MiniScript:
                     await js.InvokeVoidAsync("editor.setValue", CancellationToken.None, InputCode);
                     break;
             }
             return;
+        }
+        else
+        {
+            switch (Page)
+            {
+                case EMainPage.Gpp:
+                    await js.InvokeVoidAsync("editor.setValue", CancellationToken.None, InputCode);
+                    break;
+                case EMainPage.MiniScript:
+                    Compile();
+                    await js.InvokeVoidAsync("editor.setValue", CancellationToken.None, OutputCode);
+                    break;
+            }
         }
 
         Page = page;
@@ -324,7 +341,7 @@
     [JSInvokable("StartDebugger")]
     public void StartDebugger()
     {
-        UpdateCode(Page).ContinueWith(x => GreyHackDebugger.Start());
+        UpdateCode().ContinueWith(x => GreyHackDebugger.Start());
     }
 
     private async Task CopyCodeToClipboard()

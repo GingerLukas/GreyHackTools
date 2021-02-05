@@ -451,7 +451,15 @@ namespace GreyHackTools
 
                 public override Token Compile(Context context, bool force = false)
                 {
-                    Value = context.httpClient.GetStringAsync(Value).GetAwaiter().GetResult();
+                    if (Environment.OSVersion.Platform == PlatformID.Other)
+                    {
+                        Value = "//include is not yet implemented in web";
+                    }
+                    else
+                    {
+                        Value = context.httpClient.GetStringAsync(Value).GetAwaiter().GetResult();
+                    }
+                    
                     return base.Compile(context, force);
                 }
 

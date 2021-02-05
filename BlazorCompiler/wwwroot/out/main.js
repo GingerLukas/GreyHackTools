@@ -402,6 +402,41 @@ function activateEditor(id) {
 function setupEditor(id) {
     editor = activateEditor(id);
     editor.onDidChangeModelContent(function (x) { return triggerUpdateDecorations(); });
+    var config = {
+        comments: {
+            lineComment: "//"
+        },
+        brackets: [
+            ["{", "}"],
+            ["[", "]"],
+            ["(", ")"]
+        ],
+        autoClosingPairs: [
+            { open: "{", close: "}" },
+            { open: "[", close: "]" },
+            { open: "(", close: ")" },
+            { open: "'", close: "'", notIn: ["string", "comment"] },
+            { open: "\"", close: "\"" },
+            { open: "`", close: "`", notIn: ["string", "comment"] }
+        ],
+        autoCloseBefore: ";:.,=}])>` \n\t",
+        surroundingPairs: [
+            { open: "{", close: "}" },
+            { open: "[", close: "]" },
+            { open: "(", close: ")" },
+            { open: "'", close: "'", notIn: ["string", "comment"] },
+            { open: "\"", close: "\"" },
+            { open: "`", close: "`", notIn: ["string", "comment"] }
+        ],
+        folding: {
+            markers: {
+                start: /^\\s*\/\/\\s*#?region\\b/,
+                end: /^\\s*\/\/\\s*#?endregion\\b/
+            }
+        },
+    };
+    monaco.languages.setLanguageConfiguration("gspp", config);
+    monaco.languages.setLanguageConfiguration("gs", config);
     gsppCompletion = getStaticItems(true);
     gsCompletion = getStaticItems(false);
 }

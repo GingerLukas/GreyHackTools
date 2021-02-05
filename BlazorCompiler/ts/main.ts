@@ -570,7 +570,7 @@ function getDecorationItems(text: string, activeEditor: monaco.editor.IStandalon
     return output;
 }
 
-var editor;
+var editor:monaco.editor.IStandaloneCodeEditor;
 var gsppCompletion;
 var gsCompletion;
 let oldDecoration = [];
@@ -603,6 +603,42 @@ function activateEditor(id: string) {
 function setupEditor(id: string) {
     editor = activateEditor(id);
     editor.onDidChangeModelContent(x => triggerUpdateDecorations());
+    const config: monaco.languages.LanguageConfiguration = {
+        comments: {
+             lineComment: "//"
+        },
+        brackets: [
+            ["{", "}"],
+            ["[", "]"],
+            ["(", ")"]
+        ],
+        autoClosingPairs: [
+            { open: "{", close: "}" },
+            { open: "[", close: "]" },
+            { open: "(", close: ")" },
+            { open: "'", close: "'", notIn: ["string", "comment"] },
+            { open: "\"", close: "\"" },
+            { open: "`", close: "`", notIn: ["string", "comment"] }
+        ],
+        autoCloseBefore: ";:.,=}])>` \n\t",
+        surroundingPairs: [
+            { open: "{", close: "}" },
+            { open: "[", close: "]" },
+            { open: "(", close: ")" },
+            <monaco.languages.IAutoClosingPairConditional>{ open: "'", close: "'", notIn: ["string", "comment"] },
+            { open: "\"", close: "\"" },
+            <monaco.languages.IAutoClosingPairConditional>{ open: "`", close: "`", notIn: ["string", "comment"] }
+        ],
+        folding: {
+            markers: {
+                start: /^\\s*\/\/\\s*#?region\\b/,
+                end: /^\\s*\/\/\\s*#?endregion\\b/
+            }
+        },
+        //wordPattern: /(-?\\d*\\.\\d\\w*)|([^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\'\\\"\\,\\.\\<\\>\\\/\\?\\s]+)/
+    }
+    monaco.languages.setLanguageConfiguration("gspp", config);
+    monaco.languages.setLanguageConfiguration("gs", config);
     gsppCompletion = getStaticItems(true);
     gsCompletion = getStaticItems(false);
 }

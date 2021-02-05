@@ -36,8 +36,8 @@ namespace GreyHackTools
 
             public virtual Token Compile(Context context, bool force = false)
             {
-                if (context.StringBuilder.Length != 0 && char.IsLetterOrDigit(context.StringBuilder[^1]) &&
-                    Value.Length > 0 && char.IsLetterOrDigit(Value.First()))
+                if (context.StringBuilder.Length != 0 && Regex.IsMatch(context.StringBuilder[^1].ToString(),"\\w") &&
+                    Value.Length > 0 && Regex.IsMatch(Value[0].ToString(), "\\w"))
                 {
                     context.StringBuilder.Append(' ');
                 }

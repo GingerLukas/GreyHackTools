@@ -595,7 +595,9 @@ function activateEditor(id: string) {
     if (node) {
         return monaco.editor.create(node, {
             theme: "vs-dark",
-            language: "gspp"
+            language: "gspp",
+            formatOnPaste: true,
+            formatOnType: true
         });
     }
 }
@@ -634,7 +636,7 @@ function setupEditor(id: string) {
                 start: /^\\s*\/\/\\s*#?region\\b/,
                 end: /^\\s*\/\/\\s*#?endregion\\b/
             }
-        },
+        }
         //wordPattern: /(-?\\d*\\.\\d\\w*)|([^\\`\\~\\!\\@\\#\\%\\^\\&\\*\\(\\)\\-\\=\\+\\[\\{\\]\\}\\\\\\|\\;\\:\\'\\\"\\,\\.\\<\\>\\\/\\?\\s]+)/
     }
     monaco.languages.setLanguageConfiguration("gspp", config);

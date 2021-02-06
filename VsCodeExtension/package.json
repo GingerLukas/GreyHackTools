@@ -2,7 +2,7 @@
 	"name": "gspp-compiler",
 	"displayName": "GreyScript++",
 	"description": "Snippets and highlights for standard GreyScript/MiniScript as well as GreyScript++, the compiler for minification is also included.",
-	"version": "0.0.10",
+	"version": "0.0.13",
 	"publisher": "lukas-safranek",
 	"license": "gpl-3.0",
 	"repository": {

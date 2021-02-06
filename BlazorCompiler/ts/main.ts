@@ -35,6 +35,25 @@ class DecorationItem  implements monaco.editor.IModelDeltaDecoration{
     }
 }
 
+
+class vRange implements monaco.IRange {
+    constructor(start: monaco.Position, end: monaco.Position) {
+        this.startColumn = start.column;
+        this.startLineNumber = start.lineNumber;
+        this.endColumn = end.column;
+        this.endLineNumber = end.lineNumber;
+        this.start = start;
+        this.end = end;
+    }
+    startLineNumber: number;
+    startColumn: number;
+    endLineNumber: number;
+    endColumn: number;
+    start: monaco.Position;
+    end: monaco.Position;
+}
+
+
 function getCompletionItems(text: string, regEx?: RegExp, output?: CompletionItem[], words?: { [id: string]: { [id: number]: boolean } }) {
     if (regEx == undefined) regEx = /([_a-zA-Z][_a-zA-Z0-9]*)\s*=\s*((function\s*\((.*)\))|(\((.*)\)\s*=>)|(\(.*\))|(\[.*\])|(\{.*\})|(".*")|([0-9]+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)/g;
     if (output == undefined) output = [];
@@ -81,7 +100,7 @@ function getCompletionItems(text: string, regEx?: RegExp, output?: CompletionIte
 }
 
 function getCompletionItemsInMap(text: string, regEx?: RegExp, output?: CompletionItem[], words?: { [id: string]: { [id: number]: boolean } }) {
-    if (regEx == undefined) regEx = /(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|\d*)\s*:\s*(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|\d*)/g;
+    if (regEx == undefined) regEx = /(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|\d*)\s*:\s*(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|(\d*))/g;
     if (output == undefined) output = [];
     if (words == undefined) words = {};
 
@@ -89,7 +108,7 @@ function getCompletionItemsInMap(text: string, regEx?: RegExp, output?: Completi
     let tempItem;
     while ((match = regEx.exec(text))) {
         if (match[3] != undefined) {
-            //string
+            //string || number
             if (match[6] || match[9]) {
                 tempItem = new CompletionItem(match[3], CompletionItemKind.Value);
             }
@@ -102,6 +121,7 @@ function getCompletionItemsInMap(text: string, regEx?: RegExp, output?: Completi
         if (tempItem) {
             tryAddItem(tempItem, output, words, match[5]);
         }
+        tempItem = undefined;
     }
 
     return output;
@@ -530,7 +550,7 @@ function updateDecorations() {
 }
 
 function getDecorationItems(text: string, activeEditor: monaco.editor.IStandaloneCodeEditor) {
-    const regEx = /(".*?")|(if|else|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
+    const regEx = /(\$?".*?")|(\bif\b|\belse\b|\bfor\b|\bwhile\b|\bend if\b|\bend for\b|\bend while\b|\bin\b|\bthen\b|\breturn\b|\bbreak\b|\bcontinue\b|\band\b|\bor\b|\bnot\b)|(\bfunction\b|\bend function\b|\bself\b|\bnew\b|\btrue\b|\bfalse\b|\bnull\b)|(\b(?!function\b)([@_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([@_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
     let match;
     let matchIndex = 0;
     let output: DecorationItem[] = [];
@@ -538,7 +558,29 @@ function getDecorationItems(text: string, activeEditor: monaco.editor.IStandalon
     while ((match = regEx.exec(text))) {
         if (match[1]) {
             matchIndex = 1;
-            name = "gspp-strings";
+            const ranges = getStringFormatDecorations(match[1], activeEditor, match.index);
+
+            const start = activeEditor.getModel().getPositionAt(match.index);
+            const end = activeEditor.getModel().getPositionAt(match.index + match[matchIndex].length);
+            let stringRange = new vRange(start, end);
+
+            if (ranges.length > 0) {
+                for (let i = 0; i < ranges.length; i++) {
+                    const element = ranges[i];
+                    output.push(new DecorationItem(new vRange(stringRange.start, element.end), "gspp-strings"));
+                    if (i + 1 < ranges.length) {
+                        stringRange = new vRange(element.end, ranges[i + 1].start);
+                    }
+                    else {
+                        stringRange = new vRange(element.end, end);
+                    }
+
+                    output.push(new DecorationItem(element, "gspp-variables"));
+                }
+            }
+
+            output.push(new DecorationItem(stringRange, "gspp-strings"));
+            continue;
         }
         else if (match[2]) {
             matchIndex = 2;
@@ -570,16 +612,24 @@ function getDecorationItems(text: string, activeEditor: monaco.editor.IStandalon
 
         const start = activeEditor.getModel().getPositionAt(match.index);
         const end = activeEditor.getModel().getPositionAt(match.index + match[matchIndex].length);
-        output.push(
-            new DecorationItem(
-                {
-                    startColumn: start.column,
-                    startLineNumber: start.lineNumber,
-                    endColumn: end.column,
-                    endLineNumber: end.lineNumber
-                },
-                name)
-        );
+        output.push(new DecorationItem(new vRange(start,end), name));
+    }
+
+    return output;
+}
+
+function getStringFormatDecorations(text: string, activeEditor: monaco.editor.IStandaloneCodeEditor, startIndex: number) {
+    const regex = /{.*?}/g;
+
+    const output: vRange[] = [];
+
+    let match;
+    while ((match = regex.exec(text))) {
+        if (match) {
+            const start = activeEditor.getModel().getPositionAt(match.index + startIndex);
+            const end = activeEditor.getModel().getPositionAt(match.index + match[0].length + startIndex);
+            output.push(new vRange(start, end));
+        }
     }
 
     return output;

@@ -14,15 +14,18 @@ namespace GreyHackTools
             public Token LastToken { get; set; }
             public StringBuilder StringBuilder => stringBuilders.Peek();
 
-            internal Stack<StringBuilder> stringBuilders = new();
-            internal Stack<bool> ShouldOptimizeString = new();
-            internal Stack<bool> MapActive = new();
-            internal VariableNameProvider nameProvider = new();
+            internal Stack<StringBuilder> stringBuilders = new Stack<StringBuilder>();
+            internal Stack<bool> ShouldOptimizeString = new Stack<bool>();
+            internal Stack<bool> MapActive = new Stack<bool>();
+            internal VariableNameProvider nameProvider = new VariableNameProvider();
             internal bool optimizeEnabled = false;
             internal Settings Settings = Settings.None;
-            internal HashSet<string> customIgnoreOptimize = new();
-            internal HttpClient httpClient = new HttpClient();
+            internal HashSet<string> customIgnoreOptimize = new HashSet<string>();
+#if js
 
+#else
+            internal HttpClient httpClient = new HttpClient();
+#endif
             public bool IgnoreOptimize(string value) => _ignoreOptimize.Contains(value) || customIgnoreOptimize.Contains(value);
 
             public void AddToken(Token token)

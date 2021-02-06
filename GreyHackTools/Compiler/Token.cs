@@ -37,9 +37,9 @@ namespace GreyHackTools
             public virtual Token Compile(Context context, bool force = false)
             {
                 if (context.StringBuilder.Length != 0 &&
-                    ((Regex.IsMatch(context.StringBuilder[^1].ToString(), "\\w") &&
-                      Value.Length > 0 && Regex.IsMatch(Value[0].ToString(), "\\w"))|| 
-                     (Prev != null && Prev is Keyword && this is Bracket b&& (b.Value.FirstOrDefault() == '('||b.Value.FirstOrDefault()=='['))))
+                    ((Regex.IsMatch(context.StringBuilder[context.StringBuilder.Length - 1].ToString(), "\\w") &&
+                      Value.Length > 0 && Regex.IsMatch(Value[0].ToString(), "\\w")) ||
+                     (Prev != null && Prev is Keyword && this is Bracket b && (b.Value.FirstOrDefault() == '(' || b.Value.FirstOrDefault() == '['))))
                 {
                     context.StringBuilder.Append(' ');
                 }
@@ -155,7 +155,7 @@ namespace GreyHackTools
                 public override Token Compile(Context context, bool force = false)
                 {
                     if (this is Bracket br && !br.Custom && (br.Value.Length == 0 || br.Value[0] != '{')) return base.Compile(context);
-                    
+
                     if ((Next != null && !_tokenOperators.Contains(Value.First()) && (Next.Value == "." || Next.Value == "(" || Next.Value == "[")))
                     {
                         context.stringBuilders.Push(new StringBuilder());
@@ -291,8 +291,8 @@ namespace GreyHackTools
                 }
             }
 
-            
-            
+
+
             public class Bracket : Variable
             {
                 public bool IsOpening => Value == "(" || Value == "[" || Value == "{";
@@ -305,9 +305,9 @@ namespace GreyHackTools
                     Optimizable = false;
                 }
 
-                private Token CompileInside(Context context,bool includeLastBracket = true,bool customBody = false,string postfix = "")
+                private Token CompileInside(Context context, bool includeLastBracket = true, bool customBody = false, string postfix = "")
                 {
-                    
+
                     bool b = false;
                     Token last = null;
                     Token node = Next;
@@ -330,7 +330,7 @@ namespace GreyHackTools
 
                             break;
                         }
-                        
+
                         Token tmp = node.Compile(context);
                         if (!customBody) node.EndStatement = b;
                         //checking for last bracket after compile
@@ -347,7 +347,7 @@ namespace GreyHackTools
                     context.stringBuilders.Pop();
                     return node;
                 }
-                
+
                 public override Token Compile(Context context, bool force = false)
                 {
                     if (Custom) return base.Compile(context, force);
@@ -356,8 +356,8 @@ namespace GreyHackTools
                         Token node = Next;
                         context.stringBuilders.Push(new StringBuilder());
 
-                        if (Value == "{" && (Prev is Bracket {Custom: true} ||
-                                             Prev.CompareBeginningOfValue("function") || 
+                        if (Value == "{" && ((Prev is Bracket b && b.Custom) ||
+                                             Prev.CompareBeginningOfValue("function") ||
                                              Prev.Value == "else"))
                         {
                             if (!EndStatement) EndStatement = true;
@@ -398,14 +398,14 @@ namespace GreyHackTools
                         else if (Prev is Keyword k && k.Value == "for")
                         {
                             context.StringBuilder.Append(' ');
-                            node = CompileInside(context,false);
+                            node = CompileInside(context, false);
                         }
                         else
                         {
                             context.StringBuilder.Append(Value);
                             node = CompileInside(context);
                         }
-                        
+
                         Next = node?.Next;
                         if (node != null)
                             EndStatement = node.EndStatement && !Value.EndsWith(GreyHackCompiler._separator);
@@ -464,6 +464,9 @@ namespace GreyHackTools
 
                 public override Token Compile(Context context, bool force = false)
                 {
+#if js
+
+#else
                     if (Environment.OSVersion.Platform == PlatformID.Other)
                     {
                         Value = "//include is not yet implemented in web";
@@ -472,7 +475,9 @@ namespace GreyHackTools
                     {
                         Value = context.httpClient.GetStringAsync(Value).GetAwaiter().GetResult();
                     }
-                    
+#endif
+
+
                     return base.Compile(context, force);
                 }
 
@@ -558,7 +563,7 @@ namespace GreyHackTools
                 private bool IsValueString()
                 {
                     if (Value.Length < 2) return false;
-                    return Value[0] == '"' && Value[^1] == '"';
+                    return Value[0] == '"' && Value.LastOrDefault() == '"';
                 }
 
                 public Template()
@@ -592,3 +597,4 @@ namespace GreyHackTools
         }
     }
 }
+

@@ -16,6 +16,17 @@ var DecorationItem = /** @class */ (function () {
     }
     return DecorationItem;
 }());
+var vRange = /** @class */ (function () {
+    function vRange(start, end) {
+        this.startColumn = start.column;
+        this.startLineNumber = start.lineNumber;
+        this.endColumn = end.column;
+        this.endLineNumber = end.lineNumber;
+        this.start = start;
+        this.end = end;
+    }
+    return vRange;
+}());
 function getCompletionItems(text, regEx, output, words) {
     if (regEx == undefined)
         regEx = /([_a-zA-Z][_a-zA-Z0-9]*)\s*=\s*((function\s*\((.*)\))|(\((.*)\)\s*=>)|(\(.*\))|(\[.*\])|(\{.*\})|(".*")|([0-9]+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)/g;
@@ -65,7 +76,7 @@ function getCompletionItems(text, regEx, output, words) {
 }
 function getCompletionItemsInMap(text, regEx, output, words) {
     if (regEx == undefined)
-        regEx = /(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|\d*)\s*:\s*(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|\d*)/g;
+        regEx = /(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|\d*)\s*:\s*(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|(\d*))/g;
     if (output == undefined)
         output = [];
     if (words == undefined)
@@ -74,7 +85,7 @@ function getCompletionItemsInMap(text, regEx, output, words) {
     var tempItem;
     while ((match = regEx.exec(text))) {
         if (match[3] != undefined) {
-            //string
+            //string || number
             if (match[6] || match[9]) {
                 tempItem = new CompletionItem(match[3], CompletionItemKind.Value);
             }
@@ -86,6 +97,7 @@ function getCompletionItemsInMap(text, regEx, output, words) {
         if (tempItem) {
             tryAddItem(tempItem, output, words, match[5]);
         }
+        tempItem = undefined;
     }
     return output;
 }
@@ -335,7 +347,7 @@ function updateDecorations() {
     oldDecoration = editor.deltaDecorations(oldDecoration, getDecorationItems(text, editor));
 }
 function getDecorationItems(text, activeEditor) {
-    var regEx = /(".*?")|(if|else|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
+    var regEx = /(\$?".*?")|(\bif\b|\belse\b|\bfor\b|\bwhile\b|\bend if\b|\bend for\b|\bend while\b|\bin\b|\bthen\b|\breturn\b|\bbreak\b|\bcontinue\b|\band\b|\bor\b|\bnot\b)|(\bfunction\b|\bend function\b|\bself\b|\bnew\b|\btrue\b|\bfalse\b|\bnull\b)|(\b(?!function\b)([@_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([@_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
     var match;
     var matchIndex = 0;
     var output = [];
@@ -343,7 +355,25 @@ function getDecorationItems(text, activeEditor) {
     while ((match = regEx.exec(text))) {
         if (match[1]) {
             matchIndex = 1;
-            name = "gspp-strings";
+            var ranges = getStringFormatDecorations(match[1], activeEditor, match.index);
+            var start_1 = activeEditor.getModel().getPositionAt(match.index);
+            var end_1 = activeEditor.getModel().getPositionAt(match.index + match[matchIndex].length);
+            var stringRange = new vRange(start_1, end_1);
+            if (ranges.length > 0) {
+                for (var i = 0; i < ranges.length; i++) {
+                    var element = ranges[i];
+                    output.push(new DecorationItem(new vRange(stringRange.start, element.end), "gspp-strings"));
+                    if (i + 1 < ranges.length) {
+                        stringRange = new vRange(element.end, ranges[i + 1].start);
+                    }
+                    else {
+                        stringRange = new vRange(element.end, end_1);
+                    }
+                    output.push(new DecorationItem(element, "gspp-variables"));
+                }
+            }
+            output.push(new DecorationItem(stringRange, "gspp-strings"));
+            continue;
         }
         else if (match[2]) {
             matchIndex = 2;
@@ -374,12 +404,20 @@ function getDecorationItems(text, activeEditor) {
         }
         var start = activeEditor.getModel().getPositionAt(match.index);
         var end = activeEditor.getModel().getPositionAt(match.index + match[matchIndex].length);
-        output.push(new DecorationItem({
-            startColumn: start.column,
-            startLineNumber: start.lineNumber,
-            endColumn: end.column,
-            endLineNumber: end.lineNumber
-        }, name));
+        output.push(new DecorationItem(new vRange(start, end), name));
+    }
+    return output;
+}
+function getStringFormatDecorations(text, activeEditor, startIndex) {
+    var regex = /{.*?}/g;
+    var output = [];
+    var match;
+    while ((match = regex.exec(text))) {
+        if (match) {
+            var start = activeEditor.getModel().getPositionAt(match.index + startIndex);
+            var end = activeEditor.getModel().getPositionAt(match.index + match[0].length + startIndex);
+            output.push(new vRange(start, end));
+        }
     }
     return output;
 }

@@ -385,6 +385,8 @@ XOR.Encrypt = (text, key) => {
 }
 enc = XOR.Encrypt(""hello world"",""Ginger"")
 print(XOR.Encrypt(enc,""Ginger""))";
+
+        
     }
 
 
@@ -405,12 +407,7 @@ print(XOR.Encrypt(enc,""Ginger""))";
     }
 
     private Dictionary<string, string> _autocomplete = new Dictionary<string, string>() {{"(", ")"}, {"[", "]"}, {"{", "}"}, {"\"", "\""}, {"'", "'"}};
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-
-    }
-
+    
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)

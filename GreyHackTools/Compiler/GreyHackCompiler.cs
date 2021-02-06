@@ -24,9 +24,9 @@ namespace GreyHackTools
 
         private static string _separator = Environment.NewLine;
         //private static string _separator = ";";
-        private static readonly HashSet<char> _tokenSeparators = new() { ' ', '.', ',', ':'};
-        private static readonly HashSet<char> _tokenBrackets = new() { '(', ')', '[', ']', '{', '}', };
-        private static readonly HashSet<char> _tokenOperators = new()
+        private static readonly HashSet<char> _tokenSeparators = new HashSet<char>() { ' ', '.', ',', ':'};
+        private static readonly HashSet<char> _tokenBrackets = new HashSet<char>() { '(', ')', '[', ']', '{', '}', };
+        private static readonly HashSet<char> _tokenOperators = new HashSet<char>()
         {
             '+', '-', '*', '/', '%', //standard operators
             '<', '>', '=', '!', //comparators
@@ -34,20 +34,20 @@ namespace GreyHackTools
             '@','~',
         };
 
-        private static readonly HashSet<string> _tokenEndStatements = new() { "\n","\r\n", ";" };
+        private static readonly HashSet<string> _tokenEndStatements = new HashSet<string>() { "\n","\r\n", ";" };
 
-        private static readonly HashSet<string> _tokenInclude = new() {"#!"};
-        private static readonly HashSet<char> _tokenEndInclude = new() {'!'};
+        private static readonly HashSet<string> _tokenInclude = new HashSet<string>() {"#!"};
+        private static readonly HashSet<char> _tokenEndInclude = new HashSet<char>() {'!'};
 
-        private static readonly HashSet<char> _tokenStrings = new() { '"', '$' };
+        private static readonly HashSet<char> _tokenStrings = new HashSet<char>() { '"', '$' };
 
-        private static readonly HashSet<string> _keywords = new()
+        private static readonly HashSet<string> _keywords = new HashSet<string>()
         {
             "if", "then", "else", "end", "while", "for", "in", "and", "or", "not", "true", "false",  "return",
             "continue", "break",  "new", 
         };
 
-        private static readonly HashSet<string> _ignoreOptimize = new()
+        private static readonly HashSet<string> _ignoreOptimize = new HashSet<string>()
         {
             "File", "abs", "acos", "active_net_card", "active_user", "aircrack", "airmon", "asin", "atan", "bitwise",
             "bssid_name", "build", "ceil", "change_password", "char", "chmod", "close_program", "code", "command_info",
@@ -91,7 +91,7 @@ namespace GreyHackTools
 
         
 
-        private static readonly Dictionary<string, string> _operators = new()
+        private static readonly Dictionary<string, string> _operators = new Dictionary<string, string>()
         {
             { "&&", @" and " },
             { "||", @" or " },
@@ -121,7 +121,7 @@ namespace GreyHackTools
             Comment,
         }
 
-        private static readonly Dictionary<string,ETemplate> _templates = new()
+        private static readonly Dictionary<string,ETemplate> _templates = new Dictionary<string, ETemplate>()
         {
             { @"(__)(.*)(_idx)",ETemplate.IterationIndex }, // __var_idx
             { @"(\\)(\S*)",ETemplate.IgnoreOptimization },  // \exact_var_name

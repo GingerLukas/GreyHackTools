@@ -209,7 +209,7 @@ function getCompletionItems(text: string,regEx?:RegExp, output?:vscode.Completio
 }
 
 function getCompletionItemsInMap(text: string, regEx?: RegExp, output?: vscode.CompletionItem[], words?:{ [id: string]: { [id: number]: boolean } }){
-    if (regEx == undefined) regEx = /(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|\d*)\s*:\s*(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|\d*)/g;
+    if (regEx == undefined) regEx = /(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|\d*)\s*:\s*(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|(\d*))/g;
     if (output == undefined) output = [];
     if (words == undefined) words = {};
 
@@ -217,7 +217,7 @@ function getCompletionItemsInMap(text: string, regEx?: RegExp, output?: vscode.C
     let tempItem;
     while ((match = regEx.exec(text))) {
         if (match[3] != undefined) {
-            //string
+            //string || number
             if(match[6] || match[9]){
                 tempItem = new vscode.CompletionItem(match[3], vscode.CompletionItemKind.Value);
             }
@@ -225,9 +225,9 @@ function getCompletionItemsInMap(text: string, regEx?: RegExp, output?: vscode.C
             else if (match[8]) {
                 tempItem = new vscode.CompletionItem(match[3], vscode.CompletionItemKind.Module);
             }
-            
+            if (tempItem) tryAddItem(tempItem, output, words, match[5]);
+            tempItem = undefined;
         }
-        if (tempItem) tryAddItem(tempItem, output, words, match[5]);
     }
 
     return output;
@@ -258,7 +258,7 @@ function getParamsSnippet(params?:string[]) {
 }
 
 function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
-    const regEx = /(".*?")|(if|else|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
+    const regEx = /(\$?".*?")|(\bif\b|\belse\b|\bfor\b|\bwhile\b|\bend if\b|\bend for\b|\bend while\b|\bin\b|\bthen\b|\breturn\b|\bbreak\b|\bcontinue\b|\band\b|\bor\b|\bnot\b)|(\bfunction\b|\bend function\b|\bself\b|\bnew\b|\btrue\b|\bfalse\b|\bnull\b)|(\b(?!function\b)([@_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([@_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
     let match;
 
     const strings: vscode.Range[] = [];
@@ -270,10 +270,34 @@ function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
     const comments: vscode.Range[] = [];
     let matchIndex = 0;
     let output: vscode.Range[] = [];
+
     while ((match = regEx.exec(text))) {
         if (match[1]) {
             matchIndex = 1;
-            output = strings;
+
+            const ranges = getStringFormatDecorations(match[1], activeEditor,match.index);
+
+            const start = activeEditor.document.positionAt(match.index);
+            const end = activeEditor.document.positionAt(match.index + match[matchIndex].length);
+            let stringRange = new vscode.Range(start, end);
+
+            if (ranges.length > 0) {
+                for (let i = 0; i < ranges.length; i++) {
+                    const element = ranges[i];
+                    strings.push(new vscode.Range(stringRange.start, element.start));
+                    if (i+1<ranges.length) {
+                        stringRange = new vscode.Range(element.end, ranges[i+1].start);
+                    }
+                    else {
+                        stringRange = new vscode.Range(element.end, end);
+                    }
+                    
+                    variables.push(element);
+                }
+            }
+            
+            strings.push(stringRange);
+            continue;
         }
         else if (match[2]) {
             matchIndex = 2;
@@ -302,10 +326,28 @@ function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
         else {
             continue;
         }
+
         const start = activeEditor.document.positionAt(match.index);
         const end = activeEditor.document.positionAt(match.index + match[matchIndex].length);
         output.push(new vscode.Range(start, end));
     }
 
     return { functions: functions, keywords: keywords, keywords2: keywords2, strings: strings, numbers: numbers, variables: variables, comments: comments };
+}
+
+function getStringFormatDecorations(text:string, activeEditor: vscode.TextEditor,startIndex:number) {
+    const regex = /{.*?}/g;
+
+    const output:vscode.Range[] = [];
+
+    let match;
+    while ((match = regex.exec(text))) {
+        if (match) {
+            const start = activeEditor.document.positionAt(match.index+startIndex);
+            const end = activeEditor.document.positionAt(match.index + match[0].length+startIndex);
+            output.push(new vscode.Range(start, end));
+        }
+    }
+
+    return output;
 }

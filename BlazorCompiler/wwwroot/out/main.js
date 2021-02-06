@@ -119,11 +119,15 @@ function getStaticItems(gspp) {
         gsppForCompletion.insertText = "for(${1:var} in ${2:array}){\n\t${3:body}\n}\n${0}";
         var gsppIfCompletion = new CompletionItem("if", CompletionItemKind.Snippet);
         gsppIfCompletion.insertText = "if(${1:condition}){\n\t${2:body}\n}\n${0}";
+        var gsppElseIfCompletion = new CompletionItem('else if', CompletionItemKind.Snippet);
+        gsppElseIfCompletion.insertText = 'else if(${1:condition}){\n\t${2:body}\n}\n${0}';
+        var gsppElseCompletion = new CompletionItem('else', CompletionItemKind.Snippet);
+        gsppElseCompletion.insertText = 'else{\n\t${1:body}\n}\n${0}';
         var gsppWhileCompletion = new CompletionItem("while", CompletionItemKind.Snippet);
         gsppWhileCompletion.insertText = "while(${1:condition}){\n\t${2:body}\n}\n${0}";
         var gsppFuncCompletion = new CompletionItem("func", CompletionItemKind.Snippet);
         gsppFuncCompletion.insertText = "(${1:params}) => {\n\t${2:body}\n}\n${0}";
-        gsppItems = [gsppForCompletion, gsppIfCompletion, gsppWhileCompletion, gsppFuncCompletion];
+        gsppItems = [gsppForCompletion, gsppIfCompletion, gsppElseIfCompletion, gsppElseCompletion, gsppWhileCompletion, gsppFuncCompletion];
     }
     //#endregion
     //#region gs snippets
@@ -133,11 +137,15 @@ function getStaticItems(gspp) {
         gsForCompletion.insertText = "for ${1:var} in ${2:array}\n\t${3:body}\nend for\n${0}";
         var gsIfCompletion = new CompletionItem("if", CompletionItemKind.Snippet);
         gsIfCompletion.insertText = "if ${1:condition} then\n\t${2:body}\nend if\n${0}";
+        var gsElseIfCompletion = new CompletionItem('else if', CompletionItemKind.Snippet);
+        gsElseIfCompletion.insertText = 'else if ${1:condition} then\n\t${2:body}\nend if\n${0}';
+        var gsElseCompletion = new CompletionItem('else', CompletionItemKind.Snippet);
+        gsElseCompletion.insertText = 'else\n\t${1:body}\nend if\n${0}';
         var gsWhileCompletion = new CompletionItem("while", CompletionItemKind.Snippet);
         gsWhileCompletion.insertText = "while ${1:condition}\n\t${2:body}\nend while\n${0}";
         var gsFuncCompletion = new CompletionItem("func", CompletionItemKind.Snippet);
         gsFuncCompletion.insertText = "function(${1:params})\n\t${2:body}\nend function\n${0}";
-        gsItems = [gsForCompletion, gsIfCompletion, gsWhileCompletion, gsFuncCompletion];
+        gsItems = [gsForCompletion, gsIfCompletion, gsElseIfCompletion, gsElseCompletion, gsWhileCompletion, gsFuncCompletion];
     }
     //#endregion
     //#region constants & keywords
@@ -147,6 +155,7 @@ function getStaticItems(gspp) {
     var continueCompletion = new CompletionItem("continue", CompletionItemKind.Keyword);
     var breakCompletion = new CompletionItem("break", CompletionItemKind.Keyword);
     var selfCompletion = new CompletionItem("self", CompletionItemKind.Keyword);
+    var returnCompletion = new CompletionItem('return', CompletionItemKind.Keyword);
     //#endregion
     //#region operators
     var orCompletion = new CompletionItem("or", CompletionItemKind.Operator);
@@ -239,6 +248,7 @@ function getStaticItems(gspp) {
         continueCompletion,
         breakCompletion,
         selfCompletion,
+        returnCompletion,
         //#endregion
         //#region oprators
         orCompletion,
@@ -325,7 +335,7 @@ function updateDecorations() {
     oldDecoration = editor.deltaDecorations(oldDecoration, getDecorationItems(text, editor));
 }
 function getDecorationItems(text, activeEditor) {
-    var regEx = /(".*?")|(if|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
+    var regEx = /(".*?")|(if|else|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
     var match;
     var matchIndex = 0;
     var output = [];

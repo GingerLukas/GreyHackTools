@@ -258,7 +258,7 @@ function getParamsSnippet(params?:string[]) {
 }
 
 function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
-    const regEx = /(".*?")|(if|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
+    const regEx = /(".*?")|(if|else|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
     let match;
 
     const strings: vscode.Range[] = [];

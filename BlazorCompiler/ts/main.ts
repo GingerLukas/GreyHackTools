@@ -142,13 +142,19 @@ function getStaticItems(gspp: boolean) {
         const gsppIfCompletion = new CompletionItem("if", CompletionItemKind.Snippet);
         gsppIfCompletion.insertText = "if(${1:condition}){\n\t${2:body}\n}\n${0}";
 
+        const gsppElseIfCompletion = new CompletionItem('else if', CompletionItemKind.Snippet);
+        gsppElseIfCompletion.insertText = 'else if(${1:condition}){\n\t${2:body}\n}\n${0}';
+
+        const gsppElseCompletion = new CompletionItem('else', CompletionItemKind.Snippet);
+        gsppElseCompletion.insertText = 'else{\n\t${1:body}\n}\n${0}';
+
         const gsppWhileCompletion = new CompletionItem("while", CompletionItemKind.Snippet);
         gsppWhileCompletion.insertText = "while(${1:condition}){\n\t${2:body}\n}\n${0}";
 
         const gsppFuncCompletion = new CompletionItem("func", CompletionItemKind.Snippet);
         gsppFuncCompletion.insertText = "(${1:params}) => {\n\t${2:body}\n}\n${0}";
 
-        gsppItems = [gsppForCompletion, gsppIfCompletion, gsppWhileCompletion, gsppFuncCompletion];
+        gsppItems = [gsppForCompletion, gsppIfCompletion, gsppElseIfCompletion, gsppElseCompletion, gsppWhileCompletion, gsppFuncCompletion];
     }
     //#endregion
 
@@ -161,13 +167,19 @@ function getStaticItems(gspp: boolean) {
         const gsIfCompletion = new CompletionItem("if", CompletionItemKind.Snippet);
         gsIfCompletion.insertText = "if ${1:condition} then\n\t${2:body}\nend if\n${0}";
 
+        const gsElseIfCompletion = new CompletionItem('else if', CompletionItemKind.Snippet);
+        gsElseIfCompletion.insertText = 'else if ${1:condition} then\n\t${2:body}\nend if\n${0}';
+
+        const gsElseCompletion = new CompletionItem('else', CompletionItemKind.Snippet);
+        gsElseCompletion.insertText = 'else\n\t${1:body}\nend if\n${0}';
+
         const gsWhileCompletion = new CompletionItem("while", CompletionItemKind.Snippet);
         gsWhileCompletion.insertText = "while ${1:condition}\n\t${2:body}\nend while\n${0}";
 
         const gsFuncCompletion = new CompletionItem("func", CompletionItemKind.Snippet);
         gsFuncCompletion.insertText = "function(${1:params})\n\t${2:body}\nend function\n${0}";
 
-        gsItems = [gsForCompletion, gsIfCompletion, gsWhileCompletion, gsFuncCompletion];
+        gsItems = [gsForCompletion, gsIfCompletion, gsElseIfCompletion, gsElseCompletion, gsWhileCompletion, gsFuncCompletion];
     }
     //#endregion
 
@@ -183,6 +195,8 @@ function getStaticItems(gspp: boolean) {
     const breakCompletion = new CompletionItem("break", CompletionItemKind.Keyword);
 
     const selfCompletion = new CompletionItem("self", CompletionItemKind.Keyword);
+
+    const returnCompletion = new CompletionItem('return', CompletionItemKind.Keyword);
     //#endregion
 
     //#region operators
@@ -322,6 +336,7 @@ function getStaticItems(gspp: boolean) {
         continueCompletion,
         breakCompletion,
         selfCompletion,
+        returnCompletion,
         //#endregion
 
         //#region oprators
@@ -515,7 +530,7 @@ function updateDecorations() {
 }
 
 function getDecorationItems(text: string, activeEditor: monaco.editor.IStandaloneCodeEditor) {
-    const regEx = /(".*?")|(if|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
+    const regEx = /(".*?")|(if|else|for|while|end if|end for|end while|\bin\b|then|return|break|continue|and|or|not)|(function|end function|self|new|true|false|null)|(\b(?!function\b)([_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
     let match;
     let matchIndex = 0;
     let output: DecorationItem[] = [];

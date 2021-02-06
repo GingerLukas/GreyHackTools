@@ -36,8 +36,10 @@ namespace GreyHackTools
 
             public virtual Token Compile(Context context, bool force = false)
             {
-                if (context.StringBuilder.Length != 0 && Regex.IsMatch(context.StringBuilder[^1].ToString(),"\\w") &&
-                    Value.Length > 0 && Regex.IsMatch(Value[0].ToString(), "\\w"))
+                if (context.StringBuilder.Length != 0 &&
+                    ((Regex.IsMatch(context.StringBuilder[^1].ToString(), "\\w") &&
+                      Value.Length > 0 && Regex.IsMatch(Value[0].ToString(), "\\w"))|| 
+                     (Prev != null && Prev is Keyword && this is Bracket b&& (b.Value.FirstOrDefault() == '('||b.Value.FirstOrDefault()=='['))))
                 {
                     context.StringBuilder.Append(' ');
                 }
@@ -337,7 +339,10 @@ namespace GreyHackTools
                         node = tmp.Next;
                     }
 
-                    context.StringBuilder.Append(postfix);
+                    if (node?.Next == null || node.Next?.Value != "else")
+                    {
+                        context.StringBuilder.Append(postfix);
+                    }
                     Value = context.StringBuilder.ToString();
                     context.stringBuilders.Pop();
                     return node;
@@ -350,8 +355,10 @@ namespace GreyHackTools
                     {
                         Token node = Next;
                         context.stringBuilders.Push(new StringBuilder());
-                        
-                        if (Value == "{" && (Prev is Bracket {Custom: true} || Prev.CompareBeginningOfValue("function")))
+
+                        if (Value == "{" && (Prev is Bracket {Custom: true} ||
+                                             Prev.CompareBeginningOfValue("function") || 
+                                             Prev.Value == "else"))
                         {
                             if (!EndStatement) EndStatement = true;
                             Token t;
@@ -361,27 +368,32 @@ namespace GreyHackTools
                                 type = "function";
                                 t = Prev;
                             }
+                            else if (Prev.Value == "else")
+                            {
+                                type = "if";
+                                t = Prev;
+                            }
                             else
                             {
                                 t = Prev.Prev;
                             }
 
-                            if ((bool) t?.CompareBeginningOfValue("if"))
+                            if (t.CompareBeginningOfValue("if"))
                             {
                                 type = "if";
                                 context.StringBuilder.Append(" then");
                             }
-                            else if ((bool) t?.CompareBeginningOfValue("for"))
+                            else if (t.CompareBeginningOfValue("for"))
                             {
                                 type = "for";
                             }
-                            else if ((bool) t?.CompareBeginningOfValue("while"))
+                            else if (t.CompareBeginningOfValue("while"))
                             {
                                 type = "while";
                             }
 
-                            if (t.EndStatement||EndStatement) context.StringBuilder.Append(_separator);
-                            node = CompileInside(context,false,true,$"end {type}");
+                            if (t.EndStatement || EndStatement) context.StringBuilder.Append(_separator);
+                            node = CompileInside(context, false, true, $"end {type}");
                         }
                         else if (Prev is Keyword k && k.Value == "for")
                         {
@@ -395,7 +407,8 @@ namespace GreyHackTools
                         }
                         
                         Next = node?.Next;
-                        if (node != null) EndStatement = node.EndStatement;
+                        if (node != null)
+                            EndStatement = node.EndStatement && !Value.EndsWith(GreyHackCompiler._separator);
 
                         if (Prev == null)
                         {

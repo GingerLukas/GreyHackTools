@@ -13,13 +13,19 @@ export function getStaticItems(gspp: boolean) {
     const gsppIfCompletion = new vscode.CompletionItem('if', vscode.CompletionItemKind.Snippet);
     gsppIfCompletion.insertText = new vscode.SnippetString('if(${1:condition}){\n\t${2:body}\n}\n${0}');
 
+    const gsppElseIfCompletion = new vscode.CompletionItem('else if', vscode.CompletionItemKind.Snippet);
+    gsppElseIfCompletion.insertText = new vscode.SnippetString('else if(${1:condition}){\n\t${2:body}\n}\n${0}');
+
+    const gsppElseCompletion = new vscode.CompletionItem('else', vscode.CompletionItemKind.Snippet);
+    gsppElseCompletion.insertText = new vscode.SnippetString('else{\n\t${1:body}\n}\n${0}');
+
     const gsppWhileCompletion = new vscode.CompletionItem('while', vscode.CompletionItemKind.Snippet);
     gsppWhileCompletion.insertText = new vscode.SnippetString('while(${1:condition}){\n\t${2:body}\n}\n${0}');
 
     const gsppFuncCompletion = new vscode.CompletionItem('func', vscode.CompletionItemKind.Snippet);
     gsppFuncCompletion.insertText = new vscode.SnippetString('(${1:params}) => {\n\t${2:body}\n}\n${0}');
 
-    const gsppItems = [gsppForCompletion, gsppIfCompletion, gsppWhileCompletion, gsppFuncCompletion];
+    const gsppItems = [gsppForCompletion, gsppIfCompletion, gsppElseIfCompletion, gsppElseCompletion, gsppWhileCompletion, gsppFuncCompletion];
 //#endregion
     
 //#region gs snippets
@@ -29,13 +35,19 @@ export function getStaticItems(gspp: boolean) {
     const gsIfCompletion = new vscode.CompletionItem('if', vscode.CompletionItemKind.Snippet);
     gsIfCompletion.insertText = new vscode.SnippetString('if ${1:condition} then\n\t${2:body}\nend if\n${0}');
 
+    const gsElseIfCompletion = new vscode.CompletionItem('else if', vscode.CompletionItemKind.Snippet);
+    gsElseIfCompletion.insertText = new vscode.SnippetString('else if ${1:condition} then\n\t${2:body}\nend if\n${0}');
+
+    const gsElseCompletion = new vscode.CompletionItem('else', vscode.CompletionItemKind.Snippet);
+    gsElseCompletion.insertText = new vscode.SnippetString('else\n\t${1:body}\nend if\n${0}');
+
     const gsWhileCompletion = new vscode.CompletionItem('while', vscode.CompletionItemKind.Snippet);
     gsWhileCompletion.insertText = new vscode.SnippetString('while ${1:condition}\n\t${2:body}\nend while\n${0}');
 
     const gsFuncCompletion = new vscode.CompletionItem('func', vscode.CompletionItemKind.Snippet);
     gsFuncCompletion.insertText = new vscode.SnippetString('function(${1:params})\n\t${2:body}\nend function\n${0}');
 
-    const gsItems = [gsForCompletion, gsIfCompletion, gsWhileCompletion, gsFuncCompletion];
+    const gsItems = [gsForCompletion, gsIfCompletion, gsElseIfCompletion, gsElseCompletion, gsWhileCompletion, gsFuncCompletion];
 //#endregion
 
 //#region constants & keywords
@@ -50,6 +62,8 @@ export function getStaticItems(gspp: boolean) {
     const breakCompletion = new vscode.CompletionItem('break', vscode.CompletionItemKind.Keyword);
 
     const selfCompletion = new vscode.CompletionItem('self', vscode.CompletionItemKind.Keyword);
+
+    const returnCompletion = new vscode.CompletionItem('return', vscode.CompletionItemKind.Keyword);
 //#endregion
 
 //#region operators
@@ -191,6 +205,7 @@ export function getStaticItems(gspp: boolean) {
         continueCompletion,
         breakCompletion,
         selfCompletion,
+        returnCompletion,
 //#endregion
         
 //#region oprators

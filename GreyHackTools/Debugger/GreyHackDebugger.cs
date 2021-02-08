@@ -408,6 +408,6 @@ namespace GreyHackTools
     public class DebugVariable
     {
         public string Name { get; set; }
-        public string Value { get; set; }
+        public string? Value { get; set; }
     }
 }

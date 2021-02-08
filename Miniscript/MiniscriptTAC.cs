@@ -13,6 +13,7 @@ deal with it directly (see MiniscriptInterpreter instead).
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Miniscript {
 
@@ -904,7 +905,7 @@ namespace Miniscript {
 					if (mse.location == null) mse.location = line.location;
 					throw mse;
 				}
-			}
+            }
 			
 			/// <summary>
 			/// Directly invoke a ValFunction by manually pushing it onto the call stack.

@@ -12,6 +12,7 @@ For details, see Chapters 1-3 of the MiniScript Integration Guide.
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Miniscript {
 
@@ -184,8 +185,8 @@ namespace Miniscript {
 				vm.GetTopContext().JumpToEnd();
 			}
 		}
-		
-		/// <summary>
+        
+        /// <summary>
 		/// Run one step of the virtual machine.  This method is not very useful
 		/// except in special cases; usually you will use RunUntilDone (above) instead.
 		/// </summary>

@@ -24,27 +24,27 @@ namespace GreyHackTools
 
         private static string _separator = Environment.NewLine;
         //private static string _separator = ";";
-        private static readonly HashSet<char> _tokenSeparators = new HashSet<char>() { ' ', '.', ',', ':'};
+        private static readonly HashSet<char> _tokenSeparators = new HashSet<char>() { ' ', '.', ',', ':' };
         private static readonly HashSet<char> _tokenBrackets = new HashSet<char>() { '(', ')', '[', ']', '{', '}', };
         private static readonly HashSet<char> _tokenOperators = new HashSet<char>()
         {
             '+', '-', '*', '/', '%', //standard operators
             '<', '>', '=', '!', //comparators
             '^', '&', '|', //bitwise
-            '@','~',
+            '@','~'
         };
 
-        private static readonly HashSet<string> _tokenEndStatements = new HashSet<string>() { "\n","\r\n", ";" };
+        private static readonly HashSet<string> _tokenEndStatements = new HashSet<string>() { "\n", "\r\n", ";" };
 
-        private static readonly HashSet<string> _tokenInclude = new HashSet<string>() {"#!"};
-        private static readonly HashSet<char> _tokenEndInclude = new HashSet<char>() {'!'};
+        private static readonly HashSet<string> _tokenInclude = new HashSet<string>() { "#!" };
+        private static readonly HashSet<char> _tokenEndInclude = new HashSet<char>() { '!' };
 
         private static readonly HashSet<char> _tokenStrings = new HashSet<char>() { '"', '$' };
 
         private static readonly HashSet<string> _keywords = new HashSet<string>()
         {
             "if", "then", "else", "end", "while", "for", "in", "and", "or", "not", "true", "false",  "return",
-            "continue", "break",  "new", 
+            "continue", "break",  "new",
         };
 
         private static readonly HashSet<string> _ignoreOptimize = new HashSet<string>()
@@ -89,7 +89,7 @@ namespace GreyHackTools
             "continue", "break", "function", "new", "self"
         };
 
-        
+
 
         private static readonly Dictionary<string, string> _operators = new Dictionary<string, string>()
         {
@@ -121,7 +121,7 @@ namespace GreyHackTools
             Comment,
         }
 
-        private static readonly Dictionary<string,ETemplate> _templates = new Dictionary<string, ETemplate>()
+        private static readonly Dictionary<string, ETemplate> _templates = new Dictionary<string, ETemplate>()
         {
             { @"(__)(.*)(_idx)",ETemplate.IterationIndex }, // __var_idx
             { @"(\\)(\S*)",ETemplate.IgnoreOptimization },  // \exact_var_name
@@ -129,12 +129,12 @@ namespace GreyHackTools
 
         };
 
-        private static bool IsTemplate(string input,out string regex,out MatchCollection matches, out ETemplate template)
+        private static bool IsTemplate(string input, out string regex, out MatchCollection matches, out ETemplate template)
         {
             foreach (KeyValuePair<string, ETemplate> pair in _templates)
             {
                 matches = Regex.Matches(input, pair.Key);
-                if (matches.Count!=0)
+                if (matches.Count != 0)
                 {
                     regex = pair.Key;
                     template = pair.Value;
@@ -149,10 +149,10 @@ namespace GreyHackTools
         }
 
         #endregion
-        
-        public static string Compile(string code,bool optimize = false, Settings settings = Settings.None)
+
+        public static string Compile(string code, bool optimize = false, Settings settings = Settings.None)
         {
-            return Tokenize(code,settings).Compile(optimize);
+            return Tokenize(code, settings).Compile(optimize);
         }
 
         public static bool TryCompile(string code, out string compiledCode, bool optimize = false, Settings settings = Settings.None)
@@ -160,7 +160,7 @@ namespace GreyHackTools
             try
             {
                 compiledCode = Compile(code, optimize, settings);
-                return true; 
+                return true;
             }
             catch (Exception e)
             {
@@ -169,12 +169,12 @@ namespace GreyHackTools
             }
         }
 
-        private static Context Tokenize(string plainCode,Settings settings = Settings.None)
+        private static Context Tokenize(string plainCode, Settings settings = Settings.None)
         {
-            Context context = new Context(settings){PlainInput = new Queue<char>(plainCode)};
+            Context context = new Context(settings) { PlainInput = new Queue<char>(plainCode) };
 
             Token token = null;
-            while ((token = GetNextToken(context))!=null)
+            while ((token = GetNextToken(context)) != null)
             {
                 context.AddToken(token);
 
@@ -199,7 +199,7 @@ namespace GreyHackTools
             }
         }
 
-        private static Func<Context,bool> GetSeparationSelector(Context context, out Token token)
+        private static Func<Context, bool> GetSeparationSelector(Context context, out Token token)
         {
             if (context.PlainInput.Peek() == '/' && context.PlainInput.Skip(1).FirstOrDefault() == '/')
             {
@@ -228,7 +228,7 @@ namespace GreyHackTools
             if (context.PlainInput.Peek() == '\\')
             {
                 token = new Token.Template();
-                return x=> !_tokenBrackets.Contains(x.PlainInput.Peek()) &&
+                return x => !_tokenBrackets.Contains(x.PlainInput.Peek()) &&
                            !_tokenSeparators.Contains(x.PlainInput.Peek()) &&
                            !_tokenOperators.Contains(x.PlainInput.Peek()) &&
                            !_tokenEndStatements.Contains(x.PlainInput.Peek().ToString()) &&
@@ -278,8 +278,17 @@ namespace GreyHackTools
                         context.ShouldOptimizeString.Pop();
                         break;
                     case '{':
-                        context.MapActive.Push(true);
-                        context.ShouldOptimizeString.Push((context.Settings & Settings.IgnoreMapVariables) == 0);
+                        if ((!(context.LastToken is Token.Bracket b) || b.IsOpening) && context.LastToken.Value != "=>")
+                        {
+                            context.MapActive.Push(true);
+                            context.ShouldOptimizeString.Push((context.Settings & Settings.IgnoreMapVariables) == 0);
+                        }
+                        else
+                        {
+                            context.MapActive.Push(false);
+                            context.ShouldOptimizeString.Push(false);
+                        }
+
                         break;
                     case '}':
                         context.MapActive.Pop();
@@ -323,8 +332,8 @@ namespace GreyHackTools
 
         private static void GetString(Context context)
         {
-            
-            while (context.PlainInput.Count>0&&context.PlainInput.Peek()!='"')
+
+            while (context.PlainInput.Count > 0 && context.PlainInput.Peek() != '"')
             {
                 context.StringBuilder.Append(context.PlainInput.Dequeue());
             }
@@ -347,18 +356,18 @@ namespace GreyHackTools
             StringBuilder sb = context.StringBuilder;
             RemoveSpaces(context.PlainInput);
             if (context.PlainInput.Count == 0) return null;
-            Func<Context,bool> separator = GetSeparationSelector(context, out Token t);
+            Func<Context, bool> separator = GetSeparationSelector(context, out Token t);
             do
             {
                 sb.Append(context.PlainInput.Dequeue());
             } while (context.PlainInput.Count > 0 && separator(context));
 
             string tmp_value = sb.ToString();
-            if (t is not Token.String&&IsTemplate(tmp_value, out string regex,out MatchCollection matches,out ETemplate template))
+            if (!(t is Token.String) && IsTemplate(tmp_value, out string regex, out MatchCollection matches, out ETemplate template))
             {
-                t = new Token.Template(template, matches, regex,context);
+                t = new Token.Template(template, matches, regex, context);
             }
-            else if (_keywords.Contains(tmp_value) && t is not Token.String)
+            else if (_keywords.Contains(tmp_value) && !(t is Token.String))
             {
                 t = new Token.Keyword();
             }
@@ -370,7 +379,7 @@ namespace GreyHackTools
 
             t.Value = tmp_value;
 
-            while (context.PlainInput.Count > 0 && context.PlainInput.Peek() == ' ') 
+            while (context.PlainInput.Count > 0 && context.PlainInput.Peek() == ' ')
                 context.PlainInput.Dequeue();
 
             t.EndStatement = IsEndOfLine(context);

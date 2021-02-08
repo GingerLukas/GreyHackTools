@@ -412,8 +412,17 @@ print(XOR.Encrypt(enc,""Ginger""))";
     {
         if (firstRender)
         {
-            await js.InvokeVoidAsync("setupEditor", "code");
-            await js.InvokeVoidAsync("editor.setValue", InputCode);
+           
+                try
+                {
+                    await js.InvokeVoidAsync("setupEditor", "code");
+                    await js.InvokeVoidAsync("editor.setValue", InputCode);
+                }
+                catch (Exception e)
+                {
+                }
+            
+            
         }
     }
 

@@ -171,8 +171,11 @@ if (true) {}";
                 if (context.variables == null) return;
                 foreach (Value key in context.variables.Keys)
                 {
+                    string s = context.variables[key.ToString()] == null
+                        ? "null"
+                        : context.variables[key.ToString()].ToString();
                     debugger.DebugVariables.Add(new DebugVariable()
-                        { Name = key.ToString(), Value = context.variables[key.ToString()].ToString() });
+                        {Name = key.ToString(), Value = s});
                 }
             });
         }

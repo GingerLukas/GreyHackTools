@@ -64,6 +64,10 @@ export function getStaticItems(gspp: boolean) {
     const selfCompletion = new vscode.CompletionItem('self', vscode.CompletionItemKind.Keyword);
 
     const returnCompletion = new vscode.CompletionItem('return', vscode.CompletionItemKind.Keyword);
+
+    const globalsCompletion = new vscode.CompletionItem('globals', vscode.CompletionItemKind.Module);
+
+    const localsCompletion = new vscode.CompletionItem('locals', vscode.CompletionItemKind.Module);
 //#endregion
 
 //#region operators
@@ -206,6 +210,8 @@ export function getStaticItems(gspp: boolean) {
         breakCompletion,
         selfCompletion,
         returnCompletion,
+        globalsCompletion,
+        localsCompletion,
 //#endregion
         
 //#region oprators

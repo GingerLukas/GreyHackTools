@@ -23,5 +23,5 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@3.7.1
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          branch: gs-pages
+          branch: gh-pages
           FOLDER: release/wwwroot

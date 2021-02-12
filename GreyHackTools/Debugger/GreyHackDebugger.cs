@@ -1,17 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using GreyHackTools.Debugger;
+using GreyHackTools.Debugger.GreyHackEmulation;
 using Miniscript;
 
 namespace GreyHackTools
 {
     public class GreyHackDebugger
     {
+        public RuntimeContext RuntimeContext { get; set; } = new RuntimeContext();
         public bool AutomaticallyClearDebugVariables { get; set; } = true;
         public bool Running => !_debugerTask.IsCompleted;
         
@@ -167,7 +171,8 @@ namespace GreyHackTools
                 }
                 return Intrinsic.Result.Null;
             };
-			Intrinsic intrinsic = Intrinsic.Create("md5");
+			
+            Intrinsic intrinsic = Intrinsic.Create("md5");
 			intrinsic.AddParam("value");
 			intrinsic.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
 			{
@@ -180,7 +185,8 @@ namespace GreyHackTools
 				return new Intrinsic.Result(MD5.Calculate(new UTF8Encoding().GetBytes(valString.value)).PadLeft(32, '0'));
 				
 			};
-			Intrinsic intrinsic2 = Intrinsic.Create("reverse");
+			
+            Intrinsic intrinsic2 = Intrinsic.Create("reverse");
 			intrinsic2.AddParam("self");
 			intrinsic2.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
 			{
@@ -191,7 +197,8 @@ namespace GreyHackTools
 				}
 				return Intrinsic.Result.Null;
 			};
-			Intrinsic intrinsic3 = Intrinsic.Create("join");
+			
+            Intrinsic intrinsic3 = Intrinsic.Create("join");
 			intrinsic3.AddParam("self");
 			intrinsic3.AddParam("delimiter", " ");
 			intrinsic3.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
@@ -225,7 +232,8 @@ namespace GreyHackTools
 				}
 				return new Intrinsic.Result(string.Join(text, list.ToArray()));
 			};
-			Intrinsic intrinsic4 = Intrinsic.Create("split");
+			
+            Intrinsic intrinsic4 = Intrinsic.Create("split");
 			intrinsic4.AddParam("self");
 			intrinsic4.AddParam("pattern");
 			intrinsic4.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
@@ -257,7 +265,8 @@ namespace GreyHackTools
 				}
 				return Intrinsic.Result.Null;
 			};
-			Intrinsic intrinsic5 = Intrinsic.Create("replace");
+			
+            Intrinsic intrinsic5 = Intrinsic.Create("replace");
 			intrinsic5.AddParam("self");
 			intrinsic5.AddParam("oldval");
 			intrinsic5.AddParam("newval");
@@ -298,7 +307,8 @@ namespace GreyHackTools
 				}
 				return new Intrinsic.Result(text);
 			};
-			Intrinsic intrinsic6 = Intrinsic.Create("trim");
+			
+            Intrinsic intrinsic6 = Intrinsic.Create("trim");
 			intrinsic6.AddParam("self");
 			intrinsic6.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
 			{
@@ -309,7 +319,8 @@ namespace GreyHackTools
 				}
 				return Intrinsic.Result.Null;
 			};
-			Intrinsic intrinsic7 = Intrinsic.Create("lastIndexOf");
+			
+            Intrinsic intrinsic7 = Intrinsic.Create("lastIndexOf");
 			intrinsic7.AddParam("self");
 			intrinsic7.AddParam("searchStr");
 			intrinsic7.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
@@ -323,7 +334,8 @@ namespace GreyHackTools
 				}
 				return Intrinsic.Result.Null;
 			};
-			Intrinsic intrinsic8 = Intrinsic.Create("to_int");
+			
+            Intrinsic intrinsic8 = Intrinsic.Create("to_int");
 			intrinsic8.AddParam("self");
 			intrinsic8.AddParam("value", new ValString(""));
 			intrinsic8.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
@@ -341,7 +353,8 @@ namespace GreyHackTools
 				}
 				return new Intrinsic.Result(var.ToString());
 			};
-			Intrinsic intrinsic9 = Intrinsic.Create("typeof");
+			
+            Intrinsic intrinsic9 = Intrinsic.Create("typeof");
             intrinsic9.AddParam("type_object");
             intrinsic9.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
             {
@@ -381,15 +394,18 @@ namespace GreyHackTools
                 }
                 return new Intrinsic.Result(resultStr);
             };
-			Intrinsic.Create("clear_screen").code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+			
+            Intrinsic.Create("clear_screen").code = delegate (TAC.Context context, Intrinsic.Result partialResult)
             {
                 return Intrinsic.Result.Null;
             };
+            
             Intrinsic.Create("current_date").code = delegate (TAC.Context context, Intrinsic.Result partialResult)
             {
                 var date = DateTime.Now;
                 return new Intrinsic.Result($"{date.Day}-{date.Month}-{date.Year} {date.Hour:D2}:{date.Minute:D2}");
             };
+            
             Intrinsic intrinsic10 = Intrinsic.Create("exit");
             intrinsic10.AddParam("msg", new ValString(""));
             intrinsic10.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
@@ -401,6 +417,128 @@ namespace GreyHackTools
                 }
                 context.interpreter.vm.Stop();
                 return Intrinsic.Result.Null;
+            };
+
+            Intrinsic intrinsic11 = Intrinsic.Create("nslookup");
+            intrinsic11.AddParam("address");
+            intrinsic11.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                ValString valString = context.GetVar("address") as ValString;
+                string resultStr = "Not found";
+                if (valString == null || string.IsNullOrEmpty(valString.value))
+                {
+                    throw new RuntimeException("nslookup: Invalid arguments");
+                }
+
+                int first = RuntimeContext.random.Next() % 255 + 1;
+                int second = RuntimeContext.random.Next() % 255 + 1;
+                if (IP.LocalRanges.Contains(first+"."+second))
+                {
+                    first++;
+                }
+
+                return new Intrinsic.Result(IP.RandomPublicIp(RuntimeContext.random).ToString());
+            };
+
+            Intrinsic.Create("active_user").code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                return new Intrinsic.Result(RuntimeContext.ActiveUser);
+            };
+            Intrinsic.Create("home_dir").code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                return new Intrinsic.Result(
+                    RuntimeContext.ActiveUser.Equals("root") ? "/root" : ("/home/" + RuntimeContext.ActiveUser));
+            };
+
+            Intrinsic intrinsic12 = Intrinsic.Create("current_path");
+            intrinsic12.AddParam("self");
+            intrinsic12.code = ((TAC.Context context, Intrinsic.Result partialResult) =>
+                new Intrinsic.Result(RuntimeContext.CurrentPath));
+            
+            Intrinsic intrinsic13 = Intrinsic.Create("launch_path");
+            intrinsic13.AddParam("self");
+            intrinsic13.code = ((TAC.Context context, Intrinsic.Result partialResult) =>
+                new Intrinsic.Result(RuntimeContext.CurrentPath));
+
+            Intrinsic intrinsic14 = Intrinsic.Create("include_lib");
+            intrinsic14.AddParam("libPath");
+            intrinsic14.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                return new Intrinsic.Result(intrinsic14.name + " isn't implemented");
+            };
+
+            Intrinsic.Create("user_mail_address").code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            { 
+                return new Intrinsic.Result(RuntimeContext.EmailAddress);
+            };
+
+            Intrinsic.Create("user_bank_number").code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                return new Intrinsic.Result(RuntimeContext.BankNumber);
+            };
+
+            Intrinsic.Create("program_path").code = ((TAC.Context context, Intrinsic.Result partialResult) => new Intrinsic.Result(RuntimeContext.CurrentPath));
+            
+            Intrinsic intrinsic15 = Intrinsic.Create("format_columns");
+            intrinsic15.AddParam("output_str");
+            intrinsic15.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                ValString valString = context.GetVar("output_str") as ValString;
+                if (valString == null || string.IsNullOrEmpty(valString.value))
+                {
+                    return new Intrinsic.Result("");
+                }
+                return new Intrinsic.Result(TerminalTools.FormatColumnas(valString.value, 2));
+            };
+
+            Intrinsic intrinsic16 = Intrinsic.Create("is_lan_ip");
+            intrinsic16.AddParam("address");
+            intrinsic16.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                ValString valString = context.GetVar("address") as ValString;
+                if (valString == null || string.IsNullOrEmpty(valString.value))
+                {
+                    return Intrinsic.Result.False;
+                }
+                string value = valString.value;
+                if (!IP.IsValidIP(value, false))
+                {
+                    return Intrinsic.Result.False;
+                }
+                if (!new IP(value).IsLanIp())
+                {
+                    return Intrinsic.Result.False;
+                }
+                return Intrinsic.Result.True;
+            };
+
+            Intrinsic intrinsic17 = Intrinsic.Create("parent_path");
+            intrinsic17.AddParam("path");
+            intrinsic17.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                ValString valString = context.GetVar("path") as ValString;
+                if (valString == null || string.IsNullOrEmpty(valString.value))
+                {
+                    throw new RuntimeException("parent_path: Invalid arguments");
+                }
+                string value = valString.value;
+                return new Intrinsic.Result(string.IsNullOrEmpty(value) ? "" : Path.GetPathRoot(RuntimeContext.CurrentPath));
+            };
+
+            Intrinsic intrinsic18 = Intrinsic.Create("is_valid_ip");
+            intrinsic18.AddParam("ipAddress");
+            intrinsic18.code = delegate (TAC.Context context, Intrinsic.Result partialResult)
+            {
+                ValString valString = context.GetVar("ipAddress") as ValString;
+                if (valString == null || string.IsNullOrEmpty(valString.value))
+                {
+                    return Intrinsic.Result.False;
+                }
+                if (!IP.IsValidIP(valString.value, false))
+                {
+                    return Intrinsic.Result.False;
+                }
+                return Intrinsic.Result.True;
             };
         }
 

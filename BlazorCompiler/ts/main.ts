@@ -217,6 +217,10 @@ function getStaticItems(gspp: boolean) {
     const selfCompletion = new CompletionItem("self", CompletionItemKind.Keyword);
 
     const returnCompletion = new CompletionItem('return', CompletionItemKind.Keyword);
+
+    const globalsCompletion = new CompletionItem('globals', CompletionItemKind.Module);
+
+    const localsCompletion = new CompletionItem('locals', CompletionItemKind.Module);
     //#endregion
 
     //#region operators
@@ -357,6 +361,8 @@ function getStaticItems(gspp: boolean) {
         breakCompletion,
         selfCompletion,
         returnCompletion,
+        globalsCompletion,
+        localsCompletion,
         //#endregion
 
         //#region oprators

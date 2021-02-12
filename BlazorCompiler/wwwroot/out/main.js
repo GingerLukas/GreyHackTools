@@ -168,6 +168,8 @@ function getStaticItems(gspp) {
     var breakCompletion = new CompletionItem("break", CompletionItemKind.Keyword);
     var selfCompletion = new CompletionItem("self", CompletionItemKind.Keyword);
     var returnCompletion = new CompletionItem('return', CompletionItemKind.Keyword);
+    var globalsCompletion = new CompletionItem('globals', CompletionItemKind.Module);
+    var localsCompletion = new CompletionItem('locals', CompletionItemKind.Module);
     //#endregion
     //#region operators
     var orCompletion = new CompletionItem("or", CompletionItemKind.Operator);
@@ -261,6 +263,8 @@ function getStaticItems(gspp) {
         breakCompletion,
         selfCompletion,
         returnCompletion,
+        globalsCompletion,
+        localsCompletion,
         //#endregion
         //#region oprators
         orCompletion,

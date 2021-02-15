@@ -60,7 +60,7 @@ namespace GreyHackTools
                 MapActive.Push(false);
             }
 
-            public string Compile(bool optimize = false)
+            public string Compile(bool optimize = false,bool isStringFormat = false)
             {
                 optimizeEnabled = optimize;
                 StringBuilder.Clear();
@@ -84,6 +84,10 @@ namespace GreyHackTools
 
 
                 optimizeEnabled = false;
+                if (isStringFormat)
+                {
+                    return StringBuilder.ToString();
+                }
                 CodePrefix.Append(StringBuilder.ToString());
                 return CodePrefix.ToString();
             }

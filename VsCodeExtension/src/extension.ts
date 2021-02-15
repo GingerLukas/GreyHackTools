@@ -166,7 +166,7 @@ function compile(code: string, optimize: boolean, settings: number):string {
 }
 
 function getCompletionItems(text: string,regEx?:RegExp, output?:vscode.CompletionItem[], words?:{ [id: string]: { [id: number]: boolean } }) {
-    if (regEx == undefined) regEx = /([_a-zA-Z][_a-zA-Z0-9]*)\s*=\s*((function\s*\((.*)\))|(\((.*)\)\s*=>)|(\(.*\))|(\[.*\])|(\{.*\})|(".*")|([0-9]+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)/g;
+    if (regEx == undefined) regEx = /(([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*")|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>)/g;
     if (output == undefined) output = [];
     if (words == undefined) words = {};
 
@@ -174,9 +174,10 @@ function getCompletionItems(text: string,regEx?:RegExp, output?:vscode.Completio
     let tempItem;
     while ((match = regEx.exec(text))) {
         //standard function || lambda
-        if (match[3] || match[5]) {
-            tempItem = new vscode.CompletionItem(match[1], vscode.CompletionItemKind.Function);
-            const params = match[4] || match[6];
+        const name:string = match[2] || match[4];
+        if (match[7] || match[9]) {
+            tempItem = new vscode.CompletionItem(name, vscode.CompletionItemKind.Function);
+            const params = match[8] || match[10];
             const fParams = [];
             if (params) {
                 for (let param of params.split(",")) {
@@ -185,61 +186,47 @@ function getCompletionItems(text: string,regEx?:RegExp, output?:vscode.Completio
                     tryAddItem(new vscode.CompletionItem(param, vscode.CompletionItemKind.Variable), output, words);
                 }
             }
-            tempItem.insertText = new vscode.SnippetString(match[1] + '('+getParamsSnippet(fParams)+')');
+            tempItem.insertText = new vscode.SnippetString(name + '('+getParamsSnippet(fParams)+')');
         }
         //bracket || array || variable
-        else if (match[7] || match[8] || match[12]) {
-            tempItem = new vscode.CompletionItem(match[1], vscode.CompletionItemKind.Variable);
+        else if (match[11] || match[12] || match[16]) {
+            tempItem = new vscode.CompletionItem(name, vscode.CompletionItemKind.Variable);
         }
         //map
-        else if (match[9]) {
-            tempItem = new vscode.CompletionItem(match[1], vscode.CompletionItemKind.Module);
+        else if (match[13]) {
+            tempItem = new vscode.CompletionItem(name, vscode.CompletionItemKind.Module);
         }
         //string || number
-        else if (match[10] || match[11]) {
-            tempItem = new vscode.CompletionItem(match[1], vscode.CompletionItemKind.Value);
+        else if (match[14] || match[15]) {
+            tempItem = new vscode.CompletionItem(name, vscode.CompletionItemKind.Value);
         }
         //iterator
-        else if (match[13]) {
-            tempItem = new vscode.CompletionItem(match[14], vscode.CompletionItemKind.Variable);
+        else if (match[17]) {
+            tempItem = new vscode.CompletionItem(match[18], vscode.CompletionItemKind.Variable);
+            tryAddItem(new vscode.CompletionItem("__" + match[18] + "_idx", vscode.CompletionItemKind.Constant), output, words);
         }
-        if (tempItem) tryAddItem(tempItem, output, words, match[2]);
-    }
-    return output;
-}
-
-function getCompletionItemsInMap(text: string, regEx?: RegExp, output?: vscode.CompletionItem[], words?:{ [id: string]: { [id: number]: boolean } }){
-    if (regEx == undefined) regEx = /(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|\d*)\s*:\s*(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|(\d*))/g;
-    if (output == undefined) output = [];
-    if (words == undefined) words = {};
-
-    let match;
-    let tempItem;
-    while ((match = regEx.exec(text))) {
-        if (match[3] != undefined) {
-            //string || number
-            if(match[6] || match[9]){
-                tempItem = new vscode.CompletionItem(match[3], vscode.CompletionItemKind.Value);
+        else if (match[19]) {
+            const fParams = [];
+            for (let param of match[20].split(",")) {
+                param = param.trim();
+                fParams.push(param);
+                tryAddItem(new vscode.CompletionItem(param, vscode.CompletionItemKind.Variable), output, words);
             }
-            //map
-            else if (match[8]) {
-                tempItem = new vscode.CompletionItem(match[3], vscode.CompletionItemKind.Module);
-            }
-            if (tempItem) tryAddItem(tempItem, output, words, match[5]);
+        }
+        if (tempItem) {
+            tryAddItem(tempItem, output, words);
             tempItem = undefined;
         }
     }
-
     return output;
 }
 
-function tryAddItem(item: vscode.CompletionItem, output: vscode.CompletionItem[], words: { [id: string]: { [id: number]: boolean } }, opt?: string) {
+function tryAddItem(item: vscode.CompletionItem, output: vscode.CompletionItem[], words: { [id: string]: { [id: number]: boolean } }) {
     if (item && item.kind) {
         if (words[item.label] == undefined) words[item.label] = {};
         if (words[item.label][item.kind] == undefined) {
             words[item.label][item.kind] = true;
             output.push(item);
-            if (item.kind == vscode.CompletionItemKind.Module && opt) getCompletionItemsInMap(opt, undefined, output, words);
         }
     }
 }

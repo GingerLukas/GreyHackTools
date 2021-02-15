@@ -11,7 +11,7 @@ namespace GreyHackTools
     {
         internal partial class Token
         {
-            public class Template : Token
+            public class Template : Variable
             {
                 public override string Value
                 {
@@ -32,14 +32,15 @@ namespace GreyHackTools
                     switch (TemplateType)
                     {
                         case ETemplate.IterationIndex:
-                            if (Prev != null && Prev.Value == ".")
+                            if (replace)
                             {
-                                return base.Optimize(context, replace);
+                                string var_name = Matches[0].Groups[2].Value;
+                                if (string.IsNullOrWhiteSpace(var_name) || context.IgnoreOptimize(var_name))
+                                    return this;
+                                _value = Regex.Replace(Value, RegexString,
+                                    $"$1{context.nameProvider.GetReplace(var_name)}$3");
                             }
 
-                            string var_name = Matches[0].Groups[2].Value;
-                            if (string.IsNullOrWhiteSpace(var_name) || context.IgnoreOptimize(var_name)) return this;
-                            _value = Regex.Replace(Value, RegexString, $"$1{context.nameProvider.GetReplace(var_name)}$3");
                             break;
                         case ETemplate.IgnoreOptimization:
                             break;
@@ -80,14 +81,15 @@ namespace GreyHackTools
                             }
                             break;
                     }
+                    
+                    // if (Prev!=null && Next!=null)
+                    // {
+                    //     Prev.Next = Next;
+                    //     Next.Prev = Prev;
+                    //     context.StringBuilder.AppendLine(Value);
+                    // }
 
-                    if (Prev!=null && Next!=null)
-                    {
-                        Prev.Next = Next;
-                        Next.Prev = Prev;
-                        context.StringBuilder.AppendLine(Value);
-                    }
-                    return this;
+                    return base.Compile(context, force);
                 }
 
                 private bool IsValueString()

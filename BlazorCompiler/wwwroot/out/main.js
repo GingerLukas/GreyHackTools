@@ -29,7 +29,7 @@ var vRange = /** @class */ (function () {
 }());
 function getCompletionItems(text, regEx, output, words) {
     if (regEx == undefined)
-        regEx = /([_a-zA-Z][_a-zA-Z0-9]*)\s*=\s*((function\s*\((.*)\))|(\((.*)\)\s*=>)|(\(.*\))|(\[.*\])|(\{.*\})|(".*")|([0-9]+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)/g;
+        regEx = /(([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*")|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>)/g;
     if (output == undefined)
         output = [];
     if (words == undefined)
@@ -38,78 +38,61 @@ function getCompletionItems(text, regEx, output, words) {
     var tempItem;
     while ((match = regEx.exec(text))) {
         //standard function || lambda
-        if (match[3] || match[5]) {
-            tempItem = new CompletionItem(match[1], monaco.languages.CompletionItemKind.Function);
-            var params = match[4] || match[6];
+        var name_1 = match[2] || match[4];
+        if (match[7] || match[9]) {
+            tempItem = new CompletionItem(name_1, CompletionItemKind.Function);
+            var params = match[8] || match[10];
             var fParams = [];
             if (params) {
                 for (var _i = 0, _a = params.split(","); _i < _a.length; _i++) {
                     var param = _a[_i];
                     param = param.trim();
                     fParams.push(param);
-                    tryAddItem(new CompletionItem(param, monaco.languages.CompletionItemKind.Variable), output, words);
+                    tryAddItem(new CompletionItem(param, CompletionItemKind.Variable), output, words);
                 }
             }
-            tempItem.insertText = match[1] + "(" + getParamsSnippet(fParams) + ")";
+            tempItem.insertText = (name_1 + '(' + getParamsSnippet(fParams) + ')');
         }
         //bracket || array || variable
-        else if (match[7] || match[8] || match[12]) {
-            tempItem = new CompletionItem(match[1], CompletionItemKind.Variable);
+        else if (match[11] || match[12] || match[16]) {
+            tempItem = new CompletionItem(name_1, CompletionItemKind.Variable);
         }
         //map
-        else if (match[9]) {
-            tempItem = new CompletionItem(match[1], CompletionItemKind.Module);
+        else if (match[13]) {
+            tempItem = new CompletionItem(name_1, CompletionItemKind.Module);
         }
         //string || number
-        else if (match[10] || match[11]) {
-            tempItem = new CompletionItem(match[1], CompletionItemKind.Value);
+        else if (match[14] || match[15]) {
+            tempItem = new CompletionItem(name_1, CompletionItemKind.Value);
         }
         //iterator
-        else if (match[13]) {
-            tempItem = new CompletionItem(match[14], CompletionItemKind.Variable);
+        else if (match[17]) {
+            tempItem = new CompletionItem(match[18], CompletionItemKind.Variable);
+            tryAddItem(new CompletionItem("__" + match[18] + "_idx", CompletionItemKind.Constant), output, words);
+        }
+        else if (match[19]) {
+            var fParams = [];
+            for (var _b = 0, _c = match[20].split(","); _b < _c.length; _b++) {
+                var param = _c[_b];
+                param = param.trim();
+                fParams.push(param);
+                tryAddItem(new CompletionItem(param, CompletionItemKind.Variable), output, words);
+            }
         }
         if (tempItem) {
-            tryAddItem(tempItem, output, words, match[2]);
+            tryAddItem(tempItem, output, words);
+            tempItem = undefined;
         }
     }
     return output;
 }
-function getCompletionItemsInMap(text, regEx, output, words) {
-    if (regEx == undefined)
-        regEx = /(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|\d*)\s*:\s*(("?([_a-zA-Z][_a-zA-Z0-9]*)"?)|({[^}]*})|(\d*))/g;
-    if (output == undefined)
-        output = [];
-    if (words == undefined)
-        words = {};
-    var match;
-    var tempItem;
-    while ((match = regEx.exec(text))) {
-        if (match[3] != undefined) {
-            //string || number
-            if (match[6] || match[9]) {
-                tempItem = new CompletionItem(match[3], CompletionItemKind.Value);
-            }
-            //map
-            else if (match[8]) {
-                tempItem = new CompletionItem(match[3], CompletionItemKind.Module);
-            }
-        }
-        if (tempItem) {
-            tryAddItem(tempItem, output, words, match[5]);
-        }
-        tempItem = undefined;
-    }
-    return output;
-}
-function tryAddItem(item, output, words, opt) {
+function tryAddItem(item, output, words) {
     if (item && item.kind) {
         if (words[item.label.toString()] == undefined)
             words[item.label.toString()] = {};
         if (words[item.label.toString()][item.kind] == undefined) {
             words[item.label.toString()][item.kind] = true;
             output.push(item);
-            if (item.kind == CompletionItemKind.Module && opt)
-                getCompletionItemsInMap(opt, undefined, output, words);
         }
     }
 }

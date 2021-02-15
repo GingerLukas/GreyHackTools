@@ -4,6 +4,7 @@
     flex-direction: column;
     background-color: rgb(45, 45, 48);
     color: whitesmoke;
+    height: 100vh;
 }
 
 .main {
@@ -31,6 +32,12 @@
     .top-row a:first-child {
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .top-row .nav-item {
+        grid-column: span 1;
+        display: flex;
+        align-items: center;
     }
 
 @media (max-width: 640.98px) {

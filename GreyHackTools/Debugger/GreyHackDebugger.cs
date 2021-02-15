@@ -55,52 +55,55 @@ namespace GreyHackTools
 
         public void Start()
         {
-            if (!_debugerTask.IsCompleted) return;
+            if (Running) return;
 
             Started?.Invoke(this);
 
-            _debugerTask = Task.Run(() =>
-            {
-                Line = 0;
-                _debuggerActive = false;
-                
-                try
-                {
-                    Interpreter.RunUntilDone(Double.PositiveInfinity, true, m =>
-                    {
-                        TAC.Context context = m.stack.Peek();
-
-                        if (context.code[context.lineNum].location == null || context.lineNum >= context.code.Count || context.code[context.lineNum].location.lineNum == Line)
-                        {
-                            _debugWaitHandle.Set();
-                            return;
-                        }
-
-                        //check if code line location changed
-                        int lastLine = Line;
-                        Line = context.code[context.lineNum].location.lineNum;
-                        if (!(_debuggerActive || BreakpointLines.Contains(Line)))
-                        {
-                            _debugWaitHandle.Set();
-                            return;
-                        }
-
-                        _debuggerActive = true;
-
-                        if(AutomaticallyClearDebugVariables) DebugVariables.Clear();
-                        Step?.Invoke(this,context, lastLine, Line);
-                    }, _debugWaitHandle);
-                }
-                catch (Exception e)
-                {
-                    if (!_forceStopped) RuntimeError?.Invoke(this, e);
-                }
-
-                Ended?.Invoke(this);
-                _forceStopped = false;
-            });
+            _debugerTask = Task.Run(Run);
         }
 
+        private void Run()
+        {
+            Line = 0;
+            _debuggerActive = false;
+
+            try
+            {
+                Interpreter.RunUntilDone(Double.PositiveInfinity, true, async m =>
+
+                {
+                    TAC.Context context = m.stack.Peek();
+
+                    if (context.code[context.lineNum].location == null || context.lineNum >= context.code.Count || context.code[context.lineNum].location.lineNum == Line)
+                    {
+                        _debugWaitHandle.Set();
+                        return;
+                    }
+
+                    //check if code line location changed
+                    int lastLine = Line;
+                    Line = context.code[context.lineNum].location.lineNum;
+                    if (!(_debuggerActive || BreakpointLines.Contains(Line)))
+                    {
+                        _debugWaitHandle.Set();
+                        return;
+                    }
+
+                    _debuggerActive = true;
+
+                    if (AutomaticallyClearDebugVariables) DebugVariables.Clear();
+                    Step?.Invoke(this, context, lastLine, Line);
+                }, _debugWaitHandle);
+            }
+            catch (Exception e)
+            {
+                if (!_forceStopped) RuntimeError?.Invoke(this, e);
+            }
+
+            Ended?.Invoke(this);
+            _forceStopped = false;
+        }
+        
         public void NextStep()
         {
             _debugWaitHandle.Set();

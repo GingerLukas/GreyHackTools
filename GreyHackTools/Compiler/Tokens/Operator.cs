@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using GreyHackTools.Debugger;
 
 namespace GreyHackTools
 {
@@ -29,14 +30,20 @@ namespace GreyHackTools
                 {
                     if (Custom)
                     {
+                        long depth = context.bracketDepth;
+                        string left = "";
+                        string right = "";
+                        Token tmpRight = null;
+                        Token tmpLeft = null;
                         string s = _operators[Value];
                         if (NeedsLeft && Prev != null)
                         {
                             if (Prev is Bracket b && b.IsOpening)
                                 throw new Exception($"invalid syntax for template {Value}");
                             context.stringBuilders.Push(new StringBuilder());
-                            Prev.Compile(context, true);
-                            s = s.Replace("$a", context.StringBuilder.ToString());
+                            tmpLeft = Prev.Compile(context, true);
+                            left = context.StringBuilder.ToString();
+                            s = s.Replace("$a", left);
                             context.stringBuilders.Pop();
 
                             if (Prev?.Prev != null)
@@ -53,8 +60,9 @@ namespace GreyHackTools
                         if (NeedsRight && Next != null)
                         {
                             context.stringBuilders.Push(new StringBuilder());
-                            Next.Compile(context, true);
-                            s = s.Replace("$b", context.StringBuilder.ToString());
+                            tmpRight = Next.Compile(context, true);
+                            right = context.StringBuilder.ToString();
+                            s = s.Replace("$b", right);
                             context.stringBuilders.Pop();
                             EndStatement = Next.EndStatement;
                             if (Next?.Next != null)
@@ -69,9 +77,22 @@ namespace GreyHackTools
                             }
                         }
 
-                        Value = s;
+                        if (Value=="=>" && tmpLeft.Prev != null && tmpLeft.Prev.Value != "=")
+                        {
+                            string name = context.nameProvider.GetFree(context.optimizeEnabled);
+                            Value = "@" + name;
+                            context.CodePrefix.Append(name);
+                            context.CodePrefix.Append("=");
+                            context.CodePrefix.AppendLine(s);
+                            EndStatement = tmpRight.EndStatement;
+                            return base.Compile(context,force);
+                        }
+                        else
+                        {
+                            Value = s;
 
-                        return base.Compile(context, force);
+                            return base.Compile(context, force);
+                        }
                     }
                     else
                     {

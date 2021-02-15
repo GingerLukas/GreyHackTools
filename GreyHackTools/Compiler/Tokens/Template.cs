@@ -27,14 +27,14 @@ namespace GreyHackTools
                 public ETemplate TemplateType { get; set; }
                 public string RegexString { get; set; }
                 public MatchCollection Matches { get; set; }
-                public override Token Optimize(Context context)
+                public override Token Optimize(Context context, bool replace = true)
                 {
                     switch (TemplateType)
                     {
                         case ETemplate.IterationIndex:
                             if (Prev != null && Prev.Value == ".")
                             {
-                                return base.Optimize(context);
+                                return base.Optimize(context, replace);
                             }
 
                             string var_name = Matches[0].Groups[2].Value;
@@ -81,7 +81,13 @@ namespace GreyHackTools
                             break;
                     }
 
-                    return base.Compile(context, force);
+                    if (Prev!=null && Next!=null)
+                    {
+                        Prev.Next = Next;
+                        Next.Prev = Prev;
+                        context.StringBuilder.AppendLine(Value);
+                    }
+                    return this;
                 }
 
                 private bool IsValueString()

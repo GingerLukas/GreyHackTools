@@ -203,6 +203,9 @@ function getStaticItems(gspp: boolean) {
     }
     //#endregion
 
+    const inlineFuncCompletion = new CompletionItem("ifunc", CompletionItemKind.Snippet);
+    inlineFuncCompletion.insertText = "(${1:params}) => {${2:body}}${0}";
+    
     //#region constants & keywords
     const trueCompletion = new CompletionItem("true", CompletionItemKind.Constant);
 
@@ -364,7 +367,7 @@ function getStaticItems(gspp: boolean) {
         globalsCompletion,
         localsCompletion,
         //#endregion
-
+        inlineFuncCompletion,
         //#region oprators
         orCompletion,
         andCompletion,
@@ -668,7 +671,8 @@ function activateEditor(id: string) {
             theme: "vs-dark",
             language: "gspp",
             formatOnPaste: true,
-            formatOnType: true
+            formatOnType: true,
+            automaticLayout: true
         });
     }
 }
@@ -714,6 +718,7 @@ function setupEditor(id: string) {
     monaco.languages.setLanguageConfiguration("gs", config);
     gsppCompletion = getStaticItems(true);
     gsCompletion = getStaticItems(false);
+    editor.layout();
 }
 
 function triggerUpdateDecorations() {

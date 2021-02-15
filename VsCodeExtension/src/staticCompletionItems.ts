@@ -50,6 +50,9 @@ export function getStaticItems(gspp: boolean) {
     const gsItems = [gsForCompletion, gsIfCompletion, gsElseIfCompletion, gsElseCompletion, gsWhileCompletion, gsFuncCompletion];
 //#endregion
 
+    const inlineFuncCompletion = new vscode.CompletionItem("ifunc", vscode.CompletionItemKind.Snippet);
+    inlineFuncCompletion.insertText = new vscode.SnippetString("(${1:params}) => {${2:body}}${0}");
+    
 //#region constants & keywords
     const trueCompletion = new vscode.CompletionItem('true', vscode.CompletionItemKind.Constant);
 
@@ -213,7 +216,7 @@ export function getStaticItems(gspp: boolean) {
         globalsCompletion,
         localsCompletion,
 //#endregion
-        
+        inlineFuncCompletion,
 //#region oprators
         orCompletion,
         andCompletion,

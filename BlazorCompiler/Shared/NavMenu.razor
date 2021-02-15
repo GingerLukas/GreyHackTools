@@ -1,33 +1,21 @@
 ﻿@using System.Collections.ObjectModel
-<div class="top-row pl-4 navbar navbar-dark">
-    <a class="navbar-brand" href="">Ginger's GreyHack tools</a>
-    <button class="navbar-toggler" @onclick="ToggleNavMenu">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+<div class="top-row px-4 auth" style="grid-template: 100%/1fr 1fr 1fr; display: grid;">
+    <div class="nav-item">
+        <a class="navbar-brand" href="">Ginger's GreyHack tools</a>
+    </div>
+    <div class="nav-item">
+
+    </div>
+    <div class="nav-item" style="justify-content: flex-end;">
+        <!--<LoginDisplay />-->
+        <form style="margin-left: 1.5rem; display: contents;" action="https://www.paypal.com/donate" method="post" target="_blank">
+            <input type="hidden" name="hosted_button_id" value="E3PGVUCL9VT6U" />
+            <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
+            <img alt="" border="0" src="https://www.paypal.com/en_CZ/i/scr/pixel.gif" width="1" height="1" />
+        </form>
+        <a href="https://discordapp.com/users/Ginger#0420/" target="_blank">Discord</a>
+        <a href="https://github.com/GingerLukas" target="_blank">About</a>
+    </div>
+            
+
 </div>
-
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
-    <ul class="nav flex-column">
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="compiler">
-                <span class="oi oi-code" aria-hidden="true"></span> GreyScript++
-            </NavLink>
-        </li>
-        <li class="nav-item px-3">
-            <NavLink class="nav-link" href="https://marketplace.visualstudio.com/items?itemName=lukas-safranek.gspp-compiler">
-                <span class="oi oi-data-transfer-download" aria-hidden="true"></span> VS Code extension
-            </NavLink>
-        </li>
-    </ul>
-</div>
-
-@code {
-    private bool collapseNavMenu = true;
-
-    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
-}

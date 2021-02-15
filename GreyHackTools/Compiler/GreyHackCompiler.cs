@@ -34,7 +34,7 @@ namespace GreyHackTools
             '@','~'
         };
 
-        private static readonly HashSet<string> _tokenEndStatements = new HashSet<string>() { "\n", "\r\n", ";" };
+        private static readonly HashSet<string> _tokenEndStatements = new HashSet<string>() { "\n", "\r\n", ";" ,"}"};
 
         private static readonly HashSet<string> _tokenInclude = new HashSet<string>() { "#!" };
         private static readonly HashSet<char> _tokenEndInclude = new HashSet<char>() { '!' };
@@ -44,7 +44,7 @@ namespace GreyHackTools
         private static readonly HashSet<string> _keywords = new HashSet<string>()
         {
             "if", "then", "else", "end", "while", "for", "in", "and", "or", "not", "true", "false",  "return",
-            "continue", "break",  "new",
+            "continue", "break",  "new","function"
         };
 
         private static readonly HashSet<string> _ignoreOptimize = new HashSet<string>()
@@ -109,7 +109,7 @@ namespace GreyHackTools
             {"*=", @"$a=$a*$b"},
             {"/=", @"$a=$a/$b"},
             {"%=", @"$a=$a%$b"},
-            {"=>", @"function$a"},
+            {"=>", @"function$a$b"},
         };
 
         public enum ETemplate
@@ -204,7 +204,9 @@ namespace GreyHackTools
             if (context.PlainInput.Peek() == '/' && context.PlainInput.Skip(1).FirstOrDefault() == '/')
             {
                 token = new Token.Template();
-                return x => !IsEndOfLine(x);
+                return x => !(context.PlainInput.Peek() == '\n' || (context.PlainInput.Count > 1 &&
+                                                                   context.PlainInput.Peek() == '\r' &&
+                                                                   context.PlainInput.Skip(1).First() == '\n'));
             }
 
             if (context.MapActive.Peek())
@@ -278,7 +280,7 @@ namespace GreyHackTools
                         context.ShouldOptimizeString.Pop();
                         break;
                     case '{':
-                        if ((!(context.LastToken is Token.Bracket b) || b.IsOpening) && context.LastToken.Value != "=>")
+                        if (context.LastToken == null || (!context.LastToken.Value.EndsWith(")") && context.LastToken.Value != "=>"))
                         {
                             context.MapActive.Push(true);
                             context.ShouldOptimizeString.Push((context.Settings & Settings.IgnoreMapVariables) == 0);

@@ -15,27 +15,48 @@ namespace GreyHackTools
             public virtual string Value { get; set; }
             public virtual bool Custom { get; set; }
             public bool Optimizable { get; set; } = true;
-            public bool EndStatement { get; set; }
+            private bool _endStatement = false;
+            public bool EndStatement { get{
+                if (ForceEndStatement)
+                {
+                    return ForceEndStatementValue;
+                }
+
+                return _endStatement;
+            }
+                set { _endStatement = value; }
+            }
+            public bool ForceEndStatement { get; set; }
+            public bool ForceEndStatementValue { get; set; }
 
             public override string ToString()
             {
                 return Value;
             }
 
-            public virtual Token Optimize(Context context)
+            public virtual Token Optimize(Context context,bool replace = true)
             {
                 if (Optimizable && //flag from tokenization  
                     Value.Length > 0 &&
                     !char.IsDigit(Value[0]) &&
                     !context.IgnoreOptimize(Value))
                 {
-                    Value = context.nameProvider.GetReplace(Value);
+                    if (replace)
+                    {
+                        Value = context.nameProvider.GetReplace(Value);
+                    }
+                    else
+                    {
+                        context.nameProvider.Define(Value);
+                    }
+                    
                 }
                 return this;
             }
 
             public virtual Token Compile(Context context, bool force = false)
             {
+                if (string.IsNullOrWhiteSpace(Value)) return this;
                 if (context.StringBuilder.Length != 0 &&
                     ((Regex.IsMatch(context.StringBuilder[context.StringBuilder.Length - 1].ToString(), "\\w") &&
                       Value.Length > 0 && Regex.IsMatch(Value[0].ToString(), "\\w")) ||
@@ -58,6 +79,12 @@ namespace GreyHackTools
                 }
 
                 return true;
+            }
+
+            private bool CompareBeginningOfValue(char c)
+            {
+                if (Value.Length<1) return false;
+                return Value[0] == c;
             }
         }
     }

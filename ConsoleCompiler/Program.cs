@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using GreyHackTools;
 
 namespace ConsoleCompiler
@@ -8,30 +13,47 @@ namespace ConsoleCompiler
     {
         static void Main(string[] args)
         {
-            string initialCode = File.ReadAllText("Test.src");
+            if (!Directory.Exists("tests"))
+            {
+                Console.WriteLine(@"""tests"" folder not found");
+                return;
+            }
 
-            string noOptimize = GreyHackCompiler.Compile(initialCode);
-            string onlyVariables =
-                GreyHackCompiler.Compile(initialCode, true, GreyHackCompiler.Settings.IgnoreMapVariables);
-            string fullOptimize = GreyHackCompiler.Compile(initialCode, true);
-            
-            Console.WriteLine($"Initial: {initialCode.Length} chars");
-            Console.WriteLine($"No optimize: {noOptimize.Length} chars {GetPercentage(noOptimize.Length, initialCode.Length)}%");
-            Console.WriteLine($"Optimize w/o maps: {onlyVariables.Length} chars {GetPercentage(onlyVariables.Length, initialCode.Length)}%");
-            Console.WriteLine($"Full optimize: {fullOptimize.Length} chars {GetPercentage(fullOptimize.Length, initialCode.Length)}%");
+            Dictionary<string, string[]> hashes = new Dictionary<string, string[]>();
+            string[] tests = Directory.GetFiles("tests");
+            foreach (string test in tests)
+            {
+                string code = File.ReadAllText(test);
+                hashes[test] = new string[8];
+                for (int i = 0; i < 8; i++)
+                {
+                    hashes[test][i] =
+                        string.Join("", MD5.HashData(Encoding.UTF8.GetBytes(GreyHackCompiler.Compile(
+                            code,
+                            i < 4,
+                            (GreyHackCompiler.Settings) (i % 4)))).Select(x => x.ToString("x2")));
+                }
+            }
 
-            Console.WriteLine();
-            
-            //Console.WriteLine(noOptimize);
-            Console.WriteLine(onlyVariables);
-            //Console.WriteLine(fullOptimize);
+            StringBuilder sb = new StringBuilder();
+            foreach (var hash in hashes)
+            {
+                sb.Append(hash.Key);
+                sb.Append(';');
+                sb.AppendJoin(';', hash.Value);
+                sb.AppendLine();
+            }
 
-            Console.ReadKey();
-        }
+            string newHash = string.Join("",
+                MD5.HashData(Encoding.UTF8.GetBytes(sb.ToString())).Select(x => x.ToString("x2")));
+            if (File.Exists("hash.txt"))
+            {
+                string prevHash = File.ReadAllText("hash.txt");
+                
+                Debug.Assert(prevHash==newHash);
+            }
 
-        static double GetPercentage(double up, double down)
-        {
-            return (up / down) * 100;
+            File.WriteAllText("hash.txt", newHash);
         }
     }
 }

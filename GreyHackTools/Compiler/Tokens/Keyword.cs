@@ -17,11 +17,54 @@ namespace GreyHackTools
                     Optimizable = false;
                 }
 
-                public override GreyHackCompiler.Token Optimize(GreyHackCompiler.Context context)
+                public override GreyHackCompiler.Token Optimize(GreyHackCompiler.Context context, bool replace = true)
                 {
                     if (Value == "true") Value = "1";
                     if (Value == "false") Value = "0";
-                    return base.Optimize(context);
+                    return base.Optimize(context,replace);
+                }
+
+                public override Token Compile(Context context, bool force = false)
+                {
+                    switch (Value)
+                    {
+                        case "for":
+                        case "while":
+                        case "if":
+                            CompileNext(context);
+                            break;
+                        case "function":
+                            CompileNext(context,false);
+                            break;
+                    }
+                    return base.Compile(context, force);
+                }
+
+                private void CompileNext(Context context,bool removeBracets = true)
+                {
+                    if (!(Next is Bracket))
+                    {
+                        return;
+                    }
+                    context.stringBuilders.Push(new StringBuilder());
+                    Next.Compile(context,true);
+                    
+                    if (removeBracets)
+                    {
+                        context.StringBuilder[0] = ' ';
+                        Value += context.StringBuilder.ToString(0, context.StringBuilder.Length - 1);
+                    }
+                    else
+                    {
+                        Value += context.StringBuilder.ToString();
+                    }
+                    context.stringBuilders.Pop();
+                    
+                    if (Next.Next!=null)
+                    {
+                        Next.Next.Prev = this;
+                    }
+                    Next = Next.Next;
                 }
             }
         }

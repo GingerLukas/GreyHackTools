@@ -43,6 +43,7 @@ namespace GreyHackTools
                                     context.StringBuilder.Append("\"+(");
                                     Context innerCodeContext = Tokenize(Value.Substring(last, i - last).Replace(@"""""", @""""));
                                     innerCodeContext.nameProvider = context.nameProvider;
+                                    innerCodeContext.CodePrefix = context.CodePrefix;
                                     string compiled = innerCodeContext.Compile(context.optimizeEnabled);
                                     context.StringBuilder.Append(compiled);
                                     context.StringBuilder.Append(")+\"");

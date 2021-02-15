@@ -22,111 +22,114 @@ namespace GreyHackTools
                     Optimizable = false;
                 }
 
-                private Token CompileInside(Context context, bool includeLastBracket = true, bool customBody = false, string postfix = "")
+                private Token CompileInside(Context context, bool multiLine = false, string prefix = "", string postfix = "")
                 {
+                    Token last = this;
+                    Token current = Next;
+                    context.stringBuilders.Push(new StringBuilder(prefix));
+                    char close = _openingToClosing[Value.First()];
 
-                    bool b = false;
-                    Token last = null;
-                    Token node = Next;
-                    while (node != null)
+                    while (current!=null)
                     {
-                        if (!customBody)
+                        if (!multiLine)
                         {
-                            b = node.EndStatement;
-                            node.EndStatement = false;
-                        }
-                        //check for last bracket before compiling it
-                        if (!includeLastBracket && node is Bracket tb && tb.IsClosing &&
-                                 tb.Value.Last() == _openingToClosing[Value.Last()])
-                        {
-                            if (tb.EndStatement && last != null &&
-                                                    !last.EndStatement && !last.Value.Contains(_separator))
-                            {
-                                context.StringBuilder.Append(_separator);
-                            }
-
-                            break;
-                        }
-
-                        Token tmp = node.Compile(context);
-                        if (!customBody) node.EndStatement = b;
-                        //checking for last bracket after compile
-                        if (node is Bracket br && br.IsClosing) break;
-                        last = node;
-                        node = tmp.Next;
-                    }
-
-                    if (node?.Next == null || node.Next?.Value != "else")
-                    {
-                        context.StringBuilder.Append(postfix);
-                    }
-                    Value = context.StringBuilder.ToString();
-                    context.stringBuilders.Pop();
-                    return node;
-                }
-
-                public override Token Compile(Context context, bool force = false)
-                {
-                    if (Custom) return base.Compile(context, force);
-                    if (IsOpening)
-                    {
-                        Token node = Next;
-                        context.stringBuilders.Push(new StringBuilder());
-
-                        if (Value == "{" && ((Prev is Bracket b && b.Custom) ||
-                                             Prev.CompareBeginningOfValue("function") ||
-                                             Prev.Value == "else"))
-                        {
-                            if (!EndStatement) EndStatement = true;
-                            Token t;
-                            string type = "";
-                            if (Prev.CompareBeginningOfValue("function"))
-                            {
-                                type = "function";
-                                t = Prev;
-                            }
-                            else if (Prev.Value == "else")
-                            {
-                                type = "if";
-                                t = Prev;
-                            }
-                            else
-                            {
-                                t = Prev.Prev;
-                            }
-
-                            if (t.CompareBeginningOfValue("if"))
-                            {
-                                type = "if";
-                                context.StringBuilder.Append(" then");
-                            }
-                            else if (t.CompareBeginningOfValue("for"))
-                            {
-                                type = "for";
-                            }
-                            else if (t.CompareBeginningOfValue("while"))
-                            {
-                                type = "while";
-                            }
-
-                            if (t.EndStatement || EndStatement) context.StringBuilder.Append(_separator);
-                            node = CompileInside(context, false, true, $"end {type}");
-                        }
-                        else if (Prev is Keyword k && k.Value == "for")
-                        {
-                            context.StringBuilder.Append(' ');
-                            node = CompileInside(context, false);
+                            current.ForceEndStatement = true;
+                            current.ForceEndStatementValue = false;
                         }
                         else
                         {
-                            context.StringBuilder.Append(Value);
-                            node = CompileInside(context);
+                            current.EndStatement = current.EndStatement || current.Next.CompareBeginningOfValue(close);
+                        }
+                        
+                        last = current;
+                        if (current.CompareBeginningOfValue(close)) break;
+                        current.Compile(context);
+                        current = current.Next;
+                    }
+
+                    if (last.Next != null && last.Next.CompareBeginningOfValue("else"))
+                    {
+                        last.Value = "";
+                        last.ForceEndStatement = true;
+                        last.ForceEndStatementValue = false;
+                    }
+                    else if (!string.IsNullOrWhiteSpace(postfix))
+                    {
+                        last.Value = postfix;
+                    }
+
+                    //if (!last.Prev.EndStatement && multiLine)
+                    //{
+                    //    context.StringBuilder.AppendLine();
+                    //}
+                    last.ForceEndStatement = true;
+                    last.ForceEndStatementValue = false;
+                    last.Compile(context);
+                    last.ForceEndStatement = false;
+                    EndStatement = last.EndStatement;
+                    Value = context.StringBuilder.ToString();
+                    context.stringBuilders.Pop();
+                    return last;
+                }
+                
+                public override Token Compile(Context context, bool force = false)
+                {
+                    bool elseFlag = false;
+                    bool lambdaFlag = false;
+                    if (IsOpening)
+                    {
+                        context.bracketDepth++;
+                    }
+                    else if(IsClosing)
+                    {
+                        context.bracketDepth--;
+                    }
+                    if (Custom) return base.Compile(context, force);
+                    if (IsOpening)
+                    {
+                        Token node = null;
+
+                        if (Prev != null && Value == "{" &&
+                            ((Prev is Keyword || (lambdaFlag = Prev.Value == "=>")) ||
+                             (elseFlag = Prev.CompareBeginningOfValue("else"))))
+                        {
+                            string prefix = "";
+                            string postfix = "";
+                            if (elseFlag || Prev.CompareBeginningOfValue("else"))
+                            {
+                                postfix = "end if";
+                            }
+                            else if (Prev.CompareBeginningOfValue("if"))
+                            {
+                                prefix = "then";
+                                postfix = "end if";
+                            }
+                            else if(lambdaFlag)
+                            {
+                                postfix = "end function";
+                            }
+                            else if (Prev.CompareBeginningOfValue("function"))
+                            {
+                                postfix = "end function";
+                            }
+                            else if(Prev.CompareBeginningOfValue("for"))
+                            {
+                                postfix = "end for";
+                            }
+                            else if (Prev.CompareBeginningOfValue("while"))
+                            {
+                                postfix = "end while";
+                            }
+
+                            node = CompileInside(context, true, prefix+"\n", postfix);
+                        }
+                        else
+                        {
+                            node = CompileInside(context,false,Value);
                         }
 
                         Next = node?.Next;
-                        if (node != null)
-                            EndStatement = node.EndStatement && !Value.EndsWith(GreyHackCompiler._separator);
-
+                        
                         if (Prev == null)
                         {
                             context.RootToken = this;
@@ -136,7 +139,7 @@ namespace GreyHackTools
                             Prev.Next = this;
                         }
 
-                        if (node == null || node.Next == null)
+                        if (node?.Next == null)
                         {
                             context.LastToken = this;
                         }

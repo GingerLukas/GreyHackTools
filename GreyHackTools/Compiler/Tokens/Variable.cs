@@ -20,8 +20,7 @@ namespace GreyHackTools
                     if ((Next != null && !_tokenOperators.Contains(Value.First()) &&
                          (Next.Value == "." || Next.Value == "(" || Next.Value == "[")))
                     {
-                        context.stringBuilders.Push(new StringBuilder());
-                        context.StringBuilder.Append(Value);
+                        context.stringBuilders.Push(new StringBuilder(Value));
                         if (Next.Value == ".")
                         {
                             Next = Next.Next;
@@ -32,6 +31,8 @@ namespace GreyHackTools
                         {
                             Next.Compile(context, true);
                             EndStatement = Next.EndStatement;
+                            ForceEndStatement = Next.ForceEndStatement;
+                            ForceEndStatementValue = Next.ForceEndStatementValue;
                             Next = Next.Next;
                         }
                         

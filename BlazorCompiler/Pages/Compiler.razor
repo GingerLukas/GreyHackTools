@@ -7,6 +7,9 @@
 
 
 <style>
+    body {
+        overflow: hidden;
+    }
     .sapalert-toast-box {
         background-color: rgb(37, 37, 37);
     }
@@ -57,8 +60,9 @@
 
     .compiler-main {
         padding: 0;
+        margin: 10px;
         grid-template-rows: auto 1fr;
-        grid-auto-columns: 100%;
+        grid-template-columns: 100%;
         display: grid;
     }
 
@@ -89,7 +93,6 @@
     :focus {
         outline: none;
     }
-
 </style>
 
 <SAPToastArea 
@@ -127,7 +130,9 @@
 
 
 <div class="compiler compiler-bg-main">
-    <div class="utilityStrip compiler-bg-container" style="grid-row: span 2"></div>
+    <div class="utilityStrip compiler-bg-container" style="grid-row: span 2">
+
+    </div>
     
     <!--Main-->
     <div class="utilityStrip compiler-bg-content compiler-main">
@@ -139,7 +144,7 @@
                 <button class="nav-link @IsActive(EMainPage.MiniScript)" @onclick="() => { SetPage(EMainPage.MiniScript); }">GreyScript</button>
             </li>
         </ul>
-        <div id="code"></div>
+        <div id="code" style="height: 100%;overflow: hidden;"></div>
     </div>
 
     <div class="utilityStrip compiler-bg-container" style="grid-row: span 2">
@@ -179,7 +184,7 @@
     </div>
 
     <!--Output-->
-    <div class="utilityStrip compiler-bg-container" style="grid-template-rows: 2rem 1fr; grid-template-columns: 100%; display: grid;">
+    <div class="utilityStrip compiler-bg-container" style="grid-template-rows: 2rem 1fr; grid-template-columns: 100%; display: grid; resize: vertical;">
         <div style="grid-column: span 1">Output:</div>
         <div style="grid-column: span 1"><textarea id="ms-output" class="compiler-bg-content" readonly></textarea></div>
         

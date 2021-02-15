@@ -47,7 +47,7 @@ namespace GreyHackTools
                         current = current.Next;
                     }
 
-                    if (last.Next != null && last.Next.CompareBeginningOfValue("else"))
+                    if (last.Next != null && last.Next.CompareBeginningOfValue("else") && multiLine)
                     {
                         last.Value = "";
                         last.ForceEndStatement = true;

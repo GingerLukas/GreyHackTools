@@ -324,8 +324,9 @@
         ToastArea.CreateToast(toast);
     }
 
-    private void CompileAndShow()
+    private async Task CompileAndShow()
     {
+        await UpdateCode();
         Compile();
         if(string.IsNullOrWhiteSpace(InputCode)) return;
         ShowDialog = true;

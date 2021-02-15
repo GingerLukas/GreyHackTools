@@ -64,6 +64,8 @@ namespace GreyHackTools
                     {
                         Next.Next.Prev = this;
                     }
+
+                    EndStatement = Next.EndStatement;
                     Next = Next.Next;
                 }
             }

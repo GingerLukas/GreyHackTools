@@ -24,7 +24,7 @@ namespace GreyHackTools
 
         private static string _separator = Environment.NewLine;
         //private static string _separator = ";";
-        private static readonly HashSet<char> _tokenSeparators = new HashSet<char>() { ' ', '.', ',', ':' };
+        private static readonly HashSet<char> _tokenSeparators = new HashSet<char>() { ' ', '.', ',', ':','\t' };
         private static readonly HashSet<char> _tokenBrackets = new HashSet<char>() { '(', ')', '[', ']', '{', '}', };
         private static readonly HashSet<char> _tokenOperators = new HashSet<char>()
         {
@@ -204,7 +204,7 @@ namespace GreyHackTools
             if (context.PlainInput.Peek() == '/' && context.PlainInput.Skip(1).FirstOrDefault() == '/')
             {
                 token = new Token.Template();
-                return x => !(context.PlainInput.Peek() == '\n' || (context.PlainInput.Count > 1 &&
+                return x => (context.PlainInput.Peek() == '\n' || (context.PlainInput.Count > 1 &&
                                                                    context.PlainInput.Peek() == '\r' &&
                                                                    context.PlainInput.Skip(1).First() == '\n'));
             }
@@ -218,11 +218,11 @@ namespace GreyHackTools
                     case ',':
                         context.ShouldOptimizeString.Pop();
                         context.ShouldOptimizeString.Push(!context.Settings.HasFlag(Settings.IgnoreMapVariables));
-                        return x => false;
+                        return x => true;
                     case ':':
                         context.ShouldOptimizeString.Pop();
                         context.ShouldOptimizeString.Push(false);
-                        return x => false;
+                        return x => true;
                 }
 
             }
@@ -230,11 +230,11 @@ namespace GreyHackTools
             if (context.PlainInput.Peek() == '\\')
             {
                 token = new Token.Template();
-                return x => !_tokenBrackets.Contains(x.PlainInput.Peek()) &&
-                           !_tokenSeparators.Contains(x.PlainInput.Peek()) &&
-                           !_tokenOperators.Contains(x.PlainInput.Peek()) &&
-                           !_tokenEndStatements.Contains(x.PlainInput.Peek().ToString()) &&
-                           !_tokenEndStatements.Contains(x.PlainInput.Peek().ToString() + x.PlainInput.Skip(1).FirstOrDefault().ToString());
+                return x => _tokenBrackets.Contains(x.PlainInput.Peek()) ||
+                            _tokenSeparators.Contains(x.PlainInput.Peek()) ||
+                            _tokenOperators.Contains(x.PlainInput.Peek()) ||
+                            _tokenEndStatements.Contains(x.PlainInput.Peek().ToString()) ||
+                            _tokenEndStatements.Contains(x.PlainInput.Peek().ToString() + x.PlainInput.Skip(1).FirstOrDefault().ToString());
             }
 
             if (_tokenInclude.Contains(context.PlainInput.Peek() +
@@ -248,17 +248,17 @@ namespace GreyHackTools
                     if (_tokenEndInclude.Contains(x.PlainInput.Peek()))
                     {
                         x.PlainInput.Dequeue();
-                        return false;
+                        return true;
                     }
 
-                    return true;
+                    return false;
                 };
             }
 
             if (_tokenOperators.Contains(context.PlainInput.Peek())) //operator
             {
                 token = new Token.Operator();
-                return x => _tokenOperators.Contains(x.PlainInput.Peek());
+                return x => !_tokenOperators.Contains(x.PlainInput.Peek());
             }
             if (_tokenBrackets.Contains(context.PlainInput.Peek())) //brackets
             {
@@ -298,12 +298,12 @@ namespace GreyHackTools
                         break;
                 }
 
-                return x => false;
+                return x => true;
             }
             if (_tokenSeparators.Contains(context.PlainInput.Peek())) //separators
             {
                 token = new Token.Separator();
-                return x => false;
+                return x => true;
             }
 
             if (_tokenStrings.Contains(context.PlainInput.Peek())) //strings
@@ -320,16 +320,16 @@ namespace GreyHackTools
                 return x =>
                 {
                     GetString(x);
-                    return false;
+                    return true;
                 };
             }
             token = new Token.Variable();
-            return x => !_tokenBrackets.Contains(x.PlainInput.Peek()) &&
-                        !_tokenSeparators.Contains(x.PlainInput.Peek()) &&
-                        !_tokenStrings.Contains(x.PlainInput.Peek()) &&
-                        !_tokenOperators.Contains(x.PlainInput.Peek()) &&
-                        !_tokenEndStatements.Contains(x.PlainInput.Peek().ToString()) &&
-                        !_tokenEndStatements.Contains(x.PlainInput.Peek().ToString() + x.PlainInput.Skip(1).FirstOrDefault().ToString());
+            return x => _tokenBrackets.Contains(x.PlainInput.Peek()) ||
+                        _tokenSeparators.Contains(x.PlainInput.Peek()) ||
+                        _tokenStrings.Contains(x.PlainInput.Peek()) ||
+                        _tokenOperators.Contains(x.PlainInput.Peek()) ||
+                        _tokenEndStatements.Contains(x.PlainInput.Peek().ToString()) ||
+                        _tokenEndStatements.Contains(x.PlainInput.Peek().ToString() + x.PlainInput.Skip(1).FirstOrDefault().ToString());
         }
 
         private static void GetString(Context context)
@@ -362,7 +362,7 @@ namespace GreyHackTools
             do
             {
                 sb.Append(context.PlainInput.Dequeue());
-            } while (context.PlainInput.Count > 0 && separator(context));
+            } while (context.PlainInput.Count > 0 && !separator(context));
 
             string tmp_value = sb.ToString();
             if (!(t is Token.String) && IsTemplate(tmp_value, out string regex, out MatchCollection matches, out ETemplate template))

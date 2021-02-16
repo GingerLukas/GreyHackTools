@@ -123,9 +123,9 @@ namespace GreyHackTools
 
         private static readonly Dictionary<string, ETemplate> _templates = new Dictionary<string, ETemplate>()
         {
-            { @"(__)(.*)(_idx)",ETemplate.IterationIndex }, // __var_idx
-            { @"(\\)(\S*)",ETemplate.IgnoreOptimization },  // \exact_var_name
-            { @"(\/\/)(.*)$", ETemplate.Comment },         //comment
+            { @"^(__)(.*)(_idx)$",ETemplate.IterationIndex }, // __var_idx
+            { @"^(\\)(\S*)$",ETemplate.IgnoreOptimization },  // \exact_var_name
+            { @"^(\/\/)(.*)$", ETemplate.Comment },         //comment
 
         };
 

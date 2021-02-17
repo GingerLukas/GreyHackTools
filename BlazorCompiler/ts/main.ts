@@ -71,10 +71,10 @@ function getCompletionItems(text: string, regEx?: RegExp, output?: CompletionIte
             if (params) {
                 let param;
 
-                const paramsRegex = /\w+?\b/g;
+                const paramsRegex = /(^|,)\s*(\w+?)\b/g;
                 while ((param = paramsRegex.exec(params))) {
-                    fParams.push(param[0]);
-                    tryAddItem(new CompletionItem(param[0], CompletionItemKind.Variable), output, words);
+                    fParams.push(param[2]);
+                    tryAddItem(new CompletionItem(param[2], CompletionItemKind.Variable), output, words);
                 }
             }
             tempItem.insertText = (name + '(' + getParamsSnippet(fParams) + ')');

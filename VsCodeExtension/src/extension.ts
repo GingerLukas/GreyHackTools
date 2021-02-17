@@ -190,10 +190,10 @@ function getCompletionItems(text: string,regEx?:RegExp, output?:vscode.Completio
             if (params) {
                 let param;
 
-                const paramsRegex = /\w+?\b/g;
+                const paramsRegex = /(^|,)\s*(\w+?)\b/g;
                 while ((param = paramsRegex.exec(params))) {
-                    fParams.push(param[0]);
-                    tryAddItem(new vscode.CompletionItem(param[0], vscode.CompletionItemKind.Variable), output, words);
+                    fParams.push(param[2]);
+                    tryAddItem(new vscode.CompletionItem(param[2], vscode.CompletionItemKind.Variable), output, words);
                 }
             }
             tempItem.insertText = new vscode.SnippetString(name + '('+getParamsSnippet(fParams)+')');

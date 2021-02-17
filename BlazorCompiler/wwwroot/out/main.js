@@ -45,10 +45,10 @@ function getCompletionItems(text, regEx, output, words) {
             var fParams = [];
             if (params) {
                 var param = void 0;
-                var paramsRegex = /\w+?\b/g;
+                var paramsRegex = /(^|,)\s*(\w+?)\b/g;
                 while ((param = paramsRegex.exec(params))) {
-                    fParams.push(param[0]);
-                    tryAddItem(new CompletionItem(param[0], CompletionItemKind.Variable), output, words);
+                    fParams.push(param[2]);
+                    tryAddItem(new CompletionItem(param[2], CompletionItemKind.Variable), output, words);
                 }
             }
             tempItem.insertText = (name_1 + '(' + getParamsSnippet(fParams) + ')');

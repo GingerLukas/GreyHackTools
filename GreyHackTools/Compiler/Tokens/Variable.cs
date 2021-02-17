@@ -31,8 +31,6 @@ namespace GreyHackTools
                         {
                             Next.Compile(context, true);
                             EndStatement = Next.EndStatement;
-                            ForceEndStatement = Next.ForceEndStatement;
-                            ForceEndStatementValue = Next.ForceEndStatementValue;
                             Next = Next.Next;
                         }
                         

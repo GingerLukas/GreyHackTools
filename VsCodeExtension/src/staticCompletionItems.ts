@@ -175,7 +175,7 @@ export function getStaticItems(gspp: boolean) {
     reverseCompletion.insertText = new vscode.SnippetString('reverse()');
 
     const sortCompletion = new vscode.CompletionItem('sort', vscode.CompletionItemKind.Function);
-    sortCompletion.insertText = new vscode.SnippetString('sort(${1:nul})');
+    sortCompletion.insertText = new vscode.SnippetString('sort(${1:null})');
 
     const sumCompletion = new vscode.CompletionItem('sum', vscode.CompletionItemKind.Function);
     sumCompletion.insertText = new vscode.SnippetString('sum()');
@@ -333,7 +333,7 @@ Method;exit;exit(\${1:null})
 Property;public_ip;public_ip
 Property;local_ip;local_ip
 Method;device_ports;device_ports(\${1:IP})
-Property;computers_lan_ip;computers_lan_ip
+Property;devices_lan_ip;devices_lan_ip
 Method;ping_port;ping_port(\${1:port})
 Method;port_info;port_info(\${1:Port})
 Property;used_ports;used_ports
@@ -364,7 +364,7 @@ Method;set_content;set_content(\${1:content})
 Method;set_group;set_group(\${1:group}, \${2:recursive})
 Property;group;group
 Property;path;path
-Property;content;content
+Property;get_content;get_content
 Property;is_binary;is_binary
 Property;is_folder;is_folder
 Method;has_permission;has_permission(\${1|"r","w","x"|})
@@ -385,6 +385,7 @@ Property;start_terminal;start_terminal
 Method;connect_service;connect_service(\${1:IP}, \${2:port}, \${3:user}, \${4:pass}, \${5:service})
 Method;scp;scp(\${1:file}, \${2:folder}, \${3:shell})
 Method;launch;launch(\${1:program}, \${2:params})
+Property;launch_path;launch_path
 Method;build;build(\${1:srcpath}, \${2:buildpath})
 Method;put;put(\${1:file}, \${2:folder}, \${3:shell})
 Method;aircrack;aircrack(\${1:filepath})

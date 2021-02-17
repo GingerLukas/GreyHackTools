@@ -21,7 +21,6 @@ namespace GreyHackTools
                     set { }
                 }
 
-
                 public Operator()
                 {
                     Optimizable = false;
@@ -30,6 +29,10 @@ namespace GreyHackTools
                 {
                     if (Custom)
                     {
+                        if (Value == "=>")
+                        {
+                            SupportsMultiLineBracket = true;
+                        }
                         long depth = context.bracketDepth;
                         string left = "";
                         string right = "";

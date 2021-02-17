@@ -14,6 +14,7 @@ namespace GreyHackTools
             public Token Next { get; set; }
             public virtual string Value { get; set; }
             public virtual bool Custom { get; set; }
+            public virtual bool SupportsMultiLineBracket { get; set; } = false;
             public bool Optimizable { get; set; } = true;
             private bool _endStatement = false;
             public bool EndStatement { get{

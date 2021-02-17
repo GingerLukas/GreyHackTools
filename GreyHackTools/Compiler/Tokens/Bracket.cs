@@ -47,7 +47,7 @@ namespace GreyHackTools
                         current = current.Next;
                     }
 
-                    if (last.Next != null && last.Next.CompareBeginningOfValue("else") && multiLine)
+                    if (last.Next != null && last.Next.Value == "else" && multiLine)
                     {
                         last.Value = "";
                         last.ForceEndStatement = true;
@@ -57,11 +57,6 @@ namespace GreyHackTools
                     {
                         last.Value = postfix;
                     }
-
-                    //if (!last.Prev.EndStatement && multiLine)
-                    //{
-                    //    context.StringBuilder.AppendLine();
-                    //}
                     last.ForceEndStatement = true;
                     last.ForceEndStatementValue = false;
                     last.Compile(context);
@@ -74,8 +69,6 @@ namespace GreyHackTools
                 
                 public override Token Compile(Context context, bool force = false)
                 {
-                    bool elseFlag = false;
-                    bool lambdaFlag = false;
                     if (IsOpening)
                     {
                         context.bracketDepth++;
@@ -89,13 +82,11 @@ namespace GreyHackTools
                     {
                         Token node = null;
 
-                        if (Prev != null && Value == "{" &&
-                            ((Prev is Keyword || (lambdaFlag = Prev.Value == "=>")) ||
-                             (elseFlag = Prev.CompareBeginningOfValue("else"))))
+                        if (Prev != null && Value == "{" && Prev.SupportsMultiLineBracket)
                         {
                             string prefix = "";
                             string postfix = "";
-                            if (elseFlag || Prev.CompareBeginningOfValue("else"))
+                            if (Prev.Value == "else")
                             {
                                 postfix = "end if";
                             }
@@ -104,7 +95,7 @@ namespace GreyHackTools
                                 prefix = "then";
                                 postfix = "end if";
                             }
-                            else if(lambdaFlag)
+                            else if(Prev.Value == "=>")
                             {
                                 postfix = "end function";
                             }

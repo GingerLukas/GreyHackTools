@@ -14,12 +14,15 @@ import "./JsMSppCompiler.meta";
 
 
 
+
+
 export function activate(context: vscode.ExtensionContext) {
 
     //#region init
     console.log('GS++ extension loaded');
     let timeout: NodeJS.Timer | undefined = undefined;
     
+
     let initialized = false;
     const compilerSettings = new CompilerSettings();
 
@@ -173,7 +176,7 @@ function compile(code: string, optimize: boolean, settings: number):string {
 function getCompletionItems(text: string,regEx?:RegExp, output?:vscode.CompletionItem[], words?:{ [id: string]: { [id: number]: boolean } }) {
     if (regEx == undefined) regEx = /(([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*")|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>)/g;
     if (output == undefined) output = [];
-    if (words == undefined) words = {};
+    if (words == undefined) words = {};  
 
     let match;
     let tempItem;
@@ -185,10 +188,12 @@ function getCompletionItems(text: string,regEx?:RegExp, output?:vscode.Completio
             const params = match[8] || match[10];
             const fParams = [];
             if (params) {
-                for (let param of params.split(",")) {
-                    param = param.trim();
-                    fParams.push(param);
-                    tryAddItem(new vscode.CompletionItem(param, vscode.CompletionItemKind.Variable), output, words);
+                let param;
+
+                const paramsRegex = /\w+?\b/g;
+                while ((param = paramsRegex.exec(params))) {
+                    fParams.push(param[0]);
+                    tryAddItem(new vscode.CompletionItem(param[0], vscode.CompletionItemKind.Variable), output, words);
                 }
             }
             tempItem.insertText = new vscode.SnippetString(name + '('+getParamsSnippet(fParams)+')');
@@ -250,7 +255,7 @@ function getParamsSnippet(params?:string[]) {
 }
 
 function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
-    const regEx = /(\$?".*?")|(\bif\b|\belse\b|\bfor\b|\bwhile\b|\bend if\b|\bend for\b|\bend while\b|\bin\b|\bthen\b|\breturn\b|\bbreak\b|\bcontinue\b|\band\b|\bor\b|\bnot\b)|(\bfunction\b|\bend function\b|\bself\b|\bnew\b|\btrue\b|\bfalse\b|\bnull\b)|(\b(?!function\b)([@_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([@_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
+    const decorationsRegex = /(\$?".*?")|(\bif\b|\belse\b|\bfor\b|\bwhile\b|\bend if\b|\bend for\b|\bend while\b|\bin\b|\bthen\b|\breturn\b|\bbreak\b|\bcontinue\b|\band\b|\bor\b|\bnot\b)|(\bfunction\b|\bend function\b|\bself\b|\bnew\b|\btrue\b|\bfalse\b|\bnull\b)|(\b(?!function\b)([@_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([@_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
     let match;
 
     const strings: vscode.Range[] = [];
@@ -263,7 +268,7 @@ function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
     let matchIndex = 0;
     let output: vscode.Range[] = [];
 
-    while ((match = regEx.exec(text))) {
+    while ((match = decorationsRegex.exec(text))) {
         if (match[1]) {
             matchIndex = 1;
 

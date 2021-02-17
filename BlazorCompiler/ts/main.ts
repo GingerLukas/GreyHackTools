@@ -69,10 +69,12 @@ function getCompletionItems(text: string, regEx?: RegExp, output?: CompletionIte
             const params = match[8] || match[10];
             const fParams = [];
             if (params) {
-                for (let param of params.split(",")) {
-                    param = param.trim();
-                    fParams.push(param);
-                    tryAddItem(new CompletionItem(param, CompletionItemKind.Variable), output, words);
+                let param;
+
+                const paramsRegex = /\w+?\b/g;
+                while ((param = paramsRegex.exec(params))) {
+                    fParams.push(param[0]);
+                    tryAddItem(new CompletionItem(param[0], CompletionItemKind.Variable), output, words);
                 }
             }
             tempItem.insertText = (name + '(' + getParamsSnippet(fParams) + ')');
@@ -310,7 +312,7 @@ function getStaticItems(gspp: boolean) {
     reverseCompletion.insertText = "reverse()";
 
     const sortCompletion = new CompletionItem("sort", CompletionItemKind.Function);
-    sortCompletion.insertText = "sort(${1:nul})";
+    sortCompletion.insertText = "sort(${1:null})";
 
     const sumCompletion = new CompletionItem("sum", CompletionItemKind.Function);
     sumCompletion.insertText = "sum()";
@@ -462,7 +464,7 @@ Method;exit;exit(\${1:null})
 Property;public_ip;public_ip
 Property;local_ip;local_ip
 Method;device_ports;device_ports(\${1:IP})
-Property;computers_lan_ip;computers_lan_ip
+Property;devices_lan_ip;devices_lan_ip
 Method;ping_port;ping_port(\${1:port})
 Method;port_info;port_info(\${1:Port})
 Property;used_ports;used_ports
@@ -493,7 +495,7 @@ Method;set_content;set_content(\${1:content})
 Method;set_group;set_group(\${1:group}, \${2:recursive})
 Property;group;group
 Property;path;path
-Property;content;content
+Property;get_content;get_content
 Property;is_binary;is_binary
 Property;is_folder;is_folder
 Method;has_permission;has_permission(\${1|"r","w","x"|})

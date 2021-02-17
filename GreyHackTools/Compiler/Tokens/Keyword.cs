@@ -28,13 +28,18 @@ namespace GreyHackTools
                 {
                     switch (Value)
                     {
+                        case "else":
+                            SupportsMultiLineBracket = true;
+                            break;
                         case "for":
                         case "while":
                         case "if":
                             CompileNext(context);
+                            SupportsMultiLineBracket = true;
                             break;
                         case "function":
                             CompileNext(context,false);
+                            SupportsMultiLineBracket = true;
                             break;
                     }
                     return base.Compile(context, force);

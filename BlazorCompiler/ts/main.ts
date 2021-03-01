@@ -633,6 +633,7 @@ var gsppCompletion;
 var gsCompletion;
 let oldDecoration = [];
 let timeout = undefined;
+var includeToCompletion: { [id: string]: CompletionItem[] } = {};
 
 
 monaco.languages.register({ id: "gspp" });

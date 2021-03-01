@@ -4,6 +4,7 @@
 @using System.Threading
 @using GreyHackTools.Debugger
 @inject IJSRuntime js
+@inject HttpClient HttpClient
 
 
 <style>
@@ -105,6 +106,7 @@
 
 </SAPToastArea>
 
+
 @if (ShowDialog)
 {
 
@@ -130,10 +132,18 @@
 
 
 <div class="compiler compiler-bg-main">
+    <!--Left-->
     <div class="utilityStrip compiler-bg-container" style="grid-row: span 2">
-
+        <table style="width: 100%">
+            <tr><td><form>
+                <div class="form-group">
+                    <label for="contextParams">Params:</label>
+                    <input type="text" class="form-control" id="contextParams" placeholder="ex. 'o+wrx -R'" @bind="RuntimeContext.ParamsString"/>
+                </div>
+            </form></td></tr>
+        </table>
     </div>
-    
+
     <!--Main-->
     <div class="utilityStrip compiler-bg-content compiler-main">
         <ul class="nav nav-tabs compiler-nav">
@@ -144,9 +154,10 @@
                 <button class="nav-link @IsActive(EMainPage.MiniScript)" @onclick="() => { SetPage(EMainPage.MiniScript); }">GreyScript</button>
             </li>
         </ul>
-        <div id="code" style="height: 100%;overflow: hidden;"></div>
+        <div id="code" style="height: 100%; overflow: hidden;"></div>
     </div>
 
+    <!--Right-->
     <div class="utilityStrip compiler-bg-container" style="grid-row: span 2">
         <table style="width: 100%">
             <tr>
@@ -160,7 +171,7 @@
                 <td>
                     <div class="form-check">
                         <input id="check-optimize" class="form-check-input" type="checkbox" value="" @bind="Optimize" />
-                        <label for="check-optimize" class="form-check-label" >Optimize</label>
+                        <label for="check-optimize" class="form-check-label">Optimize</label>
                     </div>
                 </td>
             </tr>
@@ -168,7 +179,7 @@
                 <td>
                     <div class="form-check">
                         <input id="check-ignore-map" class="form-check-input" type="checkbox" value="" @bind="IgnoreMapIndexes" />
-                        <label for="check-ignore-map" class="form-check-label" >Ignore map indexes</label>
+                        <label for="check-ignore-map" class="form-check-label">Ignore map indexes</label>
                     </div>
                 </td>
             </tr>
@@ -176,7 +187,7 @@
                 <td>
                     <div class="form-check">
                         <input id="check-remove-comments" class="form-check-input" type="checkbox" value="" @bind="RemoveComments" />
-                        <label for="check-remove-comments" class="form-check-label" >Remove comments</label>
+                        <label for="check-remove-comments" class="form-check-label">Remove comments</label>
                     </div>
                 </td>
             </tr>
@@ -187,7 +198,7 @@
     <div class="utilityStrip compiler-bg-container" style="grid-template-rows: 2rem 1fr; grid-template-columns: 100%; display: grid; resize: vertical;">
         <div style="grid-column: span 1">Output:</div>
         <div style="grid-column: span 1"><textarea id="ms-output" class="compiler-bg-content" readonly></textarea></div>
-        
+
     </div>
 </div>
 
@@ -206,6 +217,9 @@
     public string OutputCode { get; set; }
 
     public GreyHackDebugger GreyHackDebugger { get; set; } = new GreyHackDebugger();
+    public RuntimeContext RuntimeContext => GreyHackDebugger.RuntimeContext;
+
+    #region Settings
 
     private bool _optimize;
     public bool Optimize
@@ -252,6 +266,8 @@
         }
     }
 
+    #endregion
+
     public bool ShowDialog { get; set; }
 
     public SAPToastArea ToastArea { get; set; }
@@ -272,7 +288,7 @@
                 break;
         }
 
-        Compile();
+        await Compile();
     }
 
     public async Task SetPage(EMainPage page,bool force = true)
@@ -286,7 +302,7 @@
             {
                 case EMainPage.Gpp:
                     InputCode = await js.InvokeAsync<string>("editor.getValue", CancellationToken.None);
-                    Compile();
+                    await Compile();
                     await js.InvokeVoidAsync("editor.setValue", OutputCode);
                     break;
                 case EMainPage.MiniScript:
@@ -303,7 +319,7 @@
                     await js.InvokeVoidAsync("editor.setValue", CancellationToken.None, InputCode);
                     break;
                 case EMainPage.MiniScript:
-                    Compile();
+                    await Compile();
                     await js.InvokeVoidAsync("editor.setValue", CancellationToken.None, OutputCode);
                     break;
             }
@@ -313,26 +329,9 @@
         StateHasChanged();
     }
 
-    void CreateToast(string text, SAPAlertType type, int time = 2)
-    {
-        var toast = new SAPToast
-        {
-            Title = text,
-            AlertType = type,
-            AutoCloseDelay = TimeSpan.FromSeconds(time)
-        };
-        ToastArea.CreateToast(toast);
-    }
 
-    private async Task CompileAndShow()
-    {
-        await UpdateCode();
-        Compile();
-        if(string.IsNullOrWhiteSpace(InputCode)) return;
-        ShowDialog = true;
-    }
 
-    private void Compile()
+    private async Task Compile()
     {
         if (string.IsNullOrWhiteSpace(InputCode)) return;
         string temp = "";
@@ -344,14 +343,15 @@
         LastHash = temp;
         LastSettings = Settings;
 
-        if (GreyHackCompiler.TryCompile(InputCode, out string output, Optimize, Settings))
+        Ref<string> output = new Ref<string>("");
+        if (await GreyHackCompiler.TryCompile(InputCode, output, Optimize, Settings))
         {
-            OutputCode = output;
+            OutputCode = output.Value;
         }
         else
         {
             CreateToast("Compilation error", SAPAlertType.Danger);
-            OutputCode = output;
+            OutputCode = output.Value;
         }
     }
 
@@ -361,14 +361,11 @@
         UpdateCode().ContinueWith(x => GreyHackDebugger.Start());
     }
 
-    private async Task CopyCodeToClipboard()
-    {
-        await js.InvokeVoidAsync("copyToClipboard", OutputCode);
-        CreateToast("Copied to clipboard!", SAPAlertType.Success);
-    }
+
 
     protected override void OnInitialized()
     {
+        GreyHackCompiler.OnInclude += GreyHackCompilerOnOnInclude;
         GreyHackDebugger.Interpreter.implicitOutput = GreyHackDebugger.Interpreter.standardOutput = output =>
         {
             if (OutputBuilder.Length != 0) OutputBuilder.AppendLine();
@@ -379,28 +376,46 @@
         GreyHackDebugger.Ended += GreyHackDebuggerOnEnded;
         GreyHackDebugger.RuntimeError += (debugger, exception) => CreateToast(exception.Message, SAPAlertType.Danger, 20);
 
-        InputCode = @"XOR = {}
-XOR.Encrypt = (text, key) => {
-	o = []
-	i = 0
-	for (c in text){
-		o.push(char(code(c) ^^ code(key[i % key.len])))
-		i++
-	}
-	return o.join("""")
+        InputCode = @"XOR = {
+    ""Encrypt"":(text, key) => {
+	    o = []
+	    i = 0
+	    for (c in text){
+		    o.push(char(code(c) ^^ code(key[i % key.len])))
+		    i++
+	    }
+	    return o.join("""")
+    }
 }
 enc = XOR.Encrypt(""hello world"",""Ginger"")
 print(XOR.Encrypt(enc,""Ginger""))";
 
-        
+
     }
 
+    private async void GreyHackCompilerOnOnInclude(string include, Dictionary<string, string> includetocode, Ref<int> counter)
+    {
+        try
+        {
+            includetocode[include] = await HttpClient.GetStringAsync(include);
+            //js.InvokeVoidAsync("");
+        }
+        catch (Exception e)
+        {
+
+        }
+        counter.Value--;
+        if (counter.Value==0)
+        {
+
+        }
+    }
 
 
     private void GreyHackDebuggerOnStarted(GreyHackDebugger debugger)
     {
         OutputBuilder = new StringBuilder();
-        debugger.Interpreter.Reset(OutputCode);
+        debugger.Code = OutputCode;
         CreateToast("Debugger started", SAPAlertType.Info);
     }
 
@@ -413,23 +428,47 @@ print(XOR.Encrypt(enc,""Ginger""))";
     }
 
     private Dictionary<string, string> _autocomplete = new Dictionary<string, string>() {{"(", ")"}, {"[", "]"}, {"{", "}"}, {"\"", "\""}, {"'", "'"}};
-    
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-           
-                try
-                {
-                    await js.InvokeVoidAsync("setupEditor", "code");
-                    await js.InvokeVoidAsync("editor.setValue", InputCode);
-                }
-                catch (Exception e)
-                {
-                }
-            
-            
+
+            try
+            {
+                await js.InvokeVoidAsync("setupEditor", "code");
+                await js.InvokeVoidAsync("editor.setValue", InputCode);
+            }
+            catch (Exception e)
+            {
+            }
+
+
         }
+    }
+
+    private async Task CopyCodeToClipboard()
+    {
+        await js.InvokeVoidAsync("copyToClipboard", OutputCode);
+        CreateToast("Copied to clipboard!", SAPAlertType.Success);
+    }
+
+    private async Task CompileAndShow()
+    {
+        await UpdateCode();
+        await Compile();
+        if (string.IsNullOrWhiteSpace(InputCode)) return;
+        ShowDialog = true;
+    }
+    void CreateToast(string text, SAPAlertType type, int time = 2)
+    {
+        var toast = new SAPToast
+        {
+            Title = text,
+            AlertType = type,
+            AutoCloseDelay = TimeSpan.FromSeconds(time)
+        };
+        ToastArea.CreateToast(toast);
     }
 
     public enum EMainPage

@@ -7,6 +7,7 @@
     <Authors>Lukáš Šafránek</Authors>
     <Company>Ginger</Company>
     <Product>GppCompiler</Product>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>

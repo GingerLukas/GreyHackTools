@@ -24,7 +24,7 @@ namespace GreyHackTools
                     return base.Optimize(context,replace);
                 }
 
-                public override Token Compile(Context context, bool force = false)
+                public override Task<Token> Compile(Context context, bool force = false)
                 {
                     switch (Value)
                     {

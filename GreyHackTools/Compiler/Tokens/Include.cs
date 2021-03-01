@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace GreyHackTools
 {
@@ -17,23 +13,18 @@ namespace GreyHackTools
                     Optimizable = false;
                 }
 
-                public override Token Compile(Context context, bool force = false)
+                public override async Task<Token> Compile(Context context, bool force = false)
                 {
-#if js
-
-#else
-                    if (Environment.OSVersion.Platform == PlatformID.Other)
+                    if (IncludeToCode.ContainsKey(Value))
                     {
-                        Value = "//include is not yet implemented in web";
+                        Value = await Tokenize(IncludeToCode[Value], context.Clone()).Compile(context.optimizeEnabled, true);
+                        return await base.Compile(context, force);
                     }
-                    else
-                    {
-                        Value = context.httpClient.GetStringAsync(Value).GetAwaiter().GetResult();
-                    }
-#endif
 
 
-                    return base.Compile(context, force);
+                    Value = $"//include of \"{Value}\" failed";
+
+                    return await base.Compile(context, force);
                 }
 
                 public override string ToString()

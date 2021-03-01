@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace GreyHackTools
 {
@@ -150,21 +151,31 @@ namespace GreyHackTools
 
         #endregion
 
-        public static string Compile(string code, bool optimize = false, Settings settings = Settings.None)
+        public static Dictionary<string, string> IncludeToCode = new Dictionary<string, string>();
+
+        public delegate void IncludeHandler(string include,Dictionary<string,string> includeToCode, Ref<int> counter);
+
+        public static event IncludeHandler OnInclude;
+        public static string[] GetIncludes(string code)
         {
-            return Tokenize(code, settings).Compile(optimize);
+            return Tokenize(code).GetIncludes();
+        }
+        
+        public static async Task<string> Compile(string code, bool optimize = false, Settings settings = Settings.None)
+        {
+            return await Tokenize(code, settings).Compile(optimize);
         }
 
-        public static bool TryCompile(string code, out string compiledCode, bool optimize = false, Settings settings = Settings.None)
+        public static async Task<bool> TryCompile(string code, Ref<string> compiledCode, bool optimize = false, Settings settings = Settings.None)
         {
             try
             {
-                compiledCode = Compile(code, optimize, settings);
+                compiledCode.Value = await Compile(code, optimize, settings);
                 return true;
             }
             catch (Exception e)
             {
-                compiledCode = e.Message;
+                compiledCode.Value = e.Message;
                 return false;
             }
         }
@@ -172,6 +183,28 @@ namespace GreyHackTools
         private static Context Tokenize(string plainCode, Settings settings = Settings.None)
         {
             Context context = new Context(settings) { PlainInput = new Queue<char>(plainCode) };
+
+            Token token = null;
+            while ((token = GetNextToken(context)) != null)
+            {
+                context.AddToken(token);
+
+
+                if ((context.Settings & Settings.IgnoreMapVariables) != 0 && token.Prev != null && token.Prev.Value == ".")
+                {
+                    if (!context.IgnoreOptimize(token.Value))
+                    {
+                        context.customIgnoreOptimize.Add(token.Value);
+                    }
+                }
+            }
+
+            return context;
+        }
+
+        private static Context Tokenize(string plainCode,Context context, Settings settings = Settings.None)
+        {
+            context.PlainInput = new Queue<char>(plainCode);
 
             Token token = null;
             while ((token = GetNextToken(context)) != null)
@@ -394,4 +427,6 @@ namespace GreyHackTools
                 _tokenEndStatements.Contains(context.PlainInput.Peek().ToString() + context.PlainInput.Skip(1).FirstOrDefault().ToString()) ||
                 _tokenEndStatements.Contains(context.PlainInput.Peek().ToString());
     }
+
+    
 }

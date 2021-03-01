@@ -6,6 +6,11 @@ namespace GreyHackTools
 {
     public class RuntimeContext
     {
+        public string ParamsString
+        {
+            get => string.Join(' ', Params);
+            set => Params = value.Split(' ');
+        }
         public string[] Params { get; set; }
         public string ActiveUser { get; set; } = "Ginger";
         public string PublicIP { get; set; }

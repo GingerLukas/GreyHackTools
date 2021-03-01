@@ -15,6 +15,7 @@ namespace GreyHackTools
 {
     public class GreyHackDebugger
     {
+        public string Code { get; set; }
         public RuntimeContext RuntimeContext { get; set; } = new RuntimeContext();
         public bool AutomaticallyClearDebugVariables { get; set; } = true;
         public bool Running => !_debugerTask.IsCompleted;
@@ -43,6 +44,8 @@ namespace GreyHackTools
         private EventWaitHandle _debugWaitHandle = new EventWaitHandle(false, EventResetMode.AutoReset);
         private Task _debugerTask = Task.CompletedTask;
 
+        private StringBuilder Prefix = new StringBuilder();
+
         private bool _intrisicsAdded = false;
         public GreyHackDebugger()
         {
@@ -57,7 +60,15 @@ namespace GreyHackTools
         {
             if (Running) return;
 
+            Prefix.Clear();
+            if (RuntimeContext.Params.Length > 0)
+                Prefix.Append("params=[\"" + string.Join("\",\"", RuntimeContext.Params) + "\"];");
+
             Started?.Invoke(this);
+
+            Prefix.Append(Code);
+            
+            Interpreter.Reset(Prefix.ToString());
 
             _debugerTask = Task.Run(Run);
         }

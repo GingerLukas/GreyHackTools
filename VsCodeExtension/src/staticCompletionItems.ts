@@ -310,6 +310,7 @@ Property;time;time
 Method;typeof;typeof(\${1:var})
 Method;md5;md5(\${1:str})
 Method;get_router;get_router(\${1:IP})
+Method;get_switch;get_switch(\${1:IP})
 Method;get_shell;get_shell(\${1:user}, \${2:password})
 Method;nslookup;nslookup(\${1:domain})
 Method;whois;whois(\${1:IP})

@@ -31,7 +31,7 @@ namespace ConsoleCompiler
                         string.Join("", MD5.HashData(Encoding.UTF8.GetBytes(GreyHackCompiler.Compile(
                             code,
                             i < 4,
-                            (GreyHackCompiler.Settings) (i % 4)))).Select(x => x.ToString("x2")));
+                            (GreyHackCompiler.Settings) (i % 4)).GetAwaiter().GetResult())).Select(x => x.ToString("x2")));
                 }
             }
 

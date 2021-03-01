@@ -25,7 +25,7 @@ namespace GreyHackTools
                 {
                     Optimizable = false;
                 }
-                public override Token Compile(Context context, bool force = false)
+                public override async Task<Token> Compile(Context context, bool force = false)
                 {
                     if (Custom)
                     {
@@ -44,7 +44,7 @@ namespace GreyHackTools
                             if (Prev is Bracket b && b.IsOpening)
                                 throw new Exception($"invalid syntax for template {Value}");
                             context.stringBuilders.Push(new StringBuilder());
-                            tmpLeft = Prev.Compile(context, true);
+                            tmpLeft = await Prev.Compile(context, true);
                             left = context.StringBuilder.ToString();
                             s = s.Replace("$a", left);
                             context.stringBuilders.Pop();
@@ -63,7 +63,7 @@ namespace GreyHackTools
                         if (NeedsRight && Next != null)
                         {
                             context.stringBuilders.Push(new StringBuilder());
-                            tmpRight = Next.Compile(context, true);
+                            tmpRight = await Next.Compile(context, true);
                             right = context.StringBuilder.ToString();
                             s = s.Replace("$b", right);
                             context.stringBuilders.Pop();
@@ -88,18 +88,18 @@ namespace GreyHackTools
                             context.CodePrefix.Append("=");
                             context.CodePrefix.AppendLine(s);
                             EndStatement = tmpRight.EndStatement;
-                            return base.Compile(context,force);
+                            return await base.Compile(context,force);
                         }
                         else
                         {
                             Value = s;
 
-                            return base.Compile(context, force);
+                            return await base.Compile(context, force);
                         }
                     }
                     else
                     {
-                        return base.Compile(context, force);
+                        return await base.Compile(context, force);
                     }
                 }
 

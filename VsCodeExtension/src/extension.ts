@@ -11,6 +11,7 @@ import "./bridge.meta";
 import "./newtonsoft.json";
 import "./JsMSppCompiler";
 import "./JsMSppCompiler.meta";
+import { Http2ServerRequest } from 'http2';
 
 
 
@@ -21,10 +22,12 @@ export function activate(context: vscode.ExtensionContext) {
     //#region init
     console.log('GS++ extension loaded');
     let timeout: NodeJS.Timer | undefined = undefined;
-    
 
     let initialized = false;
     const compilerSettings = new CompilerSettings();
+
+    //@ts-ignore
+    const compiler = GreyHackTools.GreyHackCompiler;
 
     const compilerMenu = new CompilerMenuProvider([
         new CompilerMenuItem("Optimize", vscode.TreeItemCollapsibleState.None, (node) => {
@@ -174,7 +177,7 @@ function compile(code: string, optimize: boolean, settings: number):string {
 }
 
 function getCompletionItems(text: string,regEx?:RegExp, output?:vscode.CompletionItem[], words?:{ [id: string]: { [id: number]: boolean } }) {
-    if (regEx == undefined) regEx = /(([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*")|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>)/g;
+    if (regEx == undefined) regEx = /(([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*?")|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>)/g;
     if (output == undefined) output = [];
     if (words == undefined) words = {};  
 
@@ -255,7 +258,7 @@ function getParamsSnippet(params?:string[]) {
 }
 
 function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
-    const decorationsRegex = /(\$?".*?")|(\bif\b|\belse\b|\bfor\b|\bwhile\b|\bend if\b|\bend for\b|\bend while\b|\bin\b|\bthen\b|\breturn\b|\bbreak\b|\bcontinue\b|\band\b|\bor\b|\bnot\b)|(\bfunction\b|\bend function\b|\bself\b|\bnew\b|\btrue\b|\bfalse\b|\bnull\b)|(\b(?!function\b)([@_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([@_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
+    const decorationsRegex = /(\$?".*?")|(\bif\b|\belse\b|\bfor\b|\bwhile\b|\bend if\b|\bend for\b|\bend while\b|\bin\b|\bthen\b|\breturn\b|\bbreak\b|\bcontinue\b|\band\b|\bor\b|\bnot\b)|(\bfunction\b|\bend function\b|\bself\b|\bnew\b|\btrue\b|\bfalse\b|\bnull\b)|(\b(?!function\b)([@_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([@_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)|(#!.*?!)/gm;
     let match;
 
     const strings: vscode.Range[] = [];
@@ -319,6 +322,10 @@ function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
         else if (match[8]) {
             matchIndex = 8;
             output = comments;
+        }
+        else if (match[9]) {
+            matchIndex = 9;
+            output = keywords2;
         }
         else {
             continue;

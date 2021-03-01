@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace GreyHackTools
 {
@@ -55,7 +56,7 @@ namespace GreyHackTools
                 return this;
             }
 
-            public virtual Token Compile(Context context, bool force = false)
+            public virtual async Task<Token> Compile(Context context, bool force = false)
             {
                 if (string.IsNullOrWhiteSpace(Value)) return this;
                 if (context.StringBuilder.Length != 0 &&

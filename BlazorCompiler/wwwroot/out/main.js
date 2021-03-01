@@ -416,6 +416,7 @@ var gsppCompletion;
 var gsCompletion;
 var oldDecoration = [];
 var timeout = undefined;
+var includeToCompletion = {};
 monaco.languages.register({ id: "gspp" });
 monaco.languages.register({ id: "gs" });
 monaco.languages.registerCompletionItemProvider("gspp", {

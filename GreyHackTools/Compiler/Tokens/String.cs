@@ -12,7 +12,7 @@ namespace GreyHackTools
         {
             public class String : Token
             {
-                public override Token Compile(Context context, bool force = false)
+                public override async Task<Token> Compile(Context context, bool force = false)
                 {
                     if (Custom)
                     {
@@ -41,10 +41,10 @@ namespace GreyHackTools
                                 if (depth == 0)
                                 {
                                     context.StringBuilder.Append("\"+(");
-                                    Context innerCodeContext = Tokenize(Value.Substring(last, i - last).Replace(@"""""", @""""));
-                                    innerCodeContext.nameProvider = context.nameProvider;
-                                    innerCodeContext.CodePrefix = context.CodePrefix;
-                                    string compiled = innerCodeContext.Compile(context.optimizeEnabled,true);
+                                    Context innerCodeContext =
+                                        Tokenize(Value.Substring(last, i - last).Replace(@"""""", @""""),
+                                            context.Clone());
+                                    string compiled = await innerCodeContext.Compile(context.optimizeEnabled,true);
                                     context.StringBuilder.Append(compiled);
                                     context.StringBuilder.Append(")+\"");
                                 }

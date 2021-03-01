@@ -67,7 +67,7 @@ namespace GreyHackTools
                     return last;
                 }
                 
-                public override Token Compile(Context context, bool force = false)
+                public override Task<Token> Compile(Context context, bool force = false)
                 {
                     if (IsOpening)
                     {

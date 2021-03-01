@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Net;
+using System.Text.Json.Serialization;
 using System.Windows.Forms;
 using FastColoredTextBoxNS;
 using GreyHackTools;
@@ -11,6 +14,8 @@ namespace FormsCompiler
     {
         private GreyHackDebugger _debugger;
         private TabPage _prevPage;
+
+        private WebClient _webClient = new WebClient();
 
         public FormsGreyHackCompiler()
         {
@@ -77,22 +82,35 @@ if (true) {}";
             _debugger.Started += OnDebuggerStarted;
             _debugger.Ended += OnDebuggerEnded;
             _debugger.Step += OnDebuggerStep;
+            
+            GreyHackCompiler.OnInclude += GreyHackCompilerOnOnInclude;
         }
 
-        
+        private async void GreyHackCompilerOnOnInclude(string include, Dictionary<string, string> includetocode, Ref<int> counter)
+        {
+            try
+            {
+                includetocode[include] = _webClient.DownloadString("https://raw.githubusercontent.com/" + include);
+            }
+            catch (Exception e)
+            {
+                
+            }
+            counter.Value--;
+        }
 
         #endregion
 
 
-        private void Compile()
+        private async void Compile()
         {
             GreyHackCompiler.Settings settings = GreyHackCompiler.Settings.None;
             if (_cbIgnoreMapIndexes.Checked) settings |= GreyHackCompiler.Settings.IgnoreMapVariables;
             if (_cbRemoveComments.Checked) settings |= GreyHackCompiler.Settings.RemoveComments;
-
-            if (GreyHackCompiler.TryCompile(_rtbInput.Text, out string compiledCode, _cbOptimize.Checked, settings))
+            Ref<string> compiledCode = new Ref<string>("");
+            if (await GreyHackCompiler.TryCompile(_rtbInput.Text, compiledCode, _cbOptimize.Checked, settings))
             {
-                _rtbOutput.Text = compiledCode;
+                _rtbOutput.Text = compiledCode.Value;
             }
         }
 
@@ -131,7 +149,7 @@ if (true) {}";
             Compile();
             _rtbInput.ReadOnly = true;
 
-            debugger.Interpreter.Reset(_rtbOutput.Text);
+            debugger.Code = (_rtbOutput.Text);
             debugger.DebugVariables.Clear();
             
             _status.BackColor = Color.FromArgb(202, 81, 0);

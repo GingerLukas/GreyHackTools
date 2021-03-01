@@ -13,12 +13,17 @@ namespace GreyHackTools
         {
             public class Template : Variable
             {
+                private bool _ignoreNext = false;
                 public override string Value
                 {
                     get => _value;
                     set
                     {
-                        if (_value != null) return;
+                        if (_ignoreNext && _value != null)
+                        {
+                            _ignoreNext = false;
+                            return;
+                        }
                         _value = value;
                     }
                 }
@@ -48,7 +53,7 @@ namespace GreyHackTools
                     return this;
                 }
 
-                public override Token Compile(Context context, bool force = false)
+                public override async Task<Token> Compile(Context context, bool force = false)
                 {
                     switch (TemplateType)
                     {
@@ -90,7 +95,7 @@ namespace GreyHackTools
                     //     context.StringBuilder.AppendLine(Value);
                     // }
 
-                    return base.Compile(context, force);
+                    return await base.Compile(context, force);
                 }
 
                 private bool IsValueString()
@@ -123,6 +128,8 @@ namespace GreyHackTools
                             {
                                 if (!context.IgnoreOptimize(Matches[0].Groups[2].Value)) context.customIgnoreOptimize.Add(Matches[0].Groups[2].Value);
                             }
+
+                            _ignoreNext = true;
                             break;
                     }
                 }

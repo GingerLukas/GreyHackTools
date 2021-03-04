@@ -122,7 +122,8 @@ namespace GreyHackTools
                 node = RootToken;
                 while (node != null)
                 {
-                    node = (await node.Compile(this)).Next;
+                    node.Compile(this);
+                    node = node.Next;
                 }
             }
             

@@ -24,7 +24,7 @@ namespace GreyHackTools
                     return base.Optimize(context,replace);
                 }
 
-                public override Task<Token> Compile(Context context, bool force = false)
+                public override void Compile(Context context, bool force = false)
                 {
                     switch (Value)
                     {
@@ -42,7 +42,7 @@ namespace GreyHackTools
                             SupportsMultiLineBracket = true;
                             break;
                     }
-                    return base.Compile(context, force);
+                    base.Compile(context, force);
                 }
 
                 private void CompileNext(Context context,bool removeBracets = true)

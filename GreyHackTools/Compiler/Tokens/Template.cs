@@ -53,7 +53,7 @@ namespace GreyHackTools
                     return this;
                 }
 
-                public override async Task<Token> Compile(Context context, bool force = false)
+                public override async void Compile(Context context, bool force = false)
                 {
                     switch (TemplateType)
                     {
@@ -82,20 +82,20 @@ namespace GreyHackTools
                                 {
                                     context.LastToken = Prev;
                                 }
-                                return this;
+                                return;
                             }
                             
                             break;
                     }
-                    
+
                     // if (Prev!=null && Next!=null)
                     // {
                     //     Prev.Next = Next;
                     //     Next.Prev = Prev;
                     //     context.StringBuilder.AppendLine(Value);
                     // }
-
-                    return await base.Compile(context, force);
+                    base.Compile(context, force);
+                    return;
                 }
 
                 private bool IsValueString()

@@ -22,7 +22,7 @@ namespace GreyHackTools
                     Optimizable = false;
                 }
 
-                private Token CompileInside(Context context, bool multiLine = false, string prefix = "", string postfix = "")
+                private async Task<Token> CompileInside(Context context, bool multiLine = false, string prefix = "", string postfix = "")
                 {
                     Token last = this;
                     Token current = Next;
@@ -67,7 +67,7 @@ namespace GreyHackTools
                     return last;
                 }
                 
-                public override Task<Token> Compile(Context context, bool force = false)
+                public override async void Compile(Context context, bool force = false)
                 {
                     if (IsOpening)
                     {
@@ -77,14 +77,18 @@ namespace GreyHackTools
                     {
                         context.bracketDepth--;
                     }
-                    if (Custom) return base.Compile(context, force);
+                    if (Custom)
+                    {
+                        base.Compile(context, force);
+                        return;
+                    }
                     if (IsOpening)
                     {
                         Token node = null;
 
                         if (Prev != null && Value == "{" && Prev.SupportsMultiLineBracket)
                         {
-                            string prefix = "";
+                            string prefix = "\n";
                             string postfix = "";
                             if (Prev.Value == "else")
                             {
@@ -92,7 +96,7 @@ namespace GreyHackTools
                             }
                             else if (Prev.CompareBeginningOfValue("if"))
                             {
-                                prefix = "then";
+                                prefix = "then\n";
                                 postfix = "end if";
                             }
                             else if(Prev.Value == "=>")
@@ -112,11 +116,11 @@ namespace GreyHackTools
                                 postfix = "end while";
                             }
 
-                            node = CompileInside(context, true, prefix+"\n", postfix);
+                            node = await CompileInside(context, true, prefix, postfix);
                         }
                         else
                         {
-                            node = CompileInside(context,false,Value);
+                            node = await CompileInside(context,false,Value);
                         }
 
                         Next = node?.Next;
@@ -140,12 +144,10 @@ namespace GreyHackTools
                         }
 
                         Custom = true;
-                        return Compile(context, force);
                     }
-                    else
-                    {
-                        return base.Compile(context, force);
-                    }
+
+                    base.Compile(context, force);
+
                 }
 
                 public override string ToString()

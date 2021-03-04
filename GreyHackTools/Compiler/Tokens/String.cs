@@ -12,7 +12,7 @@ namespace GreyHackTools
         {
             public class String : Token
             {
-                public override async Task<Token> Compile(Context context, bool force = false)
+                public override async void Compile(Context context, bool force = false)
                 {
                     if (Custom)
                     {
@@ -64,7 +64,7 @@ namespace GreyHackTools
                     }
 
                     if (EndStatement) context.StringBuilder.Append(_separator);
-                    return this;
+                    return;
                 }
 
                 public override string ToString()

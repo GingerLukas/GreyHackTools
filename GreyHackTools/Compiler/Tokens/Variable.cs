@@ -12,10 +12,13 @@ namespace GreyHackTools
         {
             public class Variable : Token
             {
-                public override async Task<Token> Compile(Context context, bool force = false)
+                public override async void Compile(Context context, bool force = false)
                 {
                     if (this is Bracket br && !br.Custom && (br.Value.Length == 0 || br.Value[0] != '{'))
-                        return await base.Compile(context);
+                    {
+                        base.Compile(context);
+                        return;
+                    }
 
                     if ((Next != null && !_tokenOperators.Contains(Value.First()) &&
                          (Next.Value == "." || Next.Value == "(" || Next.Value == "[")))
@@ -51,11 +54,12 @@ namespace GreyHackTools
                     {
                         if (force)
                         {
-                            return await base.Compile(context, true);
+                            base.Compile(context, true);
+                            return;
                         }
                         else
                         {
-                            return this;
+                            return;
                         }
                     }
 
@@ -63,15 +67,16 @@ namespace GreyHackTools
                     {
                         if (force)
                         {
-                            return await base.Compile(context, true);
+                            base.Compile(context, true);
+                            return;
                         }
                         else
                         {
-                            return this;
+                            return;
                         }
                     }
 
-                    return await base.Compile(context, force);
+                    base.Compile(context, force);
                 }
 
                 public override string ToString()

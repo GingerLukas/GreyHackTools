@@ -36,7 +36,7 @@ class DecorationItem  implements monaco.editor.IModelDeltaDecoration{
 }
 
 
-class vRange implements monaco.IRange {
+class GRange implements monaco.IRange {
     constructor(start: monaco.Position, end: monaco.Position) {
         this.startColumn = start.column;
         this.startLineNumber = start.lineNumber;
@@ -555,17 +555,17 @@ function getDecorationItems(text: string, activeEditor: monaco.editor.IStandalon
 
             const start = activeEditor.getModel().getPositionAt(match.index);
             const end = activeEditor.getModel().getPositionAt(match.index + match[matchIndex].length);
-            let stringRange = new vRange(start, end);
+            let stringRange = new GRange(start, end);
 
             if (ranges.length > 0) {
                 for (let i = 0; i < ranges.length; i++) {
                     const element = ranges[i];
-                    output.push(new DecorationItem(new vRange(stringRange.start, element.end), "gspp-strings"));
+                    output.push(new DecorationItem(new GRange(stringRange.start, element.end), "gspp-strings"));
                     if (i + 1 < ranges.length) {
-                        stringRange = new vRange(element.end, ranges[i + 1].start);
+                        stringRange = new GRange(element.end, ranges[i + 1].start);
                     }
                     else {
-                        stringRange = new vRange(element.end, end);
+                        stringRange = new GRange(element.end, end);
                     }
 
                     output.push(new DecorationItem(element, "gspp-variables"));
@@ -605,7 +605,7 @@ function getDecorationItems(text: string, activeEditor: monaco.editor.IStandalon
 
         const start = activeEditor.getModel().getPositionAt(match.index);
         const end = activeEditor.getModel().getPositionAt(match.index + match[matchIndex].length);
-        output.push(new DecorationItem(new vRange(start,end), name));
+        output.push(new DecorationItem(new GRange(start,end), name));
     }
 
     return output;
@@ -614,14 +614,14 @@ function getDecorationItems(text: string, activeEditor: monaco.editor.IStandalon
 function getStringFormatDecorations(text: string, activeEditor: monaco.editor.IStandaloneCodeEditor, startIndex: number) {
     const regex = /{.*?}/g;
 
-    const output: vRange[] = [];
+    const output: GRange[] = [];
 
     let match;
     while ((match = regex.exec(text))) {
         if (match) {
             const start = activeEditor.getModel().getPositionAt(match.index + startIndex);
             const end = activeEditor.getModel().getPositionAt(match.index + match[0].length + startIndex);
-            output.push(new vRange(start, end));
+            output.push(new GRange(start, end));
         }
     }
 
@@ -634,6 +634,7 @@ var gsCompletion;
 let oldDecoration = [];
 let timeout = undefined;
 var includeToCompletion: { [id: string]: CompletionItem[] } = {};
+var remoteCompletions: { [id: string]: CompletionItem[] } = {};
 
 
 monaco.languages.register({ id: "gspp" });
@@ -710,4 +711,8 @@ function triggerUpdateDecorations() {
     updateDecorations();
 }
 
-
+function addRemoteCompletion(name: string, text: string) {
+    if (remoteCompletions[name] == undefined) {
+        remoteCompletions[name] = getCompletionItems(text);
+    }
+}

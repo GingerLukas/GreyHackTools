@@ -56,9 +56,9 @@ namespace GreyHackTools
                 return this;
             }
 
-            public virtual async Task<Token> Compile(Context context, bool force = false)
+            public virtual async void Compile(Context context, bool force = false)
             {
-                if (string.IsNullOrWhiteSpace(Value)) return this;
+                if (string.IsNullOrWhiteSpace(Value)) return;
                 if (context.StringBuilder.Length != 0 &&
                     ((Regex.IsMatch(context.StringBuilder[context.StringBuilder.Length - 1].ToString(), "\\w") &&
                       Value.Length > 0 && Regex.IsMatch(Value[0].ToString(), "\\w")) ||
@@ -69,7 +69,7 @@ namespace GreyHackTools
 
                 context.StringBuilder.Append(Value);
                 if (EndStatement && Next != null && !force) context.StringBuilder.Append(_separator);
-                return this;
+                return;
             }
 
             private bool CompareBeginningOfValue(string s)

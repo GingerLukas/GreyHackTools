@@ -16,8 +16,8 @@ var DecorationItem = /** @class */ (function () {
     }
     return DecorationItem;
 }());
-var vRange = /** @class */ (function () {
-    function vRange(start, end) {
+var GRange = /** @class */ (function () {
+    function GRange(start, end) {
         this.startColumn = start.column;
         this.startLineNumber = start.lineNumber;
         this.endColumn = end.column;
@@ -25,7 +25,7 @@ var vRange = /** @class */ (function () {
         this.start = start;
         this.end = end;
     }
-    return vRange;
+    return GRange;
 }());
 function getCompletionItems(text, regEx, output, words) {
     if (regEx == undefined)
@@ -348,16 +348,16 @@ function getDecorationItems(text, activeEditor) {
             var ranges = getStringFormatDecorations(match[1], activeEditor, match.index);
             var start_1 = activeEditor.getModel().getPositionAt(match.index);
             var end_1 = activeEditor.getModel().getPositionAt(match.index + match[matchIndex].length);
-            var stringRange = new vRange(start_1, end_1);
+            var stringRange = new GRange(start_1, end_1);
             if (ranges.length > 0) {
                 for (var i = 0; i < ranges.length; i++) {
                     var element = ranges[i];
-                    output.push(new DecorationItem(new vRange(stringRange.start, element.end), "gspp-strings"));
+                    output.push(new DecorationItem(new GRange(stringRange.start, element.end), "gspp-strings"));
                     if (i + 1 < ranges.length) {
-                        stringRange = new vRange(element.end, ranges[i + 1].start);
+                        stringRange = new GRange(element.end, ranges[i + 1].start);
                     }
                     else {
-                        stringRange = new vRange(element.end, end_1);
+                        stringRange = new GRange(element.end, end_1);
                     }
                     output.push(new DecorationItem(element, "gspp-variables"));
                 }
@@ -394,7 +394,7 @@ function getDecorationItems(text, activeEditor) {
         }
         var start = activeEditor.getModel().getPositionAt(match.index);
         var end = activeEditor.getModel().getPositionAt(match.index + match[matchIndex].length);
-        output.push(new DecorationItem(new vRange(start, end), name));
+        output.push(new DecorationItem(new GRange(start, end), name));
     }
     return output;
 }
@@ -406,7 +406,7 @@ function getStringFormatDecorations(text, activeEditor, startIndex) {
         if (match) {
             var start = activeEditor.getModel().getPositionAt(match.index + startIndex);
             var end = activeEditor.getModel().getPositionAt(match.index + match[0].length + startIndex);
-            output.push(new vRange(start, end));
+            output.push(new GRange(start, end));
         }
     }
     return output;
@@ -417,6 +417,7 @@ var gsCompletion;
 var oldDecoration = [];
 var timeout = undefined;
 var includeToCompletion = {};
+var remoteCompletions = {};
 monaco.languages.register({ id: "gspp" });
 monaco.languages.register({ id: "gs" });
 monaco.languages.registerCompletionItemProvider("gspp", {
@@ -486,5 +487,10 @@ function setupEditor(id) {
 }
 function triggerUpdateDecorations() {
     updateDecorations();
+}
+function addRemoteCompletion(name, text) {
+    if (remoteCompletions[name] == undefined) {
+        remoteCompletions[name] = getCompletionItems(text);
+    }
 }
 //# sourceMappingURL=main.js.map

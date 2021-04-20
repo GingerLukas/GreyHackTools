@@ -29,7 +29,7 @@ var GRange = /** @class */ (function () {
 }());
 function getCompletionItems(text, regEx, output, words) {
     if (regEx == undefined)
-        regEx = /(([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*")|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>)/g;
+        regEx = /((([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*?")|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>))|(#!(.*?)!)/g;
     if (output == undefined)
         output = [];
     if (words == undefined)
@@ -38,10 +38,10 @@ function getCompletionItems(text, regEx, output, words) {
     var tempItem;
     while ((match = regEx.exec(text))) {
         //standard function || lambda
-        var name_1 = match[2] || match[4];
-        if (match[7] || match[9]) {
+        var name_1 = match[3] || match[5];
+        if (match[8] || match[10]) {
             tempItem = new CompletionItem(name_1, CompletionItemKind.Function);
-            var params = match[8] || match[10];
+            var params = match[9] || match[11];
             var fParams = [];
             if (params) {
                 var param = void 0;
@@ -51,33 +51,36 @@ function getCompletionItems(text, regEx, output, words) {
                     tryAddItem(new CompletionItem(param[2], CompletionItemKind.Variable), output, words);
                 }
             }
-            tempItem.insertText = (name_1 + '(' + getParamsSnippet(fParams) + ')');
+            tempItem.insertText = name_1 + '(' + getParamsSnippet(fParams) + ')';
         }
         //bracket || array || variable
-        else if (match[11] || match[12] || match[16]) {
+        else if (match[12] || match[13] || match[17]) {
             tempItem = new CompletionItem(name_1, CompletionItemKind.Variable);
         }
         //map
-        else if (match[13]) {
+        else if (match[14]) {
             tempItem = new CompletionItem(name_1, CompletionItemKind.Module);
         }
         //string || number
-        else if (match[14] || match[15]) {
+        else if (match[15] || match[16]) {
             tempItem = new CompletionItem(name_1, CompletionItemKind.Value);
         }
         //iterator
-        else if (match[17]) {
-            tempItem = new CompletionItem(match[18], CompletionItemKind.Variable);
-            tryAddItem(new CompletionItem("__" + match[18] + "_idx", CompletionItemKind.Constant), output, words);
+        else if (match[18]) {
+            tempItem = new CompletionItem(match[19], CompletionItemKind.Variable);
+            tryAddItem(new CompletionItem("__" + match[19] + "_idx", CompletionItemKind.Constant), output, words);
         }
-        else if (match[19]) {
+        else if (match[20]) {
             var fParams = [];
-            for (var _i = 0, _a = match[20].split(","); _i < _a.length; _i++) {
+            for (var _i = 0, _a = match[21].split(","); _i < _a.length; _i++) {
                 var param = _a[_i];
                 param = param.trim();
                 fParams.push(param);
                 tryAddItem(new CompletionItem(param, CompletionItemKind.Variable), output, words);
             }
+        }
+        else if (match[22]) {
+            parseExternalSrc(match[23], output, words);
         }
         if (tempItem) {
             tryAddItem(tempItem, output, words);
@@ -85,6 +88,8 @@ function getCompletionItems(text, regEx, output, words) {
         }
     }
     return output;
+}
+function parseExternalSrc(path, output, words) {
 }
 function tryAddItem(item, output, words) {
     if (item && item.kind) {

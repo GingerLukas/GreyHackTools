@@ -19,6 +19,14 @@ namespace ConsoleCompiler
                 return;
             }
 
+            GreyHackCompiler.Include += (include, dir, counter, code, path) =>
+            {
+                string p = Path.GetFullPath(Path.Join(dir, include));
+                code[include] = File.ReadAllText(p);
+                path[include] = p;
+                counter.Value--;
+            };
+            
             Dictionary<string, string[]> hashes = new Dictionary<string, string[]>();
             string[] tests = Directory.GetFiles("tests");
             foreach (string test in tests)
@@ -31,7 +39,7 @@ namespace ConsoleCompiler
                         string.Join("", MD5.HashData(Encoding.UTF8.GetBytes(GreyHackCompiler.Compile(
                             code,
                             i < 4,
-                            (GreyHackCompiler.Settings) (i % 4)).GetAwaiter().GetResult())).Select(x => x.ToString("x2")));
+                             (i % 4),"tests"))).Select(x => x.ToString("x2")));
                 }
             }
 
@@ -43,7 +51,7 @@ namespace ConsoleCompiler
                 sb.AppendJoin(';', hash.Value);
                 sb.AppendLine();
             }
-
+            return;
             string newHash = string.Join("",
                 MD5.HashData(Encoding.UTF8.GetBytes(sb.ToString())).Select(x => x.ToString("x2")));
             if (File.Exists("hash.txt"))

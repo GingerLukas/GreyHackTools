@@ -344,7 +344,7 @@
         LastSettings = Settings;
 
         Ref<string> output = new Ref<string>("");
-        if (await GreyHackCompiler.TryCompile(InputCode, output, Optimize, Settings))
+        if (GreyHackCompiler.TryCompile(InputCode, output, Optimize, Settings))
         {
             OutputCode = output.Value;
         }
@@ -365,7 +365,7 @@
 
     protected override void OnInitialized()
     {
-        GreyHackCompiler.OnInclude += GreyHackCompilerOnOnInclude;
+        GreyHackCompiler.Include += GreyHackCompilerInclude;
         GreyHackDebugger.Interpreter.implicitOutput = GreyHackDebugger.Interpreter.standardOutput = output =>
         {
             if (OutputBuilder.Length != 0) OutputBuilder.AppendLine();
@@ -393,10 +393,11 @@ print(XOR.Encrypt(enc,""Ginger""))";
 
     }
 
-    private async void GreyHackCompilerOnOnInclude(string include, Dictionary<string, string> includetocode, Ref<int> counter)
+    private async void GreyHackCompilerInclude(string include, string dir, Ref<int> counter, Dictionary<string, string> includetocode, Dictionary<string, string> includetofullpath)
     {
         try
         {
+            includetofullpath[include] = include;
             includetocode[include] = await HttpClient.GetStringAsync(include);
             //js.InvokeVoidAsync("");
         }

@@ -13,4 +13,15 @@
     <ProjectReference Include="..\Miniscript\Miniscript.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="WebAssembly.Bindings">
+      <HintPath>..\..\..\mono\mono\sdks\wasm\framework\WebAssembly.Bindings.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="powershell.exe -ExecutionPolicy Bypass -NonInteractive -File .\packageToWasm.ps1 $(OutDir)" />
+  </Target>
+
 </Project>

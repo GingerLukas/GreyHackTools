@@ -1,3 +1,4 @@
+#!function.gp!
 //number
 24 << 42
 

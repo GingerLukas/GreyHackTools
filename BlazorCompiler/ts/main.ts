@@ -55,7 +55,7 @@ class GRange implements monaco.IRange {
 
 
 function getCompletionItems(text: string, regEx?: RegExp, output?: CompletionItem[], words?: { [id: string]: { [id: number]: boolean } }) {
-    if (regEx == undefined) regEx = /(([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*")|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>)/g;
+    if (regEx == undefined) regEx = /((([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*?")|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>))|(#!(.*?)!)/g;
     if (output == undefined) output = [];
     if (words == undefined) words = {};
 
@@ -63,10 +63,10 @@ function getCompletionItems(text: string, regEx?: RegExp, output?: CompletionIte
     let tempItem;
     while ((match = regEx.exec(text))) {
         //standard function || lambda
-        const name: string = match[2] || match[4];
-        if (match[7] || match[9]) {
+        const name: string = match[3] || match[5];
+        if (match[8] || match[10]) {
             tempItem = new CompletionItem(name, CompletionItemKind.Function);
-            const params = match[8] || match[10];
+            const params = match[9] || match[11];
             const fParams = [];
             if (params) {
                 let param;
@@ -77,32 +77,35 @@ function getCompletionItems(text: string, regEx?: RegExp, output?: CompletionIte
                     tryAddItem(new CompletionItem(param[2], CompletionItemKind.Variable), output, words);
                 }
             }
-            tempItem.insertText = (name + '(' + getParamsSnippet(fParams) + ')');
+            tempItem.insertText = name + '(' + getParamsSnippet(fParams) + ')';
         }
         //bracket || array || variable
-        else if (match[11] || match[12] || match[16]) {
+        else if (match[12] || match[13] || match[17]) {
             tempItem = new CompletionItem(name, CompletionItemKind.Variable);
         }
         //map
-        else if (match[13]) {
+        else if (match[14]) {
             tempItem = new CompletionItem(name, CompletionItemKind.Module);
         }
         //string || number
-        else if (match[14] || match[15]) {
+        else if (match[15] || match[16]) {
             tempItem = new CompletionItem(name, CompletionItemKind.Value);
         }
         //iterator
-        else if (match[17]) {
-            tempItem = new CompletionItem(match[18], CompletionItemKind.Variable);
-            tryAddItem(new CompletionItem("__" + match[18] + "_idx", CompletionItemKind.Constant), output, words);
+        else if (match[18]) {
+            tempItem = new CompletionItem(match[19], CompletionItemKind.Variable);
+            tryAddItem(new CompletionItem("__" + match[19] + "_idx", CompletionItemKind.Constant), output, words);
         }
-        else if (match[19]) {
+        else if (match[20]) {
             const fParams = [];
-            for (let param of match[20].split(",")) {
+            for (let param of match[21].split(",")) {
                 param = param.trim();
                 fParams.push(param);
                 tryAddItem(new CompletionItem(param, CompletionItemKind.Variable), output, words);
             }
+        }
+        else if (match[22]) {
+            parseExternalSrc(match[23], output, words);
         }
         if (tempItem) {
             tryAddItem(tempItem, output, words);
@@ -110,6 +113,10 @@ function getCompletionItems(text: string, regEx?: RegExp, output?: CompletionIte
         }
     }
     return output;
+}
+
+function parseExternalSrc(path: string, output: CompletionItem[], words: { [id: string]: { [id: number]: boolean } }) {
+    
 }
 
 function tryAddItem(item: CompletionItem, output: CompletionItem[], words: { [id: string]: { [id: number]: boolean } }) {

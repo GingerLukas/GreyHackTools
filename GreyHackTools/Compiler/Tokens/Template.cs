@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace GreyHackTools
 {
@@ -53,7 +49,7 @@ namespace GreyHackTools
                     return this;
                 }
 
-                public override async void Compile(Context context, bool force = false)
+                public override void Compile(Context context, bool force = false)
                 {
                     switch (TemplateType)
                     {

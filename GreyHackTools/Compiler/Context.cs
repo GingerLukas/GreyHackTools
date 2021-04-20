@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace GreyHackTools
 {
@@ -16,6 +14,9 @@ namespace GreyHackTools
             public StringBuilder StringBuilder => stringBuilders.Peek();
 
             internal StringBuilder CodePrefix { get; set; }
+
+            internal string directory = "";
+            internal string name = "";
             
             internal long bracketDepth = 0;
             internal Stack<StringBuilder> stringBuilders = new Stack<StringBuilder>();
@@ -26,6 +27,40 @@ namespace GreyHackTools
             internal bool optimizeEnabled = false;
             internal Settings Settings = Settings.None;
             internal HashSet<string> customIgnoreOptimize = new HashSet<string>();
+            internal Dictionary<string, string> includeToCode = new Dictionary<string, string>();
+            internal HashSet<string> included = new HashSet<string>();
+            internal Dictionary<string, string> includeToFullPath = new Dictionary<string, string>();
+
+            public Context(Settings settings,string dir,string includeName)
+            {
+                directory = dir;
+                name = includeName;
+                Settings = settings;
+                PlainInput = new Queue<char>();
+
+                stringBuilders.Push(new StringBuilder());
+                CodePrefix = new StringBuilder();
+
+                ShouldOptimizeString.Push(false);
+                MapActive.Push(false);
+            }
+
+            public Context Clone(string name)
+            {
+                int index = name.LastIndexOfAny(new char[] {'\\', '/'});
+                string dir = (directory + '/' + name.Substring(0, index)).Replace('\\', '/').Replace("//", "/");
+                name = this.name.Substring(index);
+                return new Context(Settings, dir, name)
+                {
+                    nameProvider = nameProvider,
+                    CodePrefix = CodePrefix,
+                    includes = includes,
+                    customIgnoreOptimize = customIgnoreOptimize,
+                    includeToCode = includeToCode,
+                    included = included,
+                    includeToFullPath = includeToFullPath,
+                };
+            }
 
             public bool IgnoreOptimize(string value) => _ignoreOptimize.Contains(value) || customIgnoreOptimize.Contains(value);
 
@@ -47,47 +82,12 @@ namespace GreyHackTools
                     LastToken = token;
                 }
             }
-            public Context(Settings settings)
-            {
-                Settings = settings;
-                PlainInput = new Queue<char>();
-
-                stringBuilders.Push(new StringBuilder());
-                CodePrefix = new StringBuilder();
-
-                ShouldOptimizeString.Push(false);
-                MapActive.Push(false);
-            }
-
-            public Context Clone()
-            {
-                return new Context(Settings) {nameProvider = nameProvider, CodePrefix = CodePrefix,includes = includes,customIgnoreOptimize = customIgnoreOptimize};
-            }
             
-            public async Task<string> Compile(bool optimize = false,bool ignorePrefix = false)
+            
+            public string Compile(bool optimize = false,bool ignorePrefix = false)
             {
                 optimizeEnabled = optimize;
                 StringBuilder.Clear();
-                
-                Ref<int> counter = new Ref<int>(0);
-                foreach (string include in includes)
-                {
-                    if (!IncludeToCode.ContainsKey(include))
-                    {
-                        if (OnInclude!=null)
-                        {
-                            counter.Value++;
-                            OnInclude.Invoke(include, IncludeToCode, counter);
-                        }
-                        
-                        
-                    }
-                }
-
-                while (counter.Value!=0)
-                {
-                    await Task.Delay(200);
-                }
                 
                 CompileTokens(optimize);
                 
@@ -110,7 +110,7 @@ namespace GreyHackTools
                 return CodePrefix.ToString();
             }
             
-            private async void CompileTokens(bool optimize)
+            private void CompileTokens(bool optimize)
             {
                 Token node;
                 node = RootToken;

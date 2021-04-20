@@ -83,10 +83,10 @@ if (true) {}";
             _debugger.Ended += OnDebuggerEnded;
             _debugger.Step += OnDebuggerStep;
             
-            GreyHackCompiler.OnInclude += GreyHackCompilerOnOnInclude;
+            GreyHackCompiler.Include += GreyHackCompilerInclude;
         }
 
-        private async void GreyHackCompilerOnOnInclude(string include, Dictionary<string, string> includetocode, Ref<int> counter)
+        private async void GreyHackCompilerInclude(string include,string dir, Ref<int> counter, Dictionary<string, string> includetocode,Dictionary<string,string> includeToFullPath)
         {
             try
             {
@@ -108,7 +108,7 @@ if (true) {}";
             if (_cbIgnoreMapIndexes.Checked) settings |= GreyHackCompiler.Settings.IgnoreMapVariables;
             if (_cbRemoveComments.Checked) settings |= GreyHackCompiler.Settings.RemoveComments;
             Ref<string> compiledCode = new Ref<string>("");
-            if (await GreyHackCompiler.TryCompile(_rtbInput.Text, compiledCode, _cbOptimize.Checked, settings))
+            if (GreyHackCompiler.TryCompile(_rtbInput.Text, compiledCode, _cbOptimize.Checked, settings))
             {
                 _rtbOutput.Text = compiledCode.Value;
             }

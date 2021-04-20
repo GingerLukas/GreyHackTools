@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using WebAssembly;
 
 namespace GreyHackTools
 {
@@ -13,17 +15,34 @@ namespace GreyHackTools
                     Optimizable = false;
                 }
 
-                public override async void Compile(Context context, bool force = false)
+                public override void Compile(Context context, bool force = false)
                 {
-                    if (IncludeToCode.ContainsKey(Value))
+                    try
                     {
-                        Value = await Tokenize(IncludeToCode[Value], context.Clone()).Compile(context.optimizeEnabled, true);
-                        base.Compile(context, force);
-                        return;
+                        
+                        if (context.includeToFullPath.ContainsKey(Value))
+                        {
+                            string fullPath = context.includeToFullPath[Value];
+                            if (!context.included.Contains(fullPath))
+                            {
+                                context.included.Add(fullPath);
+                                Value = Tokenize(context.includeToCode[Value], context.Clone(Value)).Compile(context.optimizeEnabled, true);
+                            }
+                            else
+                            {
+                                Value = "";
+                            }
+                        }
+                        else
+                        {
+                            Value = $"//include of \"{Value}\" failed (not found)";
+                        }
+
                     }
-
-
-                    Value = $"//include of \"{Value}\" failed";
+                    catch (Exception e)
+                    {
+                        Value = $"//include of \"{Value}\" failed ({e.Message})";
+                    }
 
                     base.Compile(context, force);
                 }

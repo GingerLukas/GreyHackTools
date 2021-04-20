@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using WebAssembly;
 
 namespace GreyHackTools
 {
     public partial class GreyHackCompiler
     {
+
         #region Settings
 
         [Flags]
@@ -23,7 +26,7 @@ namespace GreyHackTools
 
         #region Internal
 
-        private static string _separator = Environment.NewLine;
+        private static string _separator = "\n";//Environment.NewLine;
         //private static string _separator = ";";
         private static readonly HashSet<char> _tokenSeparators = new HashSet<char>() { ' ', '.', ',', ':','\t' };
         private static readonly HashSet<char> _tokenBrackets = new HashSet<char>() { '(', ')', '[', ']', '{', '}', };
@@ -63,7 +66,7 @@ namespace GreyHackTools
             "permissions", "pi", "ping", "ping_port", "pop", "port_info", "port_number", "print", "program_path",
             "public_ip", "pull", "push", "put", "range", "remove", "rename", "replace", "reverse", "rnd", "round",
             "scan", "scan_address", "scp", "set_content", "set_group", "show_procs", "shuffle", "sign", "sin", "size",
-            "slice", "smtp_user_list", "sort", "split", "sqrt", "start_terminal", "str", "sum", "tan", "to_int",
+            "slice", "smtp_user_list", "sort", "split", "sqrt", "start_terminal", "str", "sum", "tan","time", "to_int",
             "touch", "trim", "typeof", "upper", "used_ports", "user_bank_number", "user_input", "user_mail_address",
             "val", "values", "version", "whois", "wifi_networks", "params", "clear_screen", "wait",
 
@@ -77,8 +80,6 @@ namespace GreyHackTools
             "aireplay",
             "firewall_rules",
             "kernel_version",
-            "kernel_version",
-            "rshell_server",
             "rshell_server",
 
 
@@ -151,26 +152,20 @@ namespace GreyHackTools
 
         #endregion
 
-        public static Dictionary<string, string> IncludeToCode = new Dictionary<string, string>();
+        public delegate void IncludeHandler(string include, string dir, Ref<int> counter,
+            Dictionary<string, string> includeToCode, Dictionary<string, string> includeToFullPath);
 
-        public delegate void IncludeHandler(string include,Dictionary<string,string> includeToCode, Ref<int> counter);
-
-        public static event IncludeHandler OnInclude;
-        public static string[] GetIncludes(string code)
+        public static event IncludeHandler Include;
+        public static string Compile(string code, bool optimize = false, int settings = (int)Settings.None,string directory = ".", string name = "ROOT")
         {
-            return Tokenize(code).GetIncludes();
-        }
-        
-        public static async Task<string> Compile(string code, bool optimize = false, Settings settings = Settings.None)
-        {
-            return await Tokenize(code, settings).Compile(optimize);
+            return Tokenize(code, (Settings)settings, directory, name).Compile(optimize);
         }
 
-        public static async Task<bool> TryCompile(string code, Ref<string> compiledCode, bool optimize = false, Settings settings = Settings.None)
+        public static bool TryCompile(string code, Ref<string> compiledCode, bool optimize = false, Settings settings = Settings.None)
         {
             try
             {
-                compiledCode.Value = await Compile(code, optimize, settings);
+                compiledCode.Value = Compile(code, optimize, (int)settings);
                 return true;
             }
             catch (Exception e)
@@ -180,9 +175,9 @@ namespace GreyHackTools
             }
         }
 
-        private static Context Tokenize(string plainCode, Settings settings = Settings.None)
+        private static Context Tokenize(string plainCode, Settings settings, string dir,string name)
         {
-            Context context = new Context(settings) { PlainInput = new Queue<char>(plainCode) };
+            Context context = new Context(settings,dir,name) { PlainInput = new Queue<char>(plainCode) };
 
             Token token = null;
             while ((token = GetNextToken(context)) != null)
@@ -428,5 +423,11 @@ namespace GreyHackTools
                 _tokenEndStatements.Contains(context.PlainInput.Peek().ToString());
     }
 
-    
+    public static class WasmTest
+    {
+        public static async Task<bool> Test()
+        {
+            return await Task.FromResult(true);
+        }
+    }
 }

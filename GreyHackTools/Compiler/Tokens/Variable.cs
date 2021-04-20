@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace GreyHackTools
 {
@@ -12,7 +9,7 @@ namespace GreyHackTools
         {
             public class Variable : Token
             {
-                public override async void Compile(Context context, bool force = false)
+                public override void Compile(Context context, bool force = false)
                 {
                     if (this is Bracket br && !br.Custom && (br.Value.Length == 0 || br.Value[0] != '{'))
                     {

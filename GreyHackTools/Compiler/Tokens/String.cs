@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace GreyHackTools
 {
@@ -12,7 +8,7 @@ namespace GreyHackTools
         {
             public class String : Token
             {
-                public override async void Compile(Context context, bool force = false)
+                public override void Compile(Context context, bool force = false)
                 {
                     if (Custom)
                     {
@@ -43,8 +39,8 @@ namespace GreyHackTools
                                     context.StringBuilder.Append("\"+(");
                                     Context innerCodeContext =
                                         Tokenize(Value.Substring(last, i - last).Replace(@"""""", @""""),
-                                            context.Clone());
-                                    string compiled = await innerCodeContext.Compile(context.optimizeEnabled,true);
+                                            context.Clone(""));
+                                    string compiled = innerCodeContext.Compile(context.optimizeEnabled,true);
                                     context.StringBuilder.Append(compiled);
                                     context.StringBuilder.Append(")+\"");
                                 }

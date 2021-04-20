@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace GreyHackTools
 {
@@ -22,7 +20,7 @@ namespace GreyHackTools
                     Optimizable = false;
                 }
 
-                private async Task<Token> CompileInside(Context context, bool multiLine = false, string prefix = "", string postfix = "")
+                private Token CompileInside(Context context, bool multiLine = false, string prefix = "", string postfix = "")
                 {
                     Token last = this;
                     Token current = Next;
@@ -67,7 +65,7 @@ namespace GreyHackTools
                     return last;
                 }
                 
-                public override async void Compile(Context context, bool force = false)
+                public override void Compile(Context context, bool force = false)
                 {
                     if (IsOpening)
                     {
@@ -116,11 +114,11 @@ namespace GreyHackTools
                                 postfix = "end while";
                             }
 
-                            node = await CompileInside(context, true, prefix, postfix);
+                            node = CompileInside(context, true, prefix, postfix);
                         }
                         else
                         {
-                            node = await CompileInside(context,false,Value);
+                            node = CompileInside(context,false,Value);
                         }
 
                         Next = node?.Next;

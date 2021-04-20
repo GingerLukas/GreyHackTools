@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using GreyHackTools.Debugger;
 
 namespace GreyHackTools
 {
@@ -25,7 +21,8 @@ namespace GreyHackTools
                 {
                     Optimizable = false;
                 }
-                public override async void Compile(Context context, bool force = false)
+                //TODO: change operator templates to Classes derived from StringBuilders for less allocation
+                public override void Compile(Context context, bool force = false)
                 {
                     if (Custom)
                     {

@@ -1,6 +1,5 @@
 ﻿using System;
 using GreyHackTools.Debugger.GreyHackEmulation;
-using Miniscript;
 
 namespace GreyHackTools
 {

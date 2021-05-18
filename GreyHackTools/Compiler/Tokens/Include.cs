@@ -15,11 +15,10 @@ namespace GreyHackTools
                     Optimizable = false;
                 }
 
-                public override void Compile(Context context, bool force = false)
+                public override async void Compile(Context context, bool force = false)
                 {
                     try
                     {
-                        
                         if (context.includeToFullPath.ContainsKey(Value))
                         {
                             string fullPath = context.includeToFullPath[Value];

@@ -1,6 +1,6 @@
 Set-Location -Path $args[0]
 
-mono-wasm --out=./publish .\GreyHackTools.dll --debug --copy=always --debugrt
+mono-wasm --out=./publish .\GreyHackTools.dll --debug --copy=always --debugrt --no-native-strip
 
 ((Get-Content -path .\publish\dotnet.js -Raw) -replace "var Module ", "Module ") | Set-Content -Path .\publish\dotnet.js
 ((Get-Content -path .\publish\dotnet.js -Raw) -replace "var MONO", "MONO") | Set-Content -Path .\publish\dotnet.js

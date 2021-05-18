@@ -421,13 +421,14 @@ namespace GreyHackTools
         private static bool IsEndOfLine(Context context) => context.PlainInput.Count == 0 ||
                 _tokenEndStatements.Contains(context.PlainInput.Peek().ToString() + context.PlainInput.Skip(1).FirstOrDefault().ToString()) ||
                 _tokenEndStatements.Contains(context.PlainInput.Peek().ToString());
+        
     }
 
     public static class WasmTest
     {
-        public static async Task<bool> Test()
+        public static async Task Test()
         {
-            return await Task.FromResult(true);
+            await Task.Delay(5000);
         }
     }
 }

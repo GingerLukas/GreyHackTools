@@ -1,211 +1,212 @@
 import * as vscode from 'vscode';
+import { CompletionItem } from "./types"
 
 let loaded = false;
-let gsppStaticItems: vscode.CompletionItem[] = [];
-let gsStaticItems: vscode.CompletionItem[] = [];
+let gsppStaticItems: CompletionItem[] = [];
+let gsStaticItems: CompletionItem[] = [];
 
 export function getStaticItems(gspp: boolean) {
 
-//#region gspp snippets
-    const gsppForCompletion = new vscode.CompletionItem('for', vscode.CompletionItemKind.Snippet);
-    gsppForCompletion.insertText = new vscode.SnippetString('for(${1:var} in ${2:array}){\n\t${3:body}\n}\n${0}');
+    //#region gspp snippets
+    const gsppForCompletion = new CompletionItem('for', vscode.CompletionItemKind.Snippet);
+    gsppForCompletion.insertText = new vscode.SnippetString('for(${1:var} in ${2:array}){\n\t${3:body}\n}${0}');
 
-    const gsppIfCompletion = new vscode.CompletionItem('if', vscode.CompletionItemKind.Snippet);
-    gsppIfCompletion.insertText = new vscode.SnippetString('if(${1:condition}){\n\t${2:body}\n}\n${0}');
+    const gsppIfCompletion = new CompletionItem('if', vscode.CompletionItemKind.Snippet);
+    gsppIfCompletion.insertText = new vscode.SnippetString('if(${1:condition}){\n\t${2:body}\n}${0}');
 
-    const gsppElseIfCompletion = new vscode.CompletionItem('else if', vscode.CompletionItemKind.Snippet);
-    gsppElseIfCompletion.insertText = new vscode.SnippetString('else if(${1:condition}){\n\t${2:body}\n}\n${0}');
+    const gsppElseIfCompletion = new CompletionItem('else if', vscode.CompletionItemKind.Snippet);
+    gsppElseIfCompletion.insertText = new vscode.SnippetString('else if(${1:condition}){\n\t${2:body}\n}${0}');
 
-    const gsppElseCompletion = new vscode.CompletionItem('else', vscode.CompletionItemKind.Snippet);
-    gsppElseCompletion.insertText = new vscode.SnippetString('else{\n\t${1:body}\n}\n${0}');
+    const gsppElseCompletion = new CompletionItem('else', vscode.CompletionItemKind.Snippet);
+    gsppElseCompletion.insertText = new vscode.SnippetString('else{\n\t${1:body}\n}${0}');
 
-    const gsppWhileCompletion = new vscode.CompletionItem('while', vscode.CompletionItemKind.Snippet);
-    gsppWhileCompletion.insertText = new vscode.SnippetString('while(${1:condition}){\n\t${2:body}\n}\n${0}');
+    const gsppWhileCompletion = new CompletionItem('while', vscode.CompletionItemKind.Snippet);
+    gsppWhileCompletion.insertText = new vscode.SnippetString('while(${1:condition}){\n\t${2:body}\n}${0}');
 
-    const gsppFuncCompletion = new vscode.CompletionItem('func', vscode.CompletionItemKind.Snippet);
-    gsppFuncCompletion.insertText = new vscode.SnippetString('(${1:params}) => {\n\t${2:body}\n}\n${0}');
+    const gsppFuncCompletion = new CompletionItem('func', vscode.CompletionItemKind.Snippet);
+    gsppFuncCompletion.insertText = new vscode.SnippetString('(${1:params}) => {\n\t${2:body}\n}${0}');
 
     const gsppItems = [gsppForCompletion, gsppIfCompletion, gsppElseIfCompletion, gsppElseCompletion, gsppWhileCompletion, gsppFuncCompletion];
-//#endregion
-    
-//#region gs snippets
-    const gsForCompletion = new vscode.CompletionItem('for', vscode.CompletionItemKind.Snippet);
-    gsForCompletion.insertText = new vscode.SnippetString('for ${1:var} in ${2:array}\n\t${3:body}\nend for\n${0}');
+    //#endregion
 
-    const gsIfCompletion = new vscode.CompletionItem('if', vscode.CompletionItemKind.Snippet);
-    gsIfCompletion.insertText = new vscode.SnippetString('if ${1:condition} then\n\t${2:body}\nend if\n${0}');
+    //#region gs snippets
+    const gsForCompletion = new CompletionItem('for', vscode.CompletionItemKind.Snippet);
+    gsForCompletion.insertText = new vscode.SnippetString('for ${1:var} in ${2:array}\n\t${3:body}\nend for${0}');
 
-    const gsElseIfCompletion = new vscode.CompletionItem('else if', vscode.CompletionItemKind.Snippet);
-    gsElseIfCompletion.insertText = new vscode.SnippetString('else if ${1:condition} then\n\t${2:body}\nend if\n${0}');
+    const gsIfCompletion = new CompletionItem('if', vscode.CompletionItemKind.Snippet);
+    gsIfCompletion.insertText = new vscode.SnippetString('if ${1:condition} then\n\t${2:body}\nend if${0}');
 
-    const gsElseCompletion = new vscode.CompletionItem('else', vscode.CompletionItemKind.Snippet);
-    gsElseCompletion.insertText = new vscode.SnippetString('else\n\t${1:body}\nend if\n${0}');
+    const gsElseIfCompletion = new CompletionItem('else if', vscode.CompletionItemKind.Snippet);
+    gsElseIfCompletion.insertText = new vscode.SnippetString('else if ${1:condition} then\n\t${2:body}\nend if${0}');
 
-    const gsWhileCompletion = new vscode.CompletionItem('while', vscode.CompletionItemKind.Snippet);
-    gsWhileCompletion.insertText = new vscode.SnippetString('while ${1:condition}\n\t${2:body}\nend while\n${0}');
+    const gsElseCompletion = new CompletionItem('else', vscode.CompletionItemKind.Snippet);
+    gsElseCompletion.insertText = new vscode.SnippetString('else\n\t${1:body}\nend if${0}');
 
-    const gsFuncCompletion = new vscode.CompletionItem('func', vscode.CompletionItemKind.Snippet);
-    gsFuncCompletion.insertText = new vscode.SnippetString('function(${1:params})\n\t${2:body}\nend function\n${0}');
+    const gsWhileCompletion = new CompletionItem('while', vscode.CompletionItemKind.Snippet);
+    gsWhileCompletion.insertText = new vscode.SnippetString('while ${1:condition}\n\t${2:body}\nend while${0}');
+
+    const gsFuncCompletion = new CompletionItem('func', vscode.CompletionItemKind.Snippet);
+    gsFuncCompletion.insertText = new vscode.SnippetString('function(${1:params})\n\t${2:body}\nend function${0}');
 
     const gsItems = [gsForCompletion, gsIfCompletion, gsElseIfCompletion, gsElseCompletion, gsWhileCompletion, gsFuncCompletion];
-//#endregion
+    //#endregion
 
-    const inlineFuncCompletion = new vscode.CompletionItem("ifunc", vscode.CompletionItemKind.Snippet);
+    const inlineFuncCompletion = new CompletionItem("ifunc", vscode.CompletionItemKind.Snippet);
     inlineFuncCompletion.insertText = new vscode.SnippetString("(${1:params}) => {${2:body}}${0}");
-    
-//#region constants & keywords
-    const trueCompletion = new vscode.CompletionItem('true', vscode.CompletionItemKind.Constant);
 
-    const falseCompletion = new vscode.CompletionItem('false', vscode.CompletionItemKind.Constant);
+    //#region constants & keywords
+    const trueCompletion = new CompletionItem('true', vscode.CompletionItemKind.Constant);
 
-    const nullCompletion = new vscode.CompletionItem('null', vscode.CompletionItemKind.Constant);
+    const falseCompletion = new CompletionItem('false', vscode.CompletionItemKind.Constant);
 
-    const continueCompletion = new vscode.CompletionItem('continue', vscode.CompletionItemKind.Keyword);
+    const nullCompletion = new CompletionItem('null', vscode.CompletionItemKind.Constant);
 
-    const breakCompletion = new vscode.CompletionItem('break', vscode.CompletionItemKind.Keyword);
+    const continueCompletion = new CompletionItem('continue', vscode.CompletionItemKind.Keyword);
 
-    const selfCompletion = new vscode.CompletionItem('self', vscode.CompletionItemKind.Keyword);
+    const breakCompletion = new CompletionItem('break', vscode.CompletionItemKind.Keyword);
 
-    const returnCompletion = new vscode.CompletionItem('return', vscode.CompletionItemKind.Keyword);
+    const selfCompletion = new CompletionItem('self', vscode.CompletionItemKind.Keyword);
 
-    const globalsCompletion = new vscode.CompletionItem('globals', vscode.CompletionItemKind.Module);
+    const returnCompletion = new CompletionItem('return', vscode.CompletionItemKind.Keyword);
 
-    const localsCompletion = new vscode.CompletionItem('locals', vscode.CompletionItemKind.Module);
-//#endregion
+    const globalsCompletion = new CompletionItem('globals', vscode.CompletionItemKind.Module);
 
-//#region operators
-    const orCompletion = new vscode.CompletionItem('or', vscode.CompletionItemKind.Operator);
+    const localsCompletion = new CompletionItem('locals', vscode.CompletionItemKind.Module);
+    //#endregion
 
-    const andCompletion = new vscode.CompletionItem('and', vscode.CompletionItemKind.Operator);
+    //#region operators
+    const orCompletion = new CompletionItem('or', vscode.CompletionItemKind.Operator);
 
-    const notCompletion = new vscode.CompletionItem('not', vscode.CompletionItemKind.Operator);
+    const andCompletion = new CompletionItem('and', vscode.CompletionItemKind.Operator);
 
-    const inCompletion = new vscode.CompletionItem('in', vscode.CompletionItemKind.Operator);
-//#endregion
+    const notCompletion = new CompletionItem('not', vscode.CompletionItemKind.Operator);
 
-//#region data functions
-    const removeCompletion = new vscode.CompletionItem('remove', vscode.CompletionItemKind.Function);
+    const inCompletion = new CompletionItem('in', vscode.CompletionItemKind.Operator);
+    //#endregion
+
+    //#region data functions
+    const removeCompletion = new CompletionItem('remove', vscode.CompletionItemKind.Function);
     removeCompletion.insertText = new vscode.SnippetString('remove(${1:item})');
 
-    const hasIndexCompletion = new vscode.CompletionItem('hasIndex', vscode.CompletionItemKind.Function);
+    const hasIndexCompletion = new CompletionItem('hasIndex', vscode.CompletionItemKind.Function);
     hasIndexCompletion.insertText = new vscode.SnippetString('hasIndex(${1:index})');
 
-    const indexOfCompletion = new vscode.CompletionItem('indexOf', vscode.CompletionItemKind.Function);
+    const indexOfCompletion = new CompletionItem('indexOf', vscode.CompletionItemKind.Function);
     indexOfCompletion.insertText = new vscode.SnippetString('indexOf(${1:item,${2:null}})');
 
-    const lastIndexOfCompletion = new vscode.CompletionItem('lastIndexOf', vscode.CompletionItemKind.Function);
+    const lastIndexOfCompletion = new CompletionItem('lastIndexOf', vscode.CompletionItemKind.Function);
     lastIndexOfCompletion.insertText = new vscode.SnippetString('lastIndexOf(${1:item})');
 
-    const sliceCompletion = new vscode.CompletionItem('slice', vscode.CompletionItemKind.Function);
+    const sliceCompletion = new CompletionItem('slice', vscode.CompletionItemKind.Function);
     sliceCompletion.insertText = new vscode.SnippetString('slice(${1:string},${2:start},${3:null})');
 
-    const splitCompletion = new vscode.CompletionItem('split', vscode.CompletionItemKind.Function);
+    const splitCompletion = new CompletionItem('split', vscode.CompletionItemKind.Function);
     splitCompletion.insertText = new vscode.SnippetString('split(${1:separator})');
 
-    const replaceCompletion = new vscode.CompletionItem('replace', vscode.CompletionItemKind.Function);
+    const replaceCompletion = new CompletionItem('replace', vscode.CompletionItemKind.Function);
     replaceCompletion.insertText = new vscode.SnippetString('replace(${1:old},${2:new})');
 
-    const trimCompletion = new vscode.CompletionItem('trim', vscode.CompletionItemKind.Function);
+    const trimCompletion = new CompletionItem('trim', vscode.CompletionItemKind.Function);
     trimCompletion.insertText = new vscode.SnippetString('trim()');
 
-    const absCompletion = new vscode.CompletionItem('abs', vscode.CompletionItemKind.Function);
+    const absCompletion = new CompletionItem('abs', vscode.CompletionItemKind.Function);
     absCompletion.insertText = new vscode.SnippetString('abs(${1:number})');
 
-    const acosCompletion = new vscode.CompletionItem('acos', vscode.CompletionItemKind.Function);
+    const acosCompletion = new CompletionItem('acos', vscode.CompletionItemKind.Function);
     acosCompletion.insertText = new vscode.SnippetString('acos(${1:number})');
 
-    const asinCompletion = new vscode.CompletionItem('asin', vscode.CompletionItemKind.Function);
+    const asinCompletion = new CompletionItem('asin', vscode.CompletionItemKind.Function);
     asinCompletion.insertText = new vscode.SnippetString('asin(${1:number})');
 
-    const atanCompletion = new vscode.CompletionItem('atan', vscode.CompletionItemKind.Function);
+    const atanCompletion = new CompletionItem('atan', vscode.CompletionItemKind.Function);
     atanCompletion.insertText = new vscode.SnippetString('atan(${1:number})');
 
-    const tanCompletion = new vscode.CompletionItem('tan', vscode.CompletionItemKind.Function);
+    const tanCompletion = new CompletionItem('tan', vscode.CompletionItemKind.Function);
     tanCompletion.insertText = new vscode.SnippetString('tan(${1:radian})');
 
-    const cosCompletion = new vscode.CompletionItem('cos', vscode.CompletionItemKind.Function);
+    const cosCompletion = new CompletionItem('cos', vscode.CompletionItemKind.Function);
     cosCompletion.insertText = new vscode.SnippetString('cos(${1:radian})');
 
-    const sinCompletion = new vscode.CompletionItem('sin', vscode.CompletionItemKind.Function);
+    const sinCompletion = new CompletionItem('sin', vscode.CompletionItemKind.Function);
     sinCompletion.insertText = new vscode.SnippetString('sin(${1:radian})');
 
-    const charCompletion = new vscode.CompletionItem('char', vscode.CompletionItemKind.Function);
+    const charCompletion = new CompletionItem('char', vscode.CompletionItemKind.Function);
     charCompletion.insertText = new vscode.SnippetString('char(${1:int})');
 
-    const floorCompletion = new vscode.CompletionItem('floor', vscode.CompletionItemKind.Function);
+    const floorCompletion = new CompletionItem('floor', vscode.CompletionItemKind.Function);
     floorCompletion.insertText = new vscode.SnippetString('floor(${1:number})');
 
-    const rangeCompletion = new vscode.CompletionItem('range', vscode.CompletionItemKind.Function);
+    const rangeCompletion = new CompletionItem('range', vscode.CompletionItemKind.Function);
     rangeCompletion.insertText = new vscode.SnippetString('range(${1:start},${2:0},${3:1})');
 
-    const roundCompletion = new vscode.CompletionItem('round', vscode.CompletionItemKind.Function);
+    const roundCompletion = new CompletionItem('round', vscode.CompletionItemKind.Function);
     roundCompletion.insertText = new vscode.SnippetString('round(${1:number,${2:0}})');
 
-    const rndCompletion = new vscode.CompletionItem('rnd', vscode.CompletionItemKind.Function);
+    const rndCompletion = new CompletionItem('rnd', vscode.CompletionItemKind.Function);
     rndCompletion.insertText = new vscode.SnippetString('rnd(${1:null})');
 
-    const signCompletion = new vscode.CompletionItem('sign', vscode.CompletionItemKind.Function);
+    const signCompletion = new CompletionItem('sign', vscode.CompletionItemKind.Function);
     signCompletion.insertText = new vscode.SnippetString('sign(${1:number})');
 
-    const sqrtCompletion = new vscode.CompletionItem('sqrt', vscode.CompletionItemKind.Function);
+    const sqrtCompletion = new CompletionItem('sqrt', vscode.CompletionItemKind.Function);
     sqrtCompletion.insertText = new vscode.SnippetString('sqrt(${1:number})');
 
-    const strCompletion = new vscode.CompletionItem('str', vscode.CompletionItemKind.Function);
+    const strCompletion = new CompletionItem('str', vscode.CompletionItemKind.Function);
     strCompletion.insertText = new vscode.SnippetString('str(${1:var})');
 
-    const ceilCompletion = new vscode.CompletionItem('ceil', vscode.CompletionItemKind.Function);
+    const ceilCompletion = new CompletionItem('ceil', vscode.CompletionItemKind.Function);
     ceilCompletion.insertText = new vscode.SnippetString('ceil(${1:number})');
 
-    const joinCompletion = new vscode.CompletionItem('join', vscode.CompletionItemKind.Function);
+    const joinCompletion = new CompletionItem('join', vscode.CompletionItemKind.Function);
     joinCompletion.insertText = new vscode.SnippetString('join(${1:separator})');
-    
-    const pushCompletion = new vscode.CompletionItem('push', vscode.CompletionItemKind.Function);
+
+    const pushCompletion = new CompletionItem('push', vscode.CompletionItemKind.Function);
     pushCompletion.insertText = new vscode.SnippetString('push(${1:value})');
 
-    const popCompletion = new vscode.CompletionItem('pop', vscode.CompletionItemKind.Function);
+    const popCompletion = new CompletionItem('pop', vscode.CompletionItemKind.Function);
     popCompletion.insertText = new vscode.SnippetString('pop()');
 
-    const pullCompletion = new vscode.CompletionItem('pull', vscode.CompletionItemKind.Function);
+    const pullCompletion = new CompletionItem('pull', vscode.CompletionItemKind.Function);
     pullCompletion.insertText = new vscode.SnippetString('pull()');
 
-    const shuffleCompletion = new vscode.CompletionItem('shuffle', vscode.CompletionItemKind.Function);
+    const shuffleCompletion = new CompletionItem('shuffle', vscode.CompletionItemKind.Function);
     shuffleCompletion.insertText = new vscode.SnippetString('shuffle()');
 
-    const reverseCompletion = new vscode.CompletionItem('reverse', vscode.CompletionItemKind.Function);
+    const reverseCompletion = new CompletionItem('reverse', vscode.CompletionItemKind.Function);
     reverseCompletion.insertText = new vscode.SnippetString('reverse()');
 
-    const sortCompletion = new vscode.CompletionItem('sort', vscode.CompletionItemKind.Function);
+    const sortCompletion = new CompletionItem('sort', vscode.CompletionItemKind.Function);
     sortCompletion.insertText = new vscode.SnippetString('sort(${1:null})');
 
-    const sumCompletion = new vscode.CompletionItem('sum', vscode.CompletionItemKind.Function);
+    const sumCompletion = new CompletionItem('sum', vscode.CompletionItemKind.Function);
     sumCompletion.insertText = new vscode.SnippetString('sum()');
-//#endregion 
-    
-//#region data properties
-    const indexesCompletion = new vscode.CompletionItem('indexes', vscode.CompletionItemKind.Property);
+    //#endregion 
 
-    const codeCompletion = new vscode.CompletionItem('code', vscode.CompletionItemKind.Property);
+    //#region data properties
+    const indexesCompletion = new CompletionItem('indexes', vscode.CompletionItemKind.Property);
 
-    const lenCompletion = new vscode.CompletionItem('len', vscode.CompletionItemKind.Property);
+    const codeCompletion = new CompletionItem('code', vscode.CompletionItemKind.Property);
 
-    const lowerCompletion = new vscode.CompletionItem('lower', vscode.CompletionItemKind.Property);
+    const lenCompletion = new CompletionItem('len', vscode.CompletionItemKind.Property);
 
-    const upperCompletion = new vscode.CompletionItem('upper', vscode.CompletionItemKind.Property);
+    const lowerCompletion = new CompletionItem('lower', vscode.CompletionItemKind.Property);
 
-    const valCompletion = new vscode.CompletionItem('val', vscode.CompletionItemKind.Property);
+    const upperCompletion = new CompletionItem('upper', vscode.CompletionItemKind.Property);
 
-    const valuesCompletion = new vscode.CompletionItem('values', vscode.CompletionItemKind.Property);
+    const valCompletion = new CompletionItem('val', vscode.CompletionItemKind.Property);
 
-    const toIntCompletion = new vscode.CompletionItem('to_int', vscode.CompletionItemKind.Property);
+    const valuesCompletion = new CompletionItem('values', vscode.CompletionItemKind.Property);
 
-    const piCompletion = new vscode.CompletionItem('pi', vscode.CompletionItemKind.Property);
-//#endregion
-    
-    
-    
+    const toIntCompletion = new CompletionItem('to_int', vscode.CompletionItemKind.Property);
+
+    const piCompletion = new CompletionItem('pi', vscode.CompletionItemKind.Property);
+    //#endregion
+
+
+
     loaded = true;
     const items = [
-//#region constants & keywords
+        //#region constants & keywords
         trueCompletion,
         falseCompletion,
         nullCompletion,
@@ -215,16 +216,16 @@ export function getStaticItems(gspp: boolean) {
         returnCompletion,
         globalsCompletion,
         localsCompletion,
-//#endregion
+        //#endregion
         inlineFuncCompletion,
-//#region oprators
+        //#region oprators
         orCompletion,
         andCompletion,
         notCompletion,
         inCompletion,
-//#endregion
+        //#endregion
 
-//#region data functions
+        //#region data functions
         absCompletion,
         acosCompletion,
         asinCompletion,
@@ -256,9 +257,9 @@ export function getStaticItems(gspp: boolean) {
         sumCompletion,
         tanCompletion,
         trimCompletion,
-//#endregion
-        
-//#region data properties
+        //#endregion
+
+        //#region data properties
         indexesCompletion,
         codeCompletion,
         lenCompletion,
@@ -268,7 +269,7 @@ export function getStaticItems(gspp: boolean) {
         valuesCompletion,
         toIntCompletion,
         piCompletion,
-//#endregion
+        //#endregion
     ];
 
 
@@ -287,7 +288,7 @@ export function getStaticItems(gspp: boolean) {
         }
         label = splited[1];
         snippet = splited[2];
-        item = new vscode.CompletionItem(label, kind);
+        item = new CompletionItem(label, kind);
         item.insertText = new vscode.SnippetString(snippet);
         items.push(item);
     }
@@ -375,7 +376,7 @@ Property;permissions;permissions
 Property;parent;parent
 Property;name;name
 Property;size;size
-Property;delete;delete
+Method;delete;delete()
 Property;get_folders;get_folders
 Property;get_files;get_files
 Property;get_lan_ip;get_lan_ip

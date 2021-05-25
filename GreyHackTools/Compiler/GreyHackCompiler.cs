@@ -156,9 +156,9 @@ namespace GreyHackTools
             Dictionary<string, string> includeToCode, Dictionary<string, string> includeToFullPath);
 
         public static event IncludeHandler Include;
-        public static string Compile(string code, bool optimize = false, int settings = (int)Settings.None,string directory = ".", string name = "ROOT")
+        public static string Compile(string code, bool optimize = false, int settings = (int)Settings.None)
         {
-            return Tokenize(code, (Settings)settings, directory, name).Compile(optimize);
+            return Tokenize(code, (Settings)settings).Compile(optimize);
         }
 
         public static bool TryCompile(string code, Ref<string> compiledCode, bool optimize = false, Settings settings = Settings.None)
@@ -175,9 +175,9 @@ namespace GreyHackTools
             }
         }
 
-        private static Context Tokenize(string plainCode, Settings settings, string dir,string name)
+        private static Context Tokenize(string plainCode, Settings settings)
         {
-            Context context = new Context(settings,dir,name) { PlainInput = new Queue<char>(plainCode) };
+            Context context = new Context(settings) { PlainInput = new Queue<char>(plainCode) };
 
             Token token = null;
             while ((token = GetNextToken(context)) != null)
@@ -237,19 +237,19 @@ namespace GreyHackTools
                                                                    context.PlainInput.Skip(1).First() == '\n'));
             }
 
-            if (context.MapActive.Peek())
+            if (context.VariableContext.Peek() is EVariableContext.MapIndex or EVariableContext.MapValue)
             {
                 token = new Token.Separator();
 
                 switch (context.PlainInput.Peek())
                 {
                     case ',':
-                        context.ShouldOptimizeString.Pop();
-                        context.ShouldOptimizeString.Push(!context.Settings.HasFlag(Settings.IgnoreMapVariables));
+                        context.VariableContext.Pop();
+                        context.VariableContext.Push(EVariableContext.MapIndex);
                         return x => true;
                     case ':':
-                        context.ShouldOptimizeString.Pop();
-                        context.ShouldOptimizeString.Push(false);
+                        context.VariableContext.Pop();
+                        context.VariableContext.Push(EVariableContext.MapValue);
                         return x => true;
                 }
 
@@ -294,35 +294,43 @@ namespace GreyHackTools
                 switch (context.PlainInput.Peek())
                 {
                     case '(':
-                        context.ShouldOptimizeString.Push(false);
+                        context.VariableContext.Push(EVariableContext.Default);
                         break;
                     case ')':
-                        context.ShouldOptimizeString.Pop();
+                        context.VariableContext.Pop();
                         break;
                     case '[':
-                        context.ShouldOptimizeString.Push((!(context.LastToken == null ||
-                                                             context.LastToken is Token.Operator)) &&
-                                                          (context.Settings & Settings.IgnoreMapVariables) == 0);
+                        var tokenGuid = context.LastToken.GetType();
+                        var varGuid = typeof(Token.Variable);
+
+                        if ((context.LastToken != null) &&
+                            tokenGuid == varGuid &&
+                            (context.Settings & Settings.IgnoreMapVariables) == 0)
+                        {
+                            context.VariableContext.Push(EVariableContext.Index);
+                        }
+                        else
+                        {
+                            context.VariableContext.Push(EVariableContext.Default);
+                        }
                         break;
                     case ']':
-                        context.ShouldOptimizeString.Pop();
+                        context.VariableContext.Pop();
                         break;
                     case '{':
                         if (context.LastToken == null || (!context.LastToken.Value.EndsWith(")") && context.LastToken.Value != "=>"))
                         {
-                            context.MapActive.Push(true);
-                            context.ShouldOptimizeString.Push((context.Settings & Settings.IgnoreMapVariables) == 0);
+                            if ((context.Settings & Settings.IgnoreMapVariables) == 0)
+                            {
+                                context.VariableContext.Push(EVariableContext.MapIndex);
+                                break;
+                            }
                         }
-                        else
-                        {
-                            context.MapActive.Push(false);
-                            context.ShouldOptimizeString.Push(false);
-                        }
+                        context.VariableContext.Push(EVariableContext.Default);
 
                         break;
                     case '}':
-                        context.MapActive.Pop();
-                        context.ShouldOptimizeString.Pop();
+                        context.VariableContext.Pop();
                         break;
                 }
 
@@ -337,7 +345,8 @@ namespace GreyHackTools
             if (_tokenStrings.Contains(context.PlainInput.Peek())) //strings
             {
                 token = new Token.String();
-                token.Optimizable = context.ShouldOptimizeString.Peek();
+                token.Optimizable =
+                    context.VariableContext.Peek() is EVariableContext.MapIndex or EVariableContext.Index;
                 if (context.PlainInput.Peek() == '$')
                 {
                     token.Custom = true;

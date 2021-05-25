@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using System.Threading.Tasks;
 using WebAssembly;
 
@@ -14,8 +15,8 @@ namespace GreyHackTools
                 {
                     Optimizable = false;
                 }
-
-                public override async void Compile(Context context, bool force = false)
+                
+                public override void Compile(Context context, bool force = false)
                 {
                     try
                     {

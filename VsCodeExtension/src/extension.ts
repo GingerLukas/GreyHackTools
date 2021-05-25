@@ -7,6 +7,7 @@ import {
   CompilerMenuItem,
   CompilerSettings,
 } from "./treeViewMenu";
+import { CompletionItem, GRange, ExternalCompletionCollection, ExternalSrc } from "./types"
 import { getStaticItems } from "./staticCompletionItems";
 import * as decorations from "./decorations";
 
@@ -37,48 +38,16 @@ global["App"] = {
 };
 var print = console.log;
 
-async function readFile(name: string) {
-  return new StringDecoder().write(Buffer.from(await vscode.workspace.fs.readFile(vscode.Uri.parse(name))));
-}
-global["readFile"] = readFile;
-
 import "./mono-config";
 import "./runtime.js";
 import "./dotnet.js";
-
-import "./bridge";
-import "./bridge.meta";
-import "./newtonsoft.json";
-import "./JsMSppCompiler";
-import "./JsMSppCompiler.meta";
 
 import { StringDecoder } from "string_decoder";
 import { IMonoModule } from "./ModuleInterface";
 
 const CompletionItemKind = vscode.CompletionItemKind;
 
-export class CompletionItem extends vscode.CompletionItem {
-  constructor(label: string, kind: vscode.CompletionItemKind) {
-    super(label, kind);
-    this.insertText = new vscode.SnippetString(label);
-  }
-  setInsertText(text: string) {
-    this.insertText = new vscode.SnippetString(text);
-  }
-}
 
-class GRange extends vscode.Range {
-  constructor(start: vscode.Position, end: vscode.Position) {
-    super(start, end);
-  }
-}
-
-class ExternalCompletionCollection {
-  constructor(public items: CompletionItem[], public date: number) { }
-}
-class ExternalSrc {
-  constructor(public src: string, public date: number) { }
-}
 
 const remoteCompletions: { [id: string]: ExternalCompletionCollection } = {};
 const externalSrcs: { [id: string]: ExternalSrc } = {};
@@ -86,34 +55,7 @@ const externalSrcs: { [id: string]: ExternalSrc } = {};
 const staticGSppCompletionItems = getStaticItems(true);
 const staticGSCompletionItems = getStaticItems(false);
 
-//@ts-ignore
-const compiler = GreyHackTools.GreyHackCompiler;
-compiler.OnInclude = (name: string, dir: string, counter: any, code: any, includeToPath: any) => {
-  const path = vscode.Uri.joinPath(vscode.Uri.parse(dir), name);
-  //@ts-ignore
-  includeToPath.add(name, path.toString());
-  vscode.workspace.fs.stat(path).then((stat) => {
-    if (
-      externalSrcs[path.toString()] == undefined ||
-      externalSrcs[path.toString()].date != stat.mtime
-    ) {
-      vscode.workspace.fs.readFile(path).then((bytes) => {
-        const src = new StringDecoder().write(Buffer.from(bytes));
-        //@ts-ignore
-        code.add(name, src);
-        counter.Value--;
-        externalSrcs[path.toString()] = new ExternalSrc(src, stat.mtime);
-      });
-    } else {
-      //@ts-ignore
-      code.add(name, externalSrcs[path.toString()].src);
-      counter.Value--;
-    }
-  });
-};
 export async function activate(context: vscode.ExtensionContext) {
-  var r = await readFile("/c:/Users/lukas/Greyhack/RAT/test.gp");
-
   //#region init
   console.log("GS++ extension loaded");
   let timeout: NodeJS.Timer | undefined = undefined;
@@ -175,61 +117,29 @@ export async function activate(context: vscode.ExtensionContext) {
       const folder = vscode.workspace.getWorkspaceFolder(document.uri);
       if (folder == undefined) return;
 
-      const task = compile(
-        document.getText(),
-        compilerSettings.Optimize,
-        compilerSettings.getSettings(),
-        vscode.Uri.joinPath(document.uri, "../").toString()
-      );
-      if (task.status != 3) {
-        const compiledCode = task.result;
-        if (compiledCode == null) {
-          return;
-        }
-
-        const folderUri = vscode.workspace.getWorkspaceFolder(document.uri)
-          ?.uri;
-        if (folderUri == undefined) {
-          return;
-        }
-        const name = posix.basename(vscode.Uri.file(document.fileName).path);
-        const fileUri = folderUri.with({
-          path: posix.join(folderUri.path, "out", name),
-        });
-
-        vscode.workspace.fs
-          .writeFile(fileUri, Buffer.from(compiledCode))
-          .then((x) => {
-            vscode.workspace.openTextDocument(fileUri.fsPath).then((doc) => {
-              vscode.window.showTextDocument(doc, 1, false);
-            });
-          });
+      const compiledCode = CompileGSpp(document.getText(), compilerSettings.Optimize, compilerSettings.getSettings());
+      if (compiledCode == null) {
         return;
       }
-      task.callbacks.push(() => {
-        const compiledCode = task.result;
-        if (compiledCode == null) {
-          return;
-        }
 
-        const folderUri = vscode.workspace.getWorkspaceFolder(document.uri)
-          ?.uri;
-        if (folderUri == undefined) {
-          return;
-        }
-        const name = posix.basename(vscode.Uri.file(document.fileName).path);
-        const fileUri = folderUri.with({
-          path: posix.join(folderUri.path, "out", name),
+      const folderUri = vscode.workspace.getWorkspaceFolder(document.uri)
+        ?.uri;
+      if (folderUri == undefined) {
+        return;
+      }
+      const name = posix.basename(vscode.Uri.file(document.fileName).path);
+      const fileUri = folderUri.with({
+        path: posix.join(folderUri.path, "out", name),
+      });
+
+      vscode.workspace.fs
+        .writeFile(fileUri, Buffer.from(compiledCode))
+        .then((x) => {
+          vscode.workspace.openTextDocument(fileUri.fsPath).then((doc) => {
+            vscode.window.showTextDocument(doc, 1, false);
+          });
         });
 
-        vscode.workspace.fs
-          .writeFile(fileUri, Buffer.from(compiledCode))
-          .then((x) => {
-            vscode.workspace.openTextDocument(fileUri.fsPath).then((doc) => {
-              vscode.window.showTextDocument(doc, 1, false);
-            });
-          });
-      });
     })
   );
 
@@ -301,6 +211,7 @@ export async function activate(context: vscode.ExtensionContext) {
   function updateDecorations() {
     if (!activeEditor) return;
 
+    /*
     const text = activeEditor.document.getText();
 
     const decor = getDecorationItems(text, activeEditor);
@@ -312,6 +223,7 @@ export async function activate(context: vscode.ExtensionContext) {
     activeEditor.setDecorations(decorations.numbers, decor.numbers);
     activeEditor.setDecorations(decorations.variables, decor.variables);
     activeEditor.setDecorations(decorations.comments, decor.comments);
+    */
   }
 
   function triggerUpdateDecorations() {
@@ -346,6 +258,49 @@ export async function activate(context: vscode.ExtensionContext) {
     null,
     context.subscriptions
   );
+
+  const tokenTypes = ["variable", "function", "comment", "number", "keyword", "macro", "string"];
+  const tokenModifiers = [];
+  const legend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+  const provider: vscode.DocumentSemanticTokensProvider = {
+    provideDocumentSemanticTokens(
+      document: vscode.TextDocument
+    ): vscode.ProviderResult<vscode.SemanticTokens> {
+
+      const tokensBuilder = new vscode.SemanticTokensBuilder(legend);
+
+      const ranges = getDecorationItems(document.getText(), <vscode.TextEditor>activeEditor)
+
+      ranges.functions.forEach(element => {
+        tokensBuilder.push(element, "function");
+      });
+      ranges.comments.forEach(element => {
+        tokensBuilder.push(element, "comment")
+      });
+      ranges.keywords.forEach(element => {
+        tokensBuilder.push(element, "macro")
+      });
+      ranges.keywords2.forEach(element => {
+        tokensBuilder.push(element, "keyword")
+      });
+      ranges.numbers.forEach(element => {
+        tokensBuilder.push(element, "number")
+      })
+      ranges.variables.forEach(element => {
+        tokensBuilder.push(element, "variable")
+      })
+      ranges.strings.forEach(element => {
+        tokensBuilder.push(element, "string")
+      })
+
+      return tokensBuilder.build();
+    }
+  };
+  const selectorGspp = { language: 'gspp', scheme: 'file' };
+  const selectorGs = { language: 'gs', scheme: 'file' };
+
+  vscode.languages.registerDocumentSemanticTokensProvider(selectorGspp, provider, legend);
+  vscode.languages.registerDocumentSemanticTokensProvider(selectorGs, provider, legend);
 }
 
 async function provideCompletionItems(
@@ -375,15 +330,7 @@ async function provideCompletionItems(
   return out;
 }
 
-function compile(
-  code: string,
-  optimize: boolean,
-  settings: number,
-  path: string
-) {
-  //@ts-ignore
-  return compiler.Compile(code, optimize, settings, path);
-}
+
 
 async function getCompletionItems(
   text: string,
@@ -393,7 +340,7 @@ async function getCompletionItems(
   words?: { [id: string]: { [id: number]: boolean } }
 ) {
   if (regEx == undefined)
-    regEx = /((([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*?")|(\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>))|(#!(.*?)!)/g;
+    regEx = /((([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*?")|(-?\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>))|(#!(.*?)!)/g;
   if (output == undefined) output = [];
   if (words == undefined) words = {};
 
@@ -455,8 +402,10 @@ async function getCompletionItems(
           words
         );
       }
-    } else if (match[22]) {
-      await parseExternalSrc(match[23], uri, output, words);
+    }
+    //external
+    else if (match[22] && false) {
+      //await parseExternalSrc(match[23], uri, output, words);
     }
     if (tempItem) {
       tryAddItem(tempItem, output, words);
@@ -493,7 +442,7 @@ function getParamsSnippet(params?: string[]) {
 }
 
 function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
-  const decorationsRegex = /(\$?".*?")|(\bif\b|\belse\b|\bfor\b|\bwhile\b|\bend if\b|\bend for\b|\bend while\b|\bin\b|\bthen\b|\breturn\b|\bbreak\b|\bcontinue\b|\band\b|\bor\b|\bnot\b)|(\bfunction\b|\bend function\b|\bself\b|\bnew\b|\btrue\b|\bfalse\b|\bnull\b)|(\b(?!function\b)([@_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(\d+)|([@_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)|(#!.*?!)/gm;
+  const decorationsRegex = /(\$?".*?")|(\bif\b|\belse\b|\bfor\b|\bwhile\b|\bend if\b|\bend for\b|\bend while\b|\bin\b|\bthen\b|\breturn\b|\bbreak\b|\bcontinue\b|\band\b|\bor\b|\bnot\b)|(\bfunction\b|\bend function\b|\bself\b|\bnew\b|\btrue\b|\bfalse\b|\bnull\b)|(\b(?!function\b)([@_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(-?\d+)|([@_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)|(#!.*?!)/gm;
   let match;
 
   const strings: GRange[] = [];

@@ -8,6 +8,14 @@ namespace GreyHackTools
 {
     public partial class GreyHackCompiler
     {
+        internal enum EVariableContext
+        {
+            Default,
+            MapIndex,
+            MapValue,
+            Array,
+            Index
+        }
         internal class Context
         {
             public Queue<char> PlainInput { get; set; }
@@ -22,8 +30,12 @@ namespace GreyHackTools
             
             internal long bracketDepth = 0;
             internal Stack<StringBuilder> stringBuilders = new Stack<StringBuilder>();
-            internal Stack<bool> ShouldOptimizeString = new Stack<bool>();
-            internal Stack<bool> MapActive = new Stack<bool>();
+
+            internal Stack<EVariableContext> VariableContext = new Stack<EVariableContext>(new[]
+            {
+                EVariableContext.Default
+            });
+
             internal HashSet<string> includes = new HashSet<string>();
             internal VariableNameProvider nameProvider = new VariableNameProvider();
             internal bool optimizeEnabled = false;
@@ -33,26 +45,18 @@ namespace GreyHackTools
             internal HashSet<string> included = new HashSet<string>();
             internal Dictionary<string, string> includeToFullPath = new Dictionary<string, string>();
 
-            public Context(Settings settings,string dir,string includeName)
+            public Context(Settings settings)
             {
-                directory = dir;
-                name = includeName;
                 Settings = settings;
                 PlainInput = new Queue<char>();
 
                 stringBuilders.Push(new StringBuilder());
                 CodePrefix = new StringBuilder();
-
-                ShouldOptimizeString.Push(false);
-                MapActive.Push(false);
             }
 
             public Context Clone(string name)
             {
-                int index = name.LastIndexOfAny(new char[] {'\\', '/'});
-                string dir = (directory + '/' + name.Substring(0, index)).Replace('\\', '/').Replace("//", "/");
-                name = this.name.Substring(index);
-                return new Context(Settings, dir, name)
+                return new Context(Settings)
                 {
                     nameProvider = nameProvider,
                     CodePrefix = CodePrefix,

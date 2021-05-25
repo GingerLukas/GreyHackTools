@@ -39,7 +39,7 @@ namespace ConsoleCompiler
                         string.Join("", MD5.HashData(Encoding.UTF8.GetBytes(GreyHackCompiler.Compile(
                             code,
                             i < 4,
-                             (i % 4),"tests"))).Select(x => x.ToString("x2")));
+                             (i % 4)))).Select(x => x.ToString("x2")));
                 }
             }
 

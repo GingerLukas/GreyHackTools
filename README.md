@@ -1,3 +1,3 @@
 # GreyHackTools
 
-[Web IDE](https://blazorcompiler.azurewebsites.net/compiler)
+[Web IDE](https://greyscript.live/compiler)

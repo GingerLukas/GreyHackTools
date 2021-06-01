@@ -40,7 +40,7 @@ namespace GreyHackTools
 
         private static readonly HashSet<string> _tokenEndStatements = new HashSet<string>() { "\n", "\r\n", ";" ,"}"};
 
-        private static readonly HashSet<string> _tokenInclude = new HashSet<string>() { "#!" };
+        private static readonly HashSet<string> _tokenInclude = new HashSet<string>() { "#" };
         private static readonly HashSet<char> _tokenEndInclude = new HashSet<char>() { '!' };
 
         private static readonly HashSet<char> _tokenStrings = new HashSet<char>() { '"', '$' };

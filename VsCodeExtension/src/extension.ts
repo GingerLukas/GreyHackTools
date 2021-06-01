@@ -9,7 +9,7 @@ import {
 } from "./treeViewMenu";
 import { CompletionItem, GRange, ExternalCompletionCollection, ExternalSrc } from "./types"
 import { getStaticItems } from "./staticCompletionItems";
-import * as decorations from "./decorations";
+import * as preprocessor from "c-preprocessor";
 
 enum CompileSettings {
   NONE = 0,
@@ -19,8 +19,7 @@ enum CompileSettings {
 var CompileGSpp = function (code: string, optimize: Boolean, flags: CompileSettings): string {
   return "NOT BINDED";
 }
-global["fs"] = vscode.workspace.fs;
-global["parse"] = vscode.Uri.parse;
+
 global["Module"] = undefined;
 var Module: IMonoModule;
 global["MONO"] = undefined;
@@ -44,6 +43,7 @@ import "./dotnet.js";
 
 import { StringDecoder } from "string_decoder";
 import { IMonoModule } from "./ModuleInterface";
+import { Console } from "console";
 
 const CompletionItemKind = vscode.CompletionItemKind;
 
@@ -117,28 +117,66 @@ export async function activate(context: vscode.ExtensionContext) {
       const folder = vscode.workspace.getWorkspaceFolder(document.uri);
       if (folder == undefined) return;
 
-      const compiledCode = CompileGSpp(document.getText(), compilerSettings.Optimize, compilerSettings.getSettings());
-      if (compiledCode == null) {
-        return;
-      }
+      var options = {
 
-      const folderUri = vscode.workspace.getWorkspaceFolder(document.uri)
-        ?.uri;
-      if (folderUri == undefined) {
-        return;
-      }
-      const name = posix.basename(vscode.Uri.file(document.fileName).path);
-      const fileUri = folderUri.with({
-        path: posix.join(folderUri.path, "out", name),
-      });
+        // Predefined constants (ex: { "MY_CONST": "42" })
+        constants: {},
 
-      vscode.workspace.fs
-        .writeFile(fileUri, Buffer.from(compiledCode))
-        .then((x) => {
-          vscode.workspace.openTextDocument(fileUri.fsPath).then((doc) => {
-            vscode.window.showTextDocument(doc, 1, false);
-          });
+        // Predefined macros (ex: { "MACRO": "(a,b) a+b" })
+        macros: {},
+
+        // End of line character
+        newLine: '\n',
+
+        // Escape '//#' & '/*#' comments (see extra/comments)
+        commentEscape: true,
+
+        // Empty lines to add between code and included files
+        includeSpaces: 0,
+
+        // Limit of empty following lines (0 = no limit)
+        emptyLinesLimit: 0,
+
+        // Base path for including files
+        basePath: '',
+
+        // Stop the compiler when an error ocurred ?
+        stopOnError: true,
+
+        // Must constants in #enum directive be in hexadecimal ?
+        enumInHex: true
+      };
+
+      preprocessor.compileFile(document.fileName, options, (error, result) => {
+        if (error) {
+          console.error(error);
+          return;
+        }
+
+        const compiledCode = CompileGSpp(result, compilerSettings.Optimize, compilerSettings.getSettings());
+        if (compiledCode == null) {
+          return;
+        }
+
+        const folderUri = vscode.workspace.getWorkspaceFolder(document.uri)
+          ?.uri;
+        if (folderUri == undefined) {
+          return;
+        }
+        const name = posix.basename(vscode.Uri.file(document.fileName).path);
+        const fileUri = folderUri.with({
+          path: posix.join(folderUri.path, "out", name),
         });
+
+        vscode.workspace.fs
+          .writeFile(fileUri, Buffer.from(compiledCode))
+          .then((x) => {
+            vscode.workspace.openTextDocument(fileUri.fsPath).then((doc) => {
+              vscode.window.showTextDocument(doc, 1, false);
+            });
+          });
+
+      });
 
     })
   );
@@ -208,52 +246,10 @@ export async function activate(context: vscode.ExtensionContext) {
   //#endregion
 
   let activeEditor = vscode.window.activeTextEditor;
-  function updateDecorations() {
-    if (!activeEditor) return;
-
-    /*
-    const text = activeEditor.document.getText();
-
-    const decor = getDecorationItems(text, activeEditor);
-
-    activeEditor.setDecorations(decorations.functions, decor.functions);
-    activeEditor.setDecorations(decorations.keywords, decor.keywords);
-    activeEditor.setDecorations(decorations.keywords2, decor.keywords2);
-    activeEditor.setDecorations(decorations.strings, decor.strings);
-    activeEditor.setDecorations(decorations.numbers, decor.numbers);
-    activeEditor.setDecorations(decorations.variables, decor.variables);
-    activeEditor.setDecorations(decorations.comments, decor.comments);
-    */
-  }
-
-  function triggerUpdateDecorations() {
-    if (timeout) {
-      clearTimeout(timeout);
-      timeout = undefined;
-    }
-    timeout = setTimeout(updateDecorations, 200);
-  }
-
-  if (activeEditor) {
-    triggerUpdateDecorations();
-  }
 
   vscode.window.onDidChangeActiveTextEditor(
     (editor) => {
       activeEditor = editor;
-      if (editor) {
-        triggerUpdateDecorations();
-      }
-    },
-    null,
-    context.subscriptions
-  );
-
-  vscode.workspace.onDidChangeTextDocument(
-    (event) => {
-      if (activeEditor && event.document === activeEditor.document) {
-        triggerUpdateDecorations();
-      }
     },
     null,
     context.subscriptions
@@ -313,7 +309,7 @@ async function provideCompletionItems(
   const line = document.lineAt(position.line).text;
   const uri = vscode.Uri.joinPath(document.uri, "../");
   let out: CompletionItem[] = [];
-  if (line.startsWith("#!")) {
+  if (line.startsWith("#include ")) {
     out = await getCompletionFs(line, uri);
   } else if (
     context.triggerCharacter != "/" &&
@@ -340,7 +336,7 @@ async function getCompletionItems(
   words?: { [id: string]: { [id: number]: boolean } }
 ) {
   if (regEx == undefined)
-    regEx = /((([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*?")|(-?\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>))|(#!(.*?)!)/g;
+    regEx = /((([_a-zA-Z][_a-zA-Z0-9]*)|("([_a-zA-Z][_a-zA-Z0-9]*)"))\s*(=|:)\s*((function\s*\(([^(]*)\))|(\(([^(]*)\)\s*=>)|(\()|(\[)|(\{)|(".*?")|(-?\d+)|([_a-zA-Z][_a-zA-Z0-9]*))|(([_a-zA-Z][_a-zA-Z0-9]*)\s+in)|(\(([^(]*)\)\s*=>))|(#include "(.*?)")|(#define (\w*)\((.*?)\))|(#define (\w*))/g;
   if (output == undefined) output = [];
   if (words == undefined) words = {};
 
@@ -404,8 +400,25 @@ async function getCompletionItems(
       }
     }
     //external
-    else if (match[22] && false) {
-      //await parseExternalSrc(match[23], uri, output, words);
+    else if (match[22]) {
+      await parseExternalSrc(match[23], uri, output, words);
+    }
+    else if (match[24]) {
+      tempItem = new CompletionItem(match[25], CompletionItemKind.Function);
+      const params = match[26]
+      const fParams: string[] = [];
+      if (params) {
+        let param;
+
+        const paramsRegex = /(^|,)\s*(\w+?)\b/g;
+        while ((param = paramsRegex.exec(params))) {
+          fParams.push(param[2]);
+        }
+      }
+      tempItem.setInsertText(match[25] + "(" + getParamsSnippet(fParams) + ")");
+    }
+    else if (match[27]) {
+      tempItem = new CompletionItem(match[28], CompletionItemKind.Constant);
     }
     if (tempItem) {
       tryAddItem(tempItem, output, words);
@@ -442,7 +455,7 @@ function getParamsSnippet(params?: string[]) {
 }
 
 function getDecorationItems(text: string, activeEditor: vscode.TextEditor) {
-  const decorationsRegex = /(\$?".*?")|(\bif\b|\belse\b|\bfor\b|\bwhile\b|\bend if\b|\bend for\b|\bend while\b|\bin\b|\bthen\b|\breturn\b|\bbreak\b|\bcontinue\b|\band\b|\bor\b|\bnot\b)|(\bfunction\b|\bend function\b|\bself\b|\bnew\b|\btrue\b|\bfalse\b|\bnull\b)|(\b(?!function\b)([@_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(-?\d+)|([@_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)|(#!.*?!)/gm;
+  const decorationsRegex = /(\$?".*?")|(\bif\b|\belse\b|\bfor\b|\bwhile\b|\bend if\b|\bend for\b|\bend while\b|\bin\b|\bthen\b|\breturn\b|\bbreak\b|\bcontinue\b|\band\b|\bor\b|\bnot\b|#include|#define|#undef|#elif|#ifndef|#if|#endif|#pragma once|__TIME__|__DATE__|__LINE__|__FILE__|#enum|#endenum)|(\bfunction\b|\bend function\b|\bself\b|\bnew\b|\btrue\b|\bfalse\b|\bnull\b)|(\b(?!function\b)([@_a-zA-Z][_a-zA-Z0-9]*)\s*\()|(-?\d+)|([@_a-zA-Z][_a-zA-Z0-9]*)|(\/\/.*$)/gm;
   let match;
 
   const strings: GRange[] = [];
@@ -559,6 +572,9 @@ async function parseExternalSrc(
   output: CompletionItem[],
   words: { [id: string]: { [id: number]: boolean } }
 ) {
+  uri = vscode.Uri.joinPath(uri, name);
+  name = uri.path;
+
   //check for duplicate entry
   const tmp = words[name];
   if (tmp && tmp[-1]) {
@@ -566,7 +582,6 @@ async function parseExternalSrc(
   }
   words[name] = {};
   words[name][-1] = true;
-  uri = vscode.Uri.joinPath(uri, name);
 
   //check for exiting result
   let collection = remoteCompletions[uri.toString()];
@@ -575,7 +590,14 @@ async function parseExternalSrc(
     remoteCompletions[uri.toString()] = collection;
   }
 
-  const stat = await vscode.workspace.fs.stat(uri);
+  let stat: vscode.FileStat;
+  try {
+    stat = await vscode.workspace.fs.stat(uri);
+  }
+  catch {
+    return;
+  }
+
   if (collection.date == stat.mtime) {
     for (const item of collection.items) {
       tryAddItem(item, output, words);
@@ -584,14 +606,13 @@ async function parseExternalSrc(
   }
 
   collection.date = stat.mtime;
-  await vscode.workspace.fs.readFile(uri).then(async (x) => {
-    const text = new StringDecoder().write(Buffer.from(x));
-    const items = getCompletionItems(text, uri);
-    collection.items = await items;
-    for (const item of collection.items) {
-      tryAddItem(item, output, words);
-    }
-  });
+  const data = await vscode.workspace.fs.readFile(uri);
+  const text = new StringDecoder().write(Buffer.from(data));
+  const items = getCompletionItems(text, uri);
+  collection.items = await items;
+  for (const item of collection.items) {
+    tryAddItem(item, output, words);
+  }
 }
 
 const parentCompletion = new CompletionItem(
@@ -606,7 +627,7 @@ parentCompletion.command = {
 async function getCompletionFs(line: string, baseUri: vscode.Uri) {
   const out: CompletionItem[] = [parentCompletion];
 
-  const regex = /#!(.*?)(!|$)/;
+  const regex = /#include "(.*?)"/;
   const match = regex.exec(line);
   if (match == undefined || match[1] == undefined) {
     return out;
@@ -620,7 +641,7 @@ async function getCompletionFs(line: string, baseUri: vscode.Uri) {
         item[0],
         vscode.CompletionItemKind.File
       );
-      completion.insertText = item[0] + "!";
+      completion.insertText = item[0];
       out.push(completion);
     } else if (item[1] == vscode.FileType.Directory) {
       const completion = new CompletionItem(

@@ -7,6 +7,44 @@ let gsStaticItems: CompletionItem[] = [];
 
 export function getStaticItems(gspp: boolean) {
 
+    const includeCompletion = new CompletionItem("include", vscode.CompletionItemKind.Snippet);
+    includeCompletion.insertText = new vscode.SnippetString('#include "${1}"${0}');
+
+    const defineCompletion = new CompletionItem("define", vscode.CompletionItemKind.Snippet);
+    defineCompletion.insertText = new vscode.SnippetString('#define ${1} ${2}');
+
+    const undefCompletion = new CompletionItem("undef", vscode.CompletionItemKind.Snippet);
+    undefCompletion.insertText = new vscode.SnippetString('#undef ${1}');
+
+    const cifCompletion = new CompletionItem("if", vscode.CompletionItemKind.Snippet);
+    cifCompletion.insertText = new vscode.SnippetString('#if ${1}\n\t${2}\n#endif${0}');
+
+    const celifCompletion = new CompletionItem("elif", vscode.CompletionItemKind.Snippet);
+    celifCompletion.insertText = new vscode.SnippetString('#elif ${1}');
+
+    const ifndefCompletion = new CompletionItem("ifndef", vscode.CompletionItemKind.Snippet);
+    ifndefCompletion.insertText = new vscode.SnippetString('#ifndef ${1}\n\t${2}\n#endif');
+
+    const pragmaCompletion = new CompletionItem("once", vscode.CompletionItemKind.Snippet);
+    pragmaCompletion.insertText = new vscode.SnippetString('#ifndef ${1}\n#define ${1}\n\n#endif');
+
+    const timeCompletion = new CompletionItem("__TIME__", vscode.CompletionItemKind.Snippet);
+    timeCompletion.insertText = new vscode.SnippetString('__TIME__');
+
+    const dateCompletion = new CompletionItem("__DATE__", vscode.CompletionItemKind.Snippet);
+    dateCompletion.insertText = new vscode.SnippetString('__DATE__');
+
+    const lineCompletion = new CompletionItem("__LINE__", vscode.CompletionItemKind.Snippet);
+    lineCompletion.insertText = new vscode.SnippetString('__LINE__');
+
+    const fileCompletion = new CompletionItem("__FILE__", vscode.CompletionItemKind.Snippet);
+    fileCompletion.insertText = new vscode.SnippetString('__FILE__');
+
+    const enumCompletion = new CompletionItem("enum", vscode.CompletionItemKind.Snippet);
+    enumCompletion.insertText = new vscode.SnippetString('#enum\n\t${1}\n#endenum');
+
+
+
     //#region gspp snippets
     const gsppForCompletion = new CompletionItem('for', vscode.CompletionItemKind.Snippet);
     gsppForCompletion.insertText = new vscode.SnippetString('for(${1:var} in ${2:array}){\n\t${3:body}\n}${0}');
@@ -26,7 +64,22 @@ export function getStaticItems(gspp: boolean) {
     const gsppFuncCompletion = new CompletionItem('func', vscode.CompletionItemKind.Snippet);
     gsppFuncCompletion.insertText = new vscode.SnippetString('(${1:params}) => {\n\t${2:body}\n}${0}');
 
-    const gsppItems = [gsppForCompletion, gsppIfCompletion, gsppElseIfCompletion, gsppElseCompletion, gsppWhileCompletion, gsppFuncCompletion];
+    const gsppItems = [gsppForCompletion, gsppIfCompletion, gsppElseIfCompletion, gsppElseCompletion, gsppWhileCompletion, gsppFuncCompletion,
+        //#region preprocessor
+        includeCompletion,
+        defineCompletion,
+        undefCompletion,
+        cifCompletion,
+        celifCompletion,
+        ifndefCompletion,
+        pragmaCompletion,
+        timeCompletion,
+        dateCompletion,
+        lineCompletion,
+        fileCompletion,
+        enumCompletion,
+        //#endregion
+    ];
     //#endregion
 
     //#region gs snippets
@@ -92,7 +145,7 @@ export function getStaticItems(gspp: boolean) {
     hasIndexCompletion.insertText = new vscode.SnippetString('hasIndex(${1:index})');
 
     const indexOfCompletion = new CompletionItem('indexOf', vscode.CompletionItemKind.Function);
-    indexOfCompletion.insertText = new vscode.SnippetString('indexOf(${1:item,${2:null}})');
+    indexOfCompletion.insertText = new vscode.SnippetString('indexOf(${1:item},${2:null})');
 
     const lastIndexOfCompletion = new CompletionItem('lastIndexOf', vscode.CompletionItemKind.Function);
     lastIndexOfCompletion.insertText = new vscode.SnippetString('lastIndexOf(${1:item})');

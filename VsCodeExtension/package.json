@@ -2,7 +2,7 @@
 	"name": "gspp-compiler",
 	"displayName": "GreyScript++",
 	"description": "Snippets and highlights for standard GreyScript/MiniScript as well as GreyScript++, the compiler for minification is also included.",
-	"version": "0.0.20",
+	"version": "0.0.23",
 	"publisher": "lukas-safranek",
 	"license": "gpl-3.0",
 	"repository": {
@@ -56,7 +56,7 @@
 			]
 		},
 		"views": {
-			"explorer":[
+			"explorer": [
 				{
 					"id": "gsppCompilerSettings",
 					"name": "GS++ Compiler Settings",
@@ -73,7 +73,13 @@
 					".gsp",
 					".gpp"
 				],
-				"aliases": ["GreyScript++","GS++","gs++","GSpp","gspp"],
+				"aliases": [
+					"GreyScript++",
+					"GS++",
+					"gs++",
+					"GSpp",
+					"gspp"
+				],
 				"configuration": "./gs-config.json"
 			},
 			{
@@ -83,7 +89,11 @@
 					".gs",
 					".ms"
 				],
-				"aliases": ["GreyScript","GS","gs"],
+				"aliases": [
+					"GreyScript",
+					"GS",
+					"gs"
+				],
 				"configuration": "./gs-config.json"
 			}
 		]
@@ -102,7 +112,7 @@
 		"eslint": "^7.1.0",
 		"typescript": "^4.0.2"
 	},
-	"dependencies": {}
+	"dependencies": {
+		"c-preprocessor": "^0.2.13"
+	}
 }
-
-
